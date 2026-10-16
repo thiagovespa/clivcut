@@ -20,6 +20,7 @@ layout(std140, binding = 0) uniform buf {
     vec4 clipMaskGeom; // centro x, centro y, largura, altura (frações do quadro)
     vec4 clipMaskExtra; // rotação (rad), proporção do quadro
     vec4 grade;
+    vec4 effect;
 } ubuf;
 
 void main()

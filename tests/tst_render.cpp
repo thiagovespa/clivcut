@@ -149,6 +149,55 @@ private slots:
         QVERIFY2(px(darker, 80, 45).red() < 90, qPrintable(px(darker, 80, 45).name()));
     }
 
+    void videoEffects()
+    {
+        Project p = createProject(QStringLiteral("t"), 160, 90, 30);
+        auto a = imageAsset(p);
+        auto c = createMediaClip(a, 0);
+        c.effect = {QStringLiteral("strobe"), 1.0}; // em t = 0 o clarão está no máximo
+        const QString id = edit::insertClip(p, c, 0);
+        SolidSource src;
+        src.images[a.id] = solid(QColor(200, 0, 0));
+        QImage img = renderAt(p, 0, src);
+        QVERIFY2(px(img, 80, 45).green() > 180, qPrintable(px(img, 80, 45).name()));
+
+        // Desfoque mistura as cores na divisa entre duas metades.
+        QImage half(160, 90, QImage::Format_RGBA8888);
+        half.fill(Qt::red);
+        for (int y = 0; y < 90; ++y)
+            for (int x = 80; x < 160; ++x)
+                half.setPixelColor(x, y, Qt::blue);
+        src.images[a.id] = half;
+        edit::clipById(p, id)->effect = {QStringLiteral("blur"), 1.0};
+        img = renderAt(p, 0, src);
+        const QColor edge = px(img, 80, 45);
+        QVERIFY2(edge.red() > 40 && edge.blue() > 40, qPrintable(edge.name()));
+        QVERIFY(near(px(img, 10, 45), Qt::red, 10)); // longe da divisa continua vermelho
+
+        // Pixelado: blocos de cor única.
+        edit::clipById(p, id)->effect = {QStringLiteral("pixelate"), 1.0};
+        img = renderAt(p, 0, src);
+        QCOMPARE(px(img, 82, 45), px(img, 86, 45));
+    }
+
+    void flashTransition()
+    {
+        Project p = createProject(QStringLiteral("t"), 160, 90, 30);
+        auto a = imageAsset(p);
+        auto c1 = createMediaClip(a, 0);
+        c1.duration = kSecond;
+        edit::insertClip(p, c1, 0);
+        auto c2 = createMediaClip(a, kSecond);
+        c2.duration = kSecond;
+        c2.transitionIn = Transition{TransitionKind::FlashWhite, 600'000};
+        edit::insertClip(p, c2, 0);
+        SolidSource src;
+        src.images[a.id] = solid(QColor(20, 20, 160));
+        // No corte, o clarão está no branco; longe dele, a imagem original.
+        QVERIFY2(px(renderAt(p, kSecond, src), 80, 45).red() > 230, qPrintable(px(renderAt(p, kSecond, src), 80, 45).name()));
+        QVERIFY(near(px(renderAt(p, 300'000, src), 80, 45), QColor(20, 20, 160), 6));
+    }
+
     void opacityAndMultiply()
     {
         Project p = createProject(QStringLiteral("t"), 320, 180, 30);

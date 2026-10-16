@@ -49,7 +49,7 @@
 | 10 | Transcript-based editing and silence removal | ✅ | word-level transcript panel (whisper.cpp) where deleting words cuts the video with ripple, filler-word selection, and silence removal with a preview on the ruler |
 | 11 | Local TTS (Piper) | ⬜ | |
 | 12 | Stickers and shapes, curved text, per-character styles | ⬜ | |
-| 13 | Shader-based video effects (glitch, shake, blur, VHS, glow, particles) and more transitions | ⬜ | |
+| 13 | Shader-based video effects (glitch, shake, blur, VHS, glow, particles) and more transitions | ✅ | 12 effects in the layer shader (per clip or as an effect layer) and 17 transitions; effect keyframes and multiple effects per clip missing |
 | 14 | Audio: music ducking under voice, voice effects (echo, reverb, voice changer), voiceover recording | ✅ | ducking in real time in the mixer, voice effects as cached FFmpeg filter chains, voiceover recorded with SDL capture |
 | 15 | Music beat detection with automatic markers | ⬜ | |
 | 16 | Project templates with media slots and ready-made text templates | ⬜ | |

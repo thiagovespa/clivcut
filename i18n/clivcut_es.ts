@@ -32,6 +32,10 @@
         <translation>Transcripción</translation>
     </message>
     <message>
+        <source>Effects</source>
+        <translation>Efectos</translation>
+    </message>
+    <message>
         <source>Keyboard shortcuts</source>
         <translation>Atajos de teclado</translation>
     </message>
@@ -249,6 +253,72 @@
     <message>
         <source>The .cube has %1 entries; expected %2³</source>
         <translation>El .cube tiene %1 entradas; se esperaban %2³</translation>
+    </message>
+</context>
+<context>
+    <name>Effects</name>
+    <message>
+        <source>Shake</source>
+        <translation>Temblor</translation>
+    </message>
+    <message>
+        <source>Blur</source>
+        <translation>Desenfoque</translation>
+    </message>
+    <message>
+        <source>Glitch</source>
+        <translation>Glitch</translation>
+    </message>
+    <message>
+        <source>RGB split</source>
+        <translation>Separación RGB</translation>
+    </message>
+    <message>
+        <source>VHS</source>
+        <translation>VHS</translation>
+    </message>
+    <message>
+        <source>Glow</source>
+        <translation>Resplandor</translation>
+    </message>
+    <message>
+        <source>Film grain</source>
+        <translation>Grano de película</translation>
+    </message>
+    <message>
+        <source>Pixelate</source>
+        <translation>Pixelado</translation>
+    </message>
+    <message>
+        <source>Mirror</source>
+        <translation>Espejo</translation>
+    </message>
+    <message>
+        <source>Snow</source>
+        <translation>Nieve</translation>
+    </message>
+    <message>
+        <source>Zoom pulse</source>
+        <translation>Zoom al ritmo</translation>
+    </message>
+    <message>
+        <source>Strobe</source>
+        <translation>Estroboscopio</translation>
+    </message>
+</context>
+<context>
+    <name>EffectsPanel</name>
+    <message>
+        <source>Click an effect to apply it to the selected clip; click it again to remove.</source>
+        <translation>Haz clic en un efecto para aplicarlo al clip seleccionado; vuelve a hacer clic para quitarlo.</translation>
+    </message>
+    <message>
+        <source>No clip selected: the effect is added as an effect layer from the playhead and affects everything below it.</source>
+        <translation>Sin clip seleccionado: el efecto se añade como una capa de efecto desde el cursor y afecta a todo lo que tiene debajo.</translation>
+    </message>
+    <message>
+        <source>Intensity</source>
+        <translation>Intensidad</translation>
     </message>
 </context>
 <context>
@@ -1553,6 +1623,10 @@ Atajos: Espacio reproduce · Ctrl+B divide · Q/W eliminan a la izquierda/derech
         <translation>Panel: Transcripción</translation>
     </message>
     <message>
+        <source>Panel: Effects</source>
+        <translation>Panel: Efectos</translation>
+    </message>
+    <message>
         <source>File</source>
         <translation>Archivo</translation>
     </message>
@@ -1762,6 +1836,10 @@ Atajos: Espacio reproduce · Ctrl+B divide · Q/W eliminan a la izquierda/derech
         <translation>Transcripción</translation>
     </message>
     <message>
+        <source>Effects</source>
+        <translation>Efectos</translation>
+    </message>
+    <message>
         <source>Import media</source>
         <translation>Importar medios</translation>
     </message>
@@ -1865,6 +1943,42 @@ Atajos: Espacio reproduce · Ctrl+B divide · Q/W eliminan a la izquierda/derech
     <message>
         <source>Zoom</source>
         <translation>Zoom</translation>
+    </message>
+    <message>
+        <source>Zoom out</source>
+        <translation>Alejar</translation>
+    </message>
+    <message>
+        <source>Slide ↑</source>
+        <translation>Deslizar ↑</translation>
+    </message>
+    <message>
+        <source>Slide ↓</source>
+        <translation>Deslizar ↓</translation>
+    </message>
+    <message>
+        <source>Wipe ↑</source>
+        <translation>Cortinilla ↑</translation>
+    </message>
+    <message>
+        <source>Wipe ↓</source>
+        <translation>Cortinilla ↓</translation>
+    </message>
+    <message>
+        <source>Spin</source>
+        <translation>Giro</translation>
+    </message>
+    <message>
+        <source>Flash</source>
+        <translation>Destello</translation>
+    </message>
+    <message>
+        <source>Glitch</source>
+        <translation>Glitch</translation>
+    </message>
+    <message>
+        <source>Blur</source>
+        <translation>Desenfoque</translation>
     </message>
     <message>
         <source>Duration</source>
@@ -2587,6 +2701,10 @@ Atajos: Espacio reproduce · Ctrl+B divide · Q/W eliminan a la izquierda/derech
     <message>
         <source>Voiceover recorded (%1)</source>
         <translation>Narración grabada (%1)</translation>
+    </message>
+    <message>
+        <source>Add effect</source>
+        <translation>Añadir efecto</translation>
     </message>
     <message>
         <source>Voice effect failed: %1</source>

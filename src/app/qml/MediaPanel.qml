@@ -29,7 +29,7 @@ Rectangle {
             Layout.bottomMargin: 4
             Text {
                 Layout.fillWidth: true
-                text: [qsTr("Media"), qsTr("Text"), qsTr("Captions"), qsTr("Filters"), qsTr("Transitions"), qsTr("Animations"), qsTr("Transcript")][root.section]
+                text: [qsTr("Media"), qsTr("Text"), qsTr("Captions"), qsTr("Filters"), qsTr("Transitions"), qsTr("Animations"), qsTr("Transcript"), qsTr("Effects")][root.section]
                 color: Theme.text
                 font.pixelSize: Theme.fontLarge
                 font.bold: true
@@ -366,7 +366,16 @@ Rectangle {
                                 { kind: "slideLeft", glyph: "⇠", name: qsTr("Slide ←") },
                                 { kind: "slideRight", glyph: "⇢", name: qsTr("Slide →") },
                                 { kind: "circleOpen", glyph: "◎", name: qsTr("Circle") },
-                                { kind: "zoomIn", glyph: "⤢", name: qsTr("Zoom") }
+                                { kind: "zoomIn", glyph: "⤢", name: qsTr("Zoom") },
+                                { kind: "zoomOut", glyph: "⤡", name: qsTr("Zoom out") },
+                                { kind: "slideUp", glyph: "⇡", name: qsTr("Slide ↑") },
+                                { kind: "slideDown", glyph: "⇣", name: qsTr("Slide ↓") },
+                                { kind: "wipeUp", glyph: "⤒", name: qsTr("Wipe ↑") },
+                                { kind: "wipeDown", glyph: "⤓", name: qsTr("Wipe ↓") },
+                                { kind: "spin", glyph: "↻", name: qsTr("Spin") },
+                                { kind: "flashWhite", glyph: "☀", name: qsTr("Flash") },
+                                { kind: "glitch", glyph: "▚", name: qsTr("Glitch") },
+                                { kind: "blurDissolve", glyph: "◌", name: qsTr("Blur") }
                             ]
                             TileButton {
                                 required property var modelData
@@ -459,6 +468,9 @@ Rectangle {
         
             // ---------------- Transcrição ----------------
             TranscriptPanel {}
+
+            // ---------------- Efeitos ----------------
+            EffectsPanel {}
         }
     }
 }

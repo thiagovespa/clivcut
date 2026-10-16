@@ -154,7 +154,16 @@ struct Mask {
     bool active() const { return shape != MaskShape::None; }
 };
 
-enum class TransitionKind { Dissolve, FadeBlack, WipeLeft, WipeRight, SlideLeft, SlideRight, CircleOpen, ZoomIn };
+enum class TransitionKind {
+    Dissolve, FadeBlack, WipeLeft, WipeRight, SlideLeft, SlideRight, CircleOpen, ZoomIn,
+    SlideUp, SlideDown, WipeUp, WipeDown, Spin, ZoomOut, FlashWhite, Glitch, BlurDissolve
+};
+
+/// Efeito de vídeo do clipe (core/Effects.h); id vazio = nenhum.
+struct ClipEffect {
+    QString id;
+    double intensity = 0.6; ///< 0..1
+};
 
 struct Transition {
     TransitionKind kind = TransitionKind::Dissolve;
@@ -206,6 +215,7 @@ struct Clip {
     bool audioMuted = false; ///< silencia o áudio deste clipe (ex.: depois de separar o áudio)
     double gainDb = 0;       ///< ganho extra em dB (normalização de volume ou ajuste manual)
     double denoise = 0;      ///< redução de ruído 0..1 (0 = desligada)
+    ClipEffect effect;         ///< efeito de vídeo (shader)
     QString voiceEffect;       ///< efeito de voz (engine/VoiceEffects.h), vazio = nenhum
     double ducking = 0;        ///< abaixa sob a voz (0..1): para música de fundo
     double voiceIsolation = 0; ///< isolamento de voz por IA 0..1 (0 = desligado)

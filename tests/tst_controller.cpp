@@ -564,6 +564,31 @@ private slots:
         QVERIFY(atStart);
     }
 
+    void videoEffectsApi()
+    {
+        QVERIFY(m_ctrl->openProject(QUrl::fromLocalFile(m_dir.filePath(QStringLiteral("p.clivcut")))));
+        QCOMPARE(m_ctrl->videoEffects().size(), 12);
+        const QString clip = clipsOf(0).first().toMap().value("id").toString();
+        m_ctrl->setClipProperty(clip, QStringLiteral("effect"), QStringLiteral("glitch"));
+        m_ctrl->setClipProperty(clip, QStringLiteral("effectIntensity"), 2.0); // limitado a 1
+        m_ctrl->select(clip);
+        QCOMPARE(m_ctrl->selectedClip().value("effect").toString(), QStringLiteral("glitch"));
+        QCOMPARE(m_ctrl->selectedClip().value("effectIntensity").toDouble(), 1.0);
+        m_ctrl->setClipProperty(clip, QStringLiteral("effect"), QStringLiteral("inexistente"));
+        QCOMPARE(m_ctrl->selectedClip().value("effect").toString(), QString());
+        // Sem seleção: vira uma camada de efeito selecionada.
+        m_ctrl->clearSelection();
+        m_ctrl->seek(0);
+        m_ctrl->addEffectClip(QStringLiteral("snow"));
+        QCOMPARE(m_ctrl->selectedClip().value("type").toString(), QStringLiteral("adjust"));
+        QCOMPARE(m_ctrl->selectedClip().value("effect").toString(), QStringLiteral("snow"));
+        // Desfazer remove a camada inteira (efeito e clipe juntos).
+        m_ctrl->undo();
+        m_ctrl->undo();
+        for (const auto &t : m_ctrl->tracks())
+            QVERIFY(t.toMap().value("kind").toString() != QStringLiteral("adjust"));
+    }
+
     void scopes()
     {
         // Meio quadro vermelho puro, meio cinza médio.

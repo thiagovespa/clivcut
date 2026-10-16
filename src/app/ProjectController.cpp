@@ -13,6 +13,7 @@
 #include "core/SpeedCurve.h"
 #include "AudioRecorder.h"
 #include "Language.h"
+#include "core/Effects.h"
 #include "engine/AiModels.h"
 #include "media/AudioDecoder.h"
 #include "engine/AudioCleanup.h"
@@ -436,7 +437,9 @@ QVariantMap ProjectController::selectedClip() const
                   {"strokeWidth", s.strokeWidth},
                   {"background", s.background},
                   {"align", s.align},
-                  {"shadow", s.shadow}});
+                  {"shadow", s.shadow},
+                  {"effect", c->effect.id},
+                  {"effectIntensity", c->effect.intensity}});
         return m;
     }
     const ColorAdjust &col = c->color;
@@ -460,7 +463,9 @@ QVariantMap ProjectController::selectedClip() const
                    {"lift", QVariantMap{{"x", col.lift.x}, {"y", col.lift.y}, {"luma", col.lift.luma}}},
                    {"gamma", QVariantMap{{"x", col.gamma.x}, {"y", col.gamma.y}, {"luma", col.gamma.luma}}},
                    {"gain", QVariantMap{{"x", col.gain.x}, {"y", col.gain.y}, {"luma", col.gain.luma}}}}},
-              {"hasGrade", col.hasGrade()}});
+              {"hasGrade", col.hasGrade()},
+              {"effect", c->effect.id},
+              {"effectIntensity", c->effect.intensity}});
     m.insert({{"temperature", col.temperature},
               {"exposure", col.exposure},
               {"tint", col.tint},
@@ -1132,6 +1137,8 @@ bool applyClipProperty(Project &p, Clip *c, Micros rel, const QString &key, cons
     else if (key == QLatin1String("gainDb")) c->gainDb = std::clamp(value.toDouble(), -24.0, 24.0);
     else if (key == QLatin1String("denoise")) c->denoise = engine::quantizedDenoise(value.toDouble());
     else if (key == QLatin1String("removeBackground")) c->removeBackground = value.toBool();
+    else if (key == QLatin1String("effect")) c->effect.id = effectShaderIndex(value.toString()) > 0 ? value.toString() : QString();
+    else if (key == QLatin1String("effectIntensity")) c->effect.intensity = std::clamp(value.toDouble(), 0.0, 1.0);
     else if (key == QLatin1String("voiceEffect")) c->voiceEffect = engine::findVoiceEffect(value.toString()) ? value.toString() : QString();
     else if (key == QLatin1String("ducking")) c->ducking = std::clamp(value.toDouble(), 0.0, 1.0);
     else if (key == QLatin1String("voiceIsolation")) c->voiceIsolation = engine::quantizedVoice(value.toDouble());
@@ -3077,6 +3084,32 @@ void ProjectController::stopRecording()
 
 // ---------------------------------------------------------------------------
 // Efeitos de voz (em segundo plano)
+
+QVariantList ProjectController::videoEffects() const
+{
+    QVariantList out;
+    for (const auto &e : clv::videoEffects())
+        out << QVariantMap{{"id", e.id}, {"name", QCoreApplication::translate("Effects", e.name.toUtf8())}};
+    return out;
+}
+
+void ProjectController::addEffectClip(const QString &effectId)
+{
+    if (effectShaderIndex(effectId) == 0)
+        return;
+    addFilterClip({});
+    if (m_selection.size() == 1) {
+        const QString id = m_selection.first();
+        edit(tr("Add effect"), [&](Project &p) {
+            Clip *c = edit::clipById(p, id);
+            if (!c)
+                return false;
+            c->effect = {effectId, 0.6};
+            return true;
+        }, QStringLiteral("addEffect:") + id);
+        emit selectedClipChanged();
+    }
+}
 
 QVariantList ProjectController::voiceEffects() const
 {

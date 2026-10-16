@@ -36,6 +36,7 @@ qt_add_qml_module(clivcut
         qml/ShortcutsDialog.qml
         qml/SilenceDialog.qml
         qml/TranscriptPanel.qml
+        qml/EffectsPanel.qml
         qml/VoiceoverPanel.qml
         qml/TopBar.qml
         qml/MediaPanel.qml

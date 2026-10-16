@@ -56,7 +56,7 @@ constexpr std::array<std::pair<BlendMode, const char *>, 10> kBlends{{
     {BlendMode::Difference, "difference"},
 }};
 
-constexpr std::array<std::pair<TransitionKind, const char *>, 8> kTransitions{{
+constexpr std::array<std::pair<TransitionKind, const char *>, 17> kTransitions{{
     {TransitionKind::Dissolve, "dissolve"},
     {TransitionKind::FadeBlack, "fadeBlack"},
     {TransitionKind::WipeLeft, "wipeLeft"},
@@ -65,6 +65,15 @@ constexpr std::array<std::pair<TransitionKind, const char *>, 8> kTransitions{{
     {TransitionKind::SlideRight, "slideRight"},
     {TransitionKind::CircleOpen, "circleOpen"},
     {TransitionKind::ZoomIn, "zoomIn"},
+    {TransitionKind::SlideUp, "slideUp"},
+    {TransitionKind::SlideDown, "slideDown"},
+    {TransitionKind::WipeUp, "wipeUp"},
+    {TransitionKind::WipeDown, "wipeDown"},
+    {TransitionKind::Spin, "spin"},
+    {TransitionKind::ZoomOut, "zoomOut"},
+    {TransitionKind::FlashWhite, "flashWhite"},
+    {TransitionKind::Glitch, "glitch"},
+    {TransitionKind::BlurDissolve, "blurDissolve"},
 }};
 
 constexpr std::array<std::pair<AnimationKind, const char *>, 7> kAnimations{{
@@ -350,6 +359,8 @@ QJsonObject clipToJson(const Clip &c)
         o.insert("ducking", c.ducking);
     if (!c.voiceEffect.isEmpty())
         o.insert("voiceEffect", c.voiceEffect);
+    if (!c.effect.id.isEmpty())
+        o.insert("effect", QJsonObject{{"id", c.effect.id}, {"intensity", c.effect.intensity}});
     if (c.audioOnly)
         o.insert("audioOnly", true);
     o.insert("fadeIn", us(c.fadeIn));
@@ -439,6 +450,8 @@ Clip clipFromJson(const QJsonObject &o)
     c.voiceIsolation = std::clamp(o.value("voiceIsolation").toDouble(), 0.0, 1.0);
     c.ducking = std::clamp(o.value("ducking").toDouble(), 0.0, 1.0);
     c.voiceEffect = o.value("voiceEffect").toString();
+    c.effect.id = o.value("effect").toObject().value("id").toString();
+    c.effect.intensity = std::clamp(o.value("effect").toObject().value("intensity").toDouble(0.6), 0.0, 1.0);
     c.audioOnly = o.value("audioOnly").toBool();
     c.fadeIn = toUs(o.value("fadeIn"));
     c.fadeOut = toUs(o.value("fadeOut"));

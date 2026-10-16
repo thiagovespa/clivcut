@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 #include "Evaluate.h"
 
+#include "Effects.h"
+
 #include "Keyframes.h"
 #include "SpeedCurve.h"
 
@@ -61,6 +63,9 @@ VisualLayer resolveLayer(const Project &p, int ti, const Clip &c, Micros rel)
     const Micros fromEnd = c.duration - rel;
     if (c.animOut.kind != AnimationKind::None && c.animOut.duration > 0 && fromEnd < c.animOut.duration)
         applyAnimation(l, c.animOut.kind, easeOut(static_cast<double>(fromEnd) / c.animOut.duration));
+    l.effect = effectShaderIndex(c.effect.id);
+    l.effectIntensity = c.effect.intensity;
+    l.effectTime = static_cast<double>(rel) / kSecond;
     return l;
 }
 
@@ -101,6 +106,64 @@ void applyTransition(TransitionKind kind, double p, VisualLayer &out, VisualLaye
     case TransitionKind::ZoomIn:
         out.scale *= 1 + p;
         out.opacity *= 1 - p;
+        in.opacity *= p;
+        break;
+    case TransitionKind::SlideUp:
+        out.y -= 2 * p;
+        in.y += 2 * (1 - p);
+        break;
+    case TransitionKind::SlideDown:
+        out.y += 2 * p;
+        in.y -= 2 * (1 - p);
+        break;
+    case TransitionKind::WipeUp:
+        in.mask = MaskKind::WipeUp;
+        in.maskProgress = p;
+        break;
+    case TransitionKind::WipeDown:
+        in.mask = MaskKind::WipeDown;
+        in.maskProgress = p;
+        break;
+    case TransitionKind::Spin:
+        // Sai girando e encolhendo; entra girando do outro lado.
+        out.rotation += 180 * p;
+        out.scale *= 1 - 0.6 * p;
+        out.opacity *= 1 - p;
+        in.rotation -= 180 * (1 - p);
+        in.scale *= 0.4 + 0.6 * p;
+        in.opacity *= p;
+        break;
+    case TransitionKind::ZoomOut:
+        in.scale *= 2 - p;
+        in.opacity *= p;
+        out.opacity *= 1 - p * 0.5;
+        break;
+    case TransitionKind::FlashWhite: {
+        // Clareia até o branco no meio e volta a partir do branco (efeito 13 = branco).
+        const double w = 1 - std::abs(2 * p - 1);
+        out.effect = in.effect = 13;
+        out.effectIntensity = in.effectIntensity = w;
+        if (p < 0.5)
+            in.opacity = 0;
+        else
+            out.opacity = 0;
+        break;
+    }
+    case TransitionKind::Glitch: {
+        // Interferência forte em volta do corte, que acontece no meio.
+        const double w = 1 - std::abs(2 * p - 1);
+        out.effect = in.effect = 3;
+        out.effectIntensity = in.effectIntensity = 0.4 + 0.6 * w;
+        if (p < 0.5)
+            in.opacity = 0;
+        else
+            out.opacity = 0;
+        break;
+    }
+    case TransitionKind::BlurDissolve:
+        out.effect = in.effect = 2;
+        out.effectIntensity = p;
+        in.effectIntensity = 1 - p;
         in.opacity *= p;
         break;
     }

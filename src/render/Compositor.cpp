@@ -52,6 +52,7 @@ struct Compositor::LayerUbo {
     float clipMaskGeom[4];
     float clipMaskExtra[4];
     float grade[4];
+    float effect[4];
 };
 
 struct Compositor::Slot {
@@ -298,6 +299,9 @@ void Compositor::fillUbo(LayerUbo &u, const VisualLayer &l, const Project &p, do
     u.mask[0] = static_cast<float>(l.mask);
     u.mask[1] = static_cast<float>(l.maskProgress);
     u.mask[2] = static_cast<float>(p.width) / p.height;
+    u.effect[0] = static_cast<float>(l.effect);
+    u.effect[1] = static_cast<float>(std::clamp(l.effectIntensity, 0.0, 1.0));
+    u.effect[2] = static_cast<float>(l.effectTime);
     u.misc[0] = static_cast<float>(std::clamp(l.opacity, 0.0, 1.0));
     u.misc[1] = static_cast<float>(blendIndex(l.blend));
     u.misc[2] = m_rhi->isYUpInFramebuffer() ? 1.f : 0.f;

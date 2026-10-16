@@ -92,6 +92,8 @@ class ProjectController : public QObject {
     Q_PROPERTY(bool scopesEnabled READ scopesEnabled WRITE setScopesEnabled NOTIFY scopesChanged)
     /// Efeitos de voz disponíveis: [{id, name}].
     Q_PROPERTY(QVariantList voiceEffects READ voiceEffects NOTIFY languageChanged)
+    /// Efeitos de vídeo disponíveis: [{id, name}].
+    Q_PROPERTY(QVariantList videoEffects READ videoEffects NOTIFY languageChanged)
     /// Narração: gravando do microfone, nível (pico 0..1) e duração gravada em µs.
     Q_PROPERTY(bool recording READ recording NOTIFY recordingChanged)
     Q_PROPERTY(double recordLevel READ recordLevel NOTIFY recordLevelChanged)
@@ -178,6 +180,9 @@ public:
     QVariantList transcript() const { return m_transcript; }
     bool scopesEnabled() const { return m_scopesEnabled; }
     QVariantList voiceEffects() const;
+    QVariantList videoEffects() const;
+    /// Camada de efeito (ajuste) do cursor até o fim do clipe principal, com o efeito dado.
+    Q_INVOKABLE void addEffectClip(const QString &effectId);
     bool recording() const;
     double recordLevel() const { return m_recordLevel; }
     double recordElapsed() const;

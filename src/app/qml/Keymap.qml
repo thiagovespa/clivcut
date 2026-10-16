@@ -76,6 +76,7 @@ QtObject {
         { id: "panel4", group: qsTr("Interface"), name: qsTr("Panel: Transitions"), keys: ["Alt+5"], edit: false },
         { id: "panel5", group: qsTr("Interface"), name: qsTr("Panel: Animations"), keys: ["Alt+6"], edit: false },
         { id: "panel6", group: qsTr("Interface"), name: qsTr("Panel: Transcript"), keys: ["Alt+7"], edit: false },
+        { id: "panel7", group: qsTr("Interface"), name: qsTr("Panel: Effects"), keys: ["Alt+8"], edit: false },
 
         { id: "newProject", group: qsTr("File"), name: qsTr("New project"), keys: ["Ctrl+N"], edit: false },
         { id: "open", group: qsTr("File"), name: qsTr("Open project"), keys: ["Ctrl+O"], edit: false },

@@ -13,7 +13,7 @@
  */
 namespace clv {
 
-enum class MaskKind { None, WipeLeft, WipeRight, Circle };
+enum class MaskKind { None, WipeLeft, WipeRight, Circle, WipeUp, WipeDown };
 
 struct VisualLayer {
     int trackIndex = 0;
@@ -30,6 +30,12 @@ struct VisualLayer {
     /// Máscara de transição (wipe/círculo) aplicada a esta camada.
     MaskKind mask = MaskKind::None;
     double maskProgress = 1;
+
+    /// Efeito de vídeo (índice do shader, 0 = nenhum), intensidade e tempo no clipe (s).
+    /// Transições podem substituir o efeito do clipe durante a passagem.
+    int effect = 0;
+    double effectIntensity = 0;
+    double effectTime = 0;
 };
 
 struct AudioSource {
