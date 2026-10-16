@@ -343,7 +343,11 @@ private slots:
         edit::insertClip(p, c, 0);
         auto t = createTextClip(QStringLiteral("Olá ✓"), 0);
         t.animIn = {AnimationKind::Zoom, 300'000};
+        t.effect = {QStringLiteral("glow"), 0.4};
         edit::insertClip(p, t, -1);
+        auto fx = createAdjustClip(0, kSecond);
+        fx.effect = {QStringLiteral("rgbSplit"), 0.7};
+        edit::insertClip(p, fx, -1);
         p.markers.push_back({newId("mrk"), kSecond, QStringLiteral("m"), QStringLiteral("#ff0000")});
 
         Project q;
@@ -360,6 +364,10 @@ private slots:
         QCOMPARE(q.tracks[0].clips[0].mask.shape, MaskShape::Rectangle);
         QVERIFY(q.tracks[0].clips[0].mask.invert);
         QCOMPARE(q.tracks[0].clips[0].mask.rotation, 15.0);
+        // O efeito sobrevive em texto e em camadas de ajuste (que saem cedo da serialização).
+        QCOMPARE(q.tracks[1].clips[0].effect.id, QStringLiteral("glow"));
+        QCOMPARE(q.tracks[2].clips[0].effect.id, QStringLiteral("rgbSplit"));
+        QCOMPARE(q.tracks[2].clips[0].effect.intensity, 0.7);
     }
 
     void historyUndoRedo()
