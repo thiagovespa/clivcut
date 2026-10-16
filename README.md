@@ -4,14 +4,18 @@ An **open-source, cross-platform** video editor (Linux first), built around a fa
 
 Written in **C++20 + Qt 6 (Qt Quick / RHI) + FFmpeg**. Video compositing runs on the GPU (Vulkan, OpenGL, Metal or Direct3D, via Qt RHI). Preview and export share **the same compositor**, so the exported file matches what you see in the player.
 
-![clivcut editor: media panel, GPU player, inspector and multi-track timeline](docs/screenshots/editor.png)
+![clivcut editor: media panel, GPU player with curved text and a sticker, effect layer and multi-track timeline](docs/screenshots/editor.png)
 
 | | |
 |---|---|
 | ![Welcome screen with canvas presets](docs/screenshots/welcome.png) | ![Command palette (Ctrl+K)](docs/screenshots/palette.png) |
 | Start from a canvas format, open a project or import a draft JSON. | **Command palette** (Ctrl+K): every action, searchable, with its shortcut. |
-| ![Keyframe graph editor](docs/screenshots/keyframes.png) | ![Built-in filters](docs/screenshots/filters.png) |
-| **Keyframe graph editor** with per-segment easing and custom Bézier curves. | **Filters** previewed on the current frame, plus adjustment layers. |
+| ![Color grading with filters, tone curves, HSL and a histogram](docs/screenshots/color.png) | ![Video effects panel with a mirror effect layer](docs/screenshots/effects.png) |
+| **Color grading:** filters, tone curves, HSL and color wheels, with live scopes. | **Video effects** on clips or as effect layers over everything below. |
+| ![Text panel with shapes and stickers](docs/screenshots/text.png) | ![Transcript-based editing](docs/screenshots/transcript.png) |
+| **Text, shapes and stickers:** speech bubbles, curved text, highlighted words. | **Edit by transcript:** select words (or filler words) and remove them from the video. |
+| ![Keyframe graph editor](docs/screenshots/keyframes.png) | ![Export dialog](docs/screenshots/export.png) |
+| **Keyframe graph editor** with per-segment easing and custom Bézier curves. | **Export** on the GPU, with transparent video, audio-only and still-frame modes. |
 
 ## Features
 
