@@ -1968,6 +1968,14 @@ Atalhos: Espaço reproduz · Ctrl+B divide · Q/W exclui à esquerda/direita · 
         <translation>Balão de fala</translation>
     </message>
     <message>
+        <source>Stickers</source>
+        <translation>Stickers</translation>
+    </message>
+    <message>
+        <source>Stickers: Fluent Emoji by Microsoft (MIT license).</source>
+        <translation>Stickers: Fluent Emoji da Microsoft (licença MIT).</translation>
+    </message>
+    <message>
         <source>Text is added at the timeline playhead, on a text track. Edit the content and style in the right panel.</source>
         <translation>O texto entra no cursor da timeline, numa faixa de texto. Edite o conteúdo e o estilo no painel à direita.</translation>
     </message>
@@ -2785,6 +2793,10 @@ Atalhos: Espaço reproduz · Ctrl+B divide · Q/W exclui à esquerda/direita · 
     <message>
         <source>Voiceover recorded (%1)</source>
         <translation>Narração gravada (%1)</translation>
+    </message>
+    <message>
+        <source>Add sticker</source>
+        <translation>Adicionar sticker</translation>
     </message>
     <message>
         <source>Add effect</source>

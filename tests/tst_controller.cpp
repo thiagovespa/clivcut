@@ -638,6 +638,35 @@ private slots:
         QVERIFY(m_ctrl->selectedClip().value("hasGrade").toBool());
     }
 
+    void stickers()
+    {
+        QVERIFY(m_ctrl->openProject(QUrl::fromLocalFile(m_dir.filePath(QStringLiteral("p.clivcut")))));
+        const QVariantList list = m_ctrl->stickers();
+        QVERIFY(list.size() > 10);
+        const QString id = list.first().toMap().value("id").toString();
+        const auto total = [this] {
+            qsizetype n = 0;
+            for (const auto &t : m_ctrl->tracks())
+                n += t.toMap().value("clips").toList().size();
+            return n;
+        };
+        const qsizetype before = total();
+        QVERIFY(clipsOf(0).size() > 0);
+        const qsizetype mainClips = clipsOf(0).size();
+        m_ctrl->addSticker(id);
+        // Entra como imagem PNG transparente numa faixa acima da principal.
+        QVERIFY(!m_ctrl->selectedClip().isEmpty());
+        QCOMPARE(total(), before + 1);
+        QCOMPARE(clipsOf(0).size(), mainClips); // nunca na faixa principal
+        const QImage png(QDir(QStandardPaths::writableLocation(QStandardPaths::AppDataLocation))
+                             .filePath(QStringLiteral("stickers/%1.png").arg(id)));
+        QCOMPARE(png.size(), QSize(512, 512));
+        QCOMPARE(qAlpha(png.pixel(2, 2)), 0);
+        QVERIFY(qAlpha(png.pixel(256, 256)) > 0);
+        m_ctrl->undo();
+        QCOMPARE(total(), before);
+    }
+
     void silenceRemovalWorkflow()
     {
         // 6 s: tom de 0–2 s, silêncio de 2–4 s, tom de 4–6 s.

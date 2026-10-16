@@ -94,6 +94,8 @@ class ProjectController : public QObject {
     Q_PROPERTY(QVariantList voiceEffects READ voiceEffects NOTIFY languageChanged)
     /// Efeitos de vídeo disponíveis: [{id, name}].
     Q_PROPERTY(QVariantList videoEffects READ videoEffects NOTIFY languageChanged)
+    /// Stickers embutidos (Fluent Emoji, MIT): [{id, source}].
+    Q_PROPERTY(QVariantList stickers READ stickers CONSTANT)
     /// Narração: gravando do microfone, nível (pico 0..1) e duração gravada em µs.
     Q_PROPERTY(bool recording READ recording NOTIFY recordingChanged)
     Q_PROPERTY(double recordLevel READ recordLevel NOTIFY recordLevelChanged)
@@ -183,6 +185,9 @@ public:
     QVariantList videoEffects() const;
     /// Camada de efeito (ajuste) do cursor até o fim do clipe principal, com o efeito dado.
     Q_INVOKABLE void addEffectClip(const QString &effectId);
+    QVariantList stickers() const;
+    /// Coloca o sticker no cursor, numa faixa de cima, pequeno e centrado.
+    Q_INVOKABLE void addSticker(const QString &id);
     bool recording() const;
     double recordLevel() const { return m_recordLevel; }
     double recordElapsed() const;

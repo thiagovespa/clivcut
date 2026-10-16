@@ -339,6 +339,39 @@ Rectangle {
                             }
                         }
                     }
+                    SectionLabel { text: qsTr("Stickers") }
+                    Flow {
+                        Layout.fillWidth: true
+                        spacing: 4
+                        Repeater {
+                            model: Project.stickers
+                            Rectangle {
+                                id: sticker
+                                required property var modelData
+                                width: 46
+                                height: 46
+                                radius: Theme.radius
+                                color: stickerHover.hovered ? Theme.surfaceHi : Theme.surface
+                                Image {
+                                    anchors.centerIn: parent
+                                    source: sticker.modelData.source
+                                    sourceSize: Qt.size(64, 64)
+                                    width: 34
+                                    height: 34
+                                    asynchronous: true
+                                }
+                                HoverHandler { id: stickerHover; cursorShape: Qt.PointingHandCursor }
+                                TapHandler { onTapped: Project.addSticker(sticker.modelData.id) }
+                            }
+                        }
+                    }
+                    Text {
+                        Layout.fillWidth: true
+                        wrapMode: Text.Wrap
+                        color: Theme.textFaint
+                        font.pixelSize: Theme.fontSmall
+                        text: qsTr("Stickers: Fluent Emoji by Microsoft (MIT license).")
+                    }
                     Text {
                         Layout.fillWidth: true
                         Layout.topMargin: 12

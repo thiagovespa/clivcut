@@ -1968,6 +1968,14 @@ Atajos: Espacio reproduce · Ctrl+B divide · Q/W eliminan a la izquierda/derech
         <translation>Bocadillo</translation>
     </message>
     <message>
+        <source>Stickers</source>
+        <translation>Stickers</translation>
+    </message>
+    <message>
+        <source>Stickers: Fluent Emoji by Microsoft (MIT license).</source>
+        <translation>Stickers: Fluent Emoji de Microsoft (licencia MIT).</translation>
+    </message>
+    <message>
         <source>Text is added at the timeline playhead, on a text track. Edit the content and style in the right panel.</source>
         <translation>El texto se añade en el cursor de la línea de tiempo, en una pista de texto. Edita el contenido y el estilo en el panel derecho.</translation>
     </message>
@@ -2785,6 +2793,10 @@ Atajos: Espacio reproduce · Ctrl+B divide · Q/W eliminan a la izquierda/derech
     <message>
         <source>Voiceover recorded (%1)</source>
         <translation>Narración grabada (%1)</translation>
+    </message>
+    <message>
+        <source>Add sticker</source>
+        <translation>Añadir sticker</translation>
     </message>
     <message>
         <source>Add effect</source>

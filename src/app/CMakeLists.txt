@@ -25,6 +25,8 @@ set_source_files_properties(qml/Theme.qml qml/Keymap.qml PROPERTIES QT_QML_SINGL
 
 # Ícones da interface (Lucide, ISC: icons/ui/LICENSE).
 file(GLOB CLIVCUT_UI_ICONS RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} CONFIGURE_DEPENDS icons/ui/*.svg)
+# Stickers (Fluent Emoji, MIT: stickers/LICENSE).
+file(GLOB CLIVCUT_STICKERS RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} CONFIGURE_DEPENDS stickers/*.svg)
 
 qt_add_qml_module(clivcut
     URI Clivcut
@@ -67,6 +69,7 @@ qt_add_qml_module(clivcut
     RESOURCES
         icons/clivcut.svg
         ${CLIVCUT_UI_ICONS}
+        ${CLIVCUT_STICKERS}
 )
 
 target_compile_definitions(clivcut PRIVATE CLIVCUT_VERSION="${PROJECT_VERSION}")

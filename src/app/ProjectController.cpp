@@ -34,6 +34,9 @@
 #include <QColor>
 #include <QGuiApplication>
 #include <QMimeData>
+#include <QDirIterator>
+#include <QSvgRenderer>
+#include <QPainter>
 #include <QJSEngine>
 #include <QKeySequence>
 #include <QQmlEngine>
@@ -3139,6 +3142,67 @@ QVariantList ProjectController::videoEffects() const
     for (const auto &e : clv::videoEffects())
         out << QVariantMap{{"id", e.id}, {"name", QCoreApplication::translate("Effects", e.name.toUtf8())}};
     return out;
+}
+
+QVariantList ProjectController::stickers() const
+{
+    QVariantList out;
+    QDirIterator it(QStringLiteral(":/qt/qml/Clivcut/stickers"), {QStringLiteral("*.svg")}, QDir::Files);
+    QStringList names;
+    while (it.hasNext())
+        names << QFileInfo(it.next()).completeBaseName();
+    names.sort();
+    for (const auto &n : names)
+        out << QVariantMap{{"id", n}, {"source", QStringLiteral("qrc:/qt/qml/Clivcut/stickers/%1.svg").arg(n)}};
+    return out;
+}
+
+void ProjectController::addSticker(const QString &id)
+{
+    // O SVG vira um PNG com transparência (uma vez) e entra como imagem comum.
+    const QString svg = QStringLiteral(":/qt/qml/Clivcut/stickers/%1.svg").arg(id);
+    if (!QFileInfo::exists(svg))
+        return;
+    const QString dir = QDir(QStandardPaths::writableLocation(QStandardPaths::AppDataLocation)).filePath(QStringLiteral("stickers"));
+    const QString png = QDir(dir).filePath(id + QStringLiteral(".png"));
+    if (!QFileInfo::exists(png)) {
+        QDir().mkpath(dir);
+        QSvgRenderer renderer(svg);
+        QImage img(512, 512, QImage::Format_ARGB32_Premultiplied);
+        img.fill(Qt::transparent);
+        QPainter painter(&img);
+        renderer.render(&painter, QRectF(16, 16, 480, 480));
+        painter.end();
+        if (!img.save(png)) {
+            emit errorOccurred(tr("Could not write %1").arg(png));
+            return;
+        }
+    }
+    importMedia({QUrl::fromLocalFile(png)});
+    QString assetId;
+    for (const auto &[aid, a] : m_project.assets)
+        if (a.path == png)
+            assetId = aid;
+    if (assetId.isEmpty())
+        return;
+    QString clipId;
+    edit(tr("Add sticker"), [&](Project &p) {
+        const MediaAsset *a = p.asset(assetId);
+        if (!a)
+            return false;
+        Clip c = createMediaClip(*a, m_project.snapToFrame(m_playhead));
+        c.duration = 3 * kSecond;
+        c.transform.scale = 0.35;
+        // Faixa de cima (nunca a principal), para ficar sobre o vídeo.
+        const int track = edit::ensureTrackFor(p, TrackKind::Video, c.start, c.duration, 1);
+        clipId = edit::insertClip(p, std::move(c), std::max(1, track));
+        return !clipId.isEmpty();
+    });
+    if (!clipId.isEmpty()) {
+        m_selection = {clipId};
+        emit selectionChanged();
+        emit selectedClipChanged();
+    }
 }
 
 void ProjectController::addEffectClip(const QString &effectId)
