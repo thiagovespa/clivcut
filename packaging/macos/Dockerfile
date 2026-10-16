@@ -17,10 +17,12 @@ ARG BASE=ubuntu:noble-20260905
 # libdmg-hfsplus (hfsplus + dmg): revisão fixa, o build sempre roda a mesma.
 FROM ${BASE} AS libdmg
 ARG LIBDMG_REVISION=ec239599c1f234a4e01ae3fe51214d0c77e5baa3
+ARG LIBDMG_SHA256=190e29e4e0bd53e31af1f617b62dcd46b300ffbb0b7cd9e1bf49adb218872763
 RUN apt-get update && apt-get install -y --no-install-recommends \
         ca-certificates curl build-essential cmake zlib1g-dev libbz2-dev libssl-dev \
- && curl -fsSL "https://github.com/mozilla/libdmg-hfsplus/archive/${LIBDMG_REVISION}.tar.gz" \
-      | tar -xz -C /tmp \
+ && curl -fsSL -o /tmp/libdmg.tar.gz "https://github.com/mozilla/libdmg-hfsplus/archive/${LIBDMG_REVISION}.tar.gz" \
+ && echo "${LIBDMG_SHA256}  /tmp/libdmg.tar.gz" | sha256sum -c - \
+ && tar -xzf /tmp/libdmg.tar.gz -C /tmp \
  && cmake -S /tmp/libdmg-hfsplus-${LIBDMG_REVISION} -B /tmp/libdmg-build -DCMAKE_BUILD_TYPE=Release \
  && cmake --build /tmp/libdmg-build --target dmg-bin hfsplus -j"$(nproc)" \
  && install -m 755 /tmp/libdmg-build/dmg/dmg /tmp/libdmg-build/hfs/hfsplus /usr/local/bin/
@@ -29,6 +31,10 @@ FROM ${BASE} AS base
 ARG LLVM_VERSION=21
 ARG QT_VERSION=6.8.3
 ARG RCODESIGN_VERSION=0.29.0
+ARG RCODESIGN_SHA256=dbe85cedd8ee4217b64e9a0e4c2aef92ab8bcaaa41f20bde99781ff02e600002
+# Fonte do fundo do DMG, travada num commit do google/fonts.
+ARG FONT_COMMIT=7dc16b7de42db624b902f2292b68ed9e489e5053
+ARG FONT_SHA256=d3bf1bdaf0550e83da9ac0b1d1d9fe6db086835a83aa28578e609a394b9a0286
 
 # LLVM do apt.llvm.org: clang, ld64.lld e as ferramentas Mach-O (otool,
 # install-name-tool, lipo). Sem pacotes -dev do Linux: o CMake do cross-compile
@@ -55,13 +61,15 @@ ENV PATH=/opt/darwin/bin:/usr/lib/llvm-${LLVM_VERSION}/bin:/opt/builder/bin:$PAT
     QT_VERSION=${QT_VERSION}
 
 # rcodesign: assinatura ad hoc no Linux (o arm64 não roda código sem assinatura).
-RUN curl -fsSL "https://github.com/indygreg/apple-platform-rs/releases/download/apple-codesign%2F${RCODESIGN_VERSION}/apple-codesign-${RCODESIGN_VERSION}-x86_64-unknown-linux-musl.tar.gz" \
-      | tar -xz -C /tmp \
- && install -m 755 /tmp/apple-codesign-*/rcodesign /usr/local/bin/ && rm -rf /tmp/apple-codesign-*
+RUN curl -fsSL -o /tmp/rcodesign.tar.gz "https://github.com/indygreg/apple-platform-rs/releases/download/apple-codesign%2F${RCODESIGN_VERSION}/apple-codesign-${RCODESIGN_VERSION}-x86_64-unknown-linux-musl.tar.gz" \
+ && echo "${RCODESIGN_SHA256}  /tmp/rcodesign.tar.gz" | sha256sum -c - \
+ && tar -xzf /tmp/rcodesign.tar.gz -C /tmp \
+ && install -m 755 /tmp/apple-codesign-*/rcodesign /usr/local/bin/ && rm -rf /tmp/apple-codesign-* /tmp/rcodesign.tar.gz
 
 # Fonte do texto do fundo do DMG (OFL).
 RUN mkdir -p /opt/fonts \
- && curl -fsSL -o /opt/fonts/Poppins-SemiBold.ttf https://github.com/google/fonts/raw/main/ofl/poppins/Poppins-SemiBold.ttf
+ && curl -fsSL -o /opt/fonts/Poppins-SemiBold.ttf https://github.com/google/fonts/raw/${FONT_COMMIT}/ofl/poppins/Poppins-SemiBold.ttf \
+ && echo "${FONT_SHA256}  /opt/fonts/Poppins-SemiBold.ttf" | sha256sum -c -
 
 # Qt: macOS (universal, as bibliotecas do app) + Linux (ferramentas de host).
 RUN aqt install-qt mac desktop ${QT_VERSION} clang_64 -m qtshadertools -O /opt/qt \

@@ -119,6 +119,8 @@ jobs:
   # macOS, e fica no cache do Actions (não é publicado).
   macos-sdk:
     name: macOS SDK
+    # DMGs só em tags de versão ou disparo manual: o builder leva ~40 min por arquitetura.
+    if: startsWith(github.ref, 'refs/tags/v') || github.event_name == 'workflow_dispatch'
     runs-on: macos-15
     outputs:
       key: ${{ steps.sdk.outputs.key }}
@@ -147,6 +149,8 @@ jobs:
   macos:
     name: macOS DMG (${{ matrix.arch }})
     needs: macos-sdk
+    # DMGs só em tags de versão ou disparo manual: o builder leva ~40 min por arquitetura.
+    if: startsWith(github.ref, 'refs/tags/v') || github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-24.04
     strategy:
       fail-fast: false
