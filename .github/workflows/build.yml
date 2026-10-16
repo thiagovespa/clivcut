@@ -210,7 +210,7 @@ jobs:
   release:
     name: Release
     if: startsWith(github.ref, 'refs/tags/v')
-    needs: [linux, windows, macos, macos-tests]
+    needs: [linux, windows, macos, macos-tests, flatpak]
     runs-on: ubuntu-24.04
     permissions:
       contents: write
@@ -224,6 +224,7 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
+          mv dist/clivcut.flatpak "dist/clivcut-${GITHUB_REF_NAME#v}-x86_64.flatpak"
           ls -la dist
           gh release create "$GITHUB_REF_NAME" dist/* \
             --repo "$GITHUB_REPOSITORY" \

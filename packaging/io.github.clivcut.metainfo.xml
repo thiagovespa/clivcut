@@ -36,9 +36,17 @@
     <category>AudioVideoEditing</category>
   </categories>
   <releases>
+    <release version="0.2.0" date="2026-10-16">
+      <description>
+        <p>GPU and transparent video export, a render cache, customizable shortcuts, AI voice isolation,
+          voice effects, music ducking, voiceover recording, silence removal, transcript-based editing,
+          tone curves, HSL and color wheels, video scopes, 12 video effects, 9 new transitions, shapes,
+          curved text, highlighted words and a sticker library.</p>
+      </description>
+    </release>
     <release version="0.1.0" date="2026-10-14">
       <description>
-        <p>Primeira versão: timeline, efeitos de cor, legendas automáticas, proxies e exportação.</p>
+        <p>First release: timeline, color effects, automatic captions, proxies and export.</p>
       </description>
     </release>
   </releases>
