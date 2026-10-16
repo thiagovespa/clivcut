@@ -1221,6 +1221,38 @@ Atajos: Espacio reproduce · Ctrl+B divide · Q/W eliminan a la izquierda/derech
         <translation>Para música de fondo: este clip baja (hasta -16 dB) cuando los otros clips tienen voz y vuelve a subir en las pausas.</translation>
     </message>
     <message>
+        <source>Beats</source>
+        <translation>Ritmo</translation>
+    </message>
+    <message>
+        <source>Clear</source>
+        <translation>Borrar</translation>
+    </message>
+    <message>
+        <source>Every beat</source>
+        <translation>Cada tiempo</translation>
+    </message>
+    <message>
+        <source>Every 2 beats</source>
+        <translation>Cada 2 tiempos</translation>
+    </message>
+    <message>
+        <source>Every bar (4 beats)</source>
+        <translation>Cada compás (4 tiempos)</translation>
+    </message>
+    <message>
+        <source>Detecting…</source>
+        <translation>Detectando…</translation>
+    </message>
+    <message>
+        <source>Mark beats</source>
+        <translation>Marcar ritmo</translation>
+    </message>
+    <message>
+        <source>Finds the rhythm of the music and adds markers on its beats; clips snap to them, so cuts land on the beat.</source>
+        <translation>Encuentra el ritmo de la música y añade marcadores en cada tiempo; los clips se ajustan a ellos para cortar a tiempo.</translation>
+    </message>
+    <message>
         <source>Voice isolation (AI)</source>
         <translation>Aislamiento de voz (IA)</translation>
     </message>
@@ -1609,6 +1641,14 @@ Atajos: Espacio reproduce · Ctrl+B divide · Q/W eliminan a la izquierda/derech
     <message>
         <source>Remove silences</source>
         <translation>Quitar silencios</translation>
+    </message>
+    <message>
+        <source>Mark the beats of the selected music</source>
+        <translation>Marcar el ritmo de la música seleccionada</translation>
+    </message>
+    <message>
+        <source>Clear beat markers</source>
+        <translation>Borrar marcadores de ritmo</translation>
     </message>
     <message>
         <source>Render preview</source>
@@ -2728,6 +2768,37 @@ Atajos: Espacio reproduce · Ctrl+B divide · Q/W eliminan a la izquierda/derech
             <numerusform>%n pausa encontrada (%1)</numerusform>
             <numerusform>%n pausas encontradas (%1)</numerusform>
         </translation>
+    </message>
+    <message>
+        <source>Select a clip with music to detect its beats</source>
+        <translation>Selecciona un clip con música para detectar su ritmo</translation>
+    </message>
+    <message>
+        <source>Detecting beats…</source>
+        <translation>Detectando el ritmo…</translation>
+    </message>
+    <message>
+        <source>The clip changed during the analysis; detect the beats again</source>
+        <translation>El clip cambió durante el análisis; vuelve a detectar el ritmo</translation>
+    </message>
+    <message>
+        <source>No beats found in this clip</source>
+        <translation>No se encontró ritmo en este clip</translation>
+    </message>
+    <message>
+        <source>Mark beats</source>
+        <translation>Marcar ritmo</translation>
+    </message>
+    <message numerus="yes">
+        <source>%n beat(s) marked · %1 BPM</source>
+        <translation>
+            <numerusform>%n tiempo marcado · %1 BPM</numerusform>
+            <numerusform>%n tiempos marcados · %1 BPM</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Clear beat markers</source>
+        <translation>Borrar marcadores de ritmo</translation>
     </message>
     <message>
         <source>The project changed after the analysis; analyze again</source>

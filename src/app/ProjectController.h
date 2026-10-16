@@ -84,6 +84,9 @@ class ProjectController : public QObject {
     Q_PROPERTY(QVariantList silences READ silences NOTIFY silencesChanged)
     Q_PROPERTY(bool analyzingSilences READ analyzingSilences NOTIFY silencesChanged)
     Q_PROPERTY(double silenceProgress READ silenceProgress NOTIFY silencesChanged)
+    /// Detecção de batidas da música em andamento; existem marcadores de batida.
+    Q_PROPERTY(bool detectingBeats READ detectingBeats NOTIFY beatsChanged)
+    Q_PROPERTY(bool hasBeatMarkers READ hasBeatMarkers NOTIFY projectChanged)
     /// Transcrição palavra a palavra da timeline: [{start, end, text}] em µs.
     Q_PROPERTY(QVariantList transcript READ transcript NOTIFY transcriptChanged)
     /// O projeto mudou por outra edição depois da transcrição: os tempos podem não bater.
@@ -178,6 +181,11 @@ public:
     double renderProgress() const { return m_renderProgress; }
     QVariantList silences() const { return m_silences; }
     bool analyzingSilences() const { return m_analyzingSilences; }
+    bool detectingBeats() const { return m_detectingBeats; }
+    bool hasBeatMarkers() const;
+    /// Marca as batidas do clipe selecionado (uma a cada `every`), trocando as marcas antigas dele.
+    Q_INVOKABLE void detectBeats(int every = 1);
+    Q_INVOKABLE void clearBeatMarkers();
     double silenceProgress() const { return m_silenceProgress; }
     QVariantList transcript() const { return m_transcript; }
     bool scopesEnabled() const { return m_scopesEnabled; }
@@ -413,6 +421,7 @@ signals:
     void languageChanged();
     void renderCacheChanged();
     void silencesChanged();
+    void beatsChanged();
     void transcriptChanged();
     void scopesChanged();
     void recordingChanged();
@@ -498,6 +507,7 @@ private:
     QVariantList m_silences;
     quint64 m_silenceRevision = 0;
     bool m_analyzingSilences = false;
+    bool m_detectingBeats = false;
     double m_silenceProgress = 0;
     QTimer m_cacheTimer;               ///< agrupa as edições antes de recalcular as chaves do cache
     std::shared_ptr<const clv::engine::RenderCacheView> m_cacheView = std::make_shared<clv::engine::RenderCacheView>();

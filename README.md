@@ -63,6 +63,7 @@ Written in **C++20 + Qt 6 (Qt Quick / RHI) + FFmpeg**. Video compositing runs on
   - **Voiceover recording** (Alt+R): counts down, records the microphone while the timeline plays from the playhead and drops the take on an audio track at that point.
   - **Voice effects:** echo, hall reverb, robot, high pitch, deep voice, telephone and old radio, processed in the background and kept in sync.
   - **Ducking:** background music gets quieter automatically while there is speech on the other clips.
+  - **Beat detection:** finds the tempo of a music clip and adds beat markers (every beat, every 2 beats or every bar); clips snap to them, so cuts land on the beat.
   - **AI voice isolation** (DeepFilterNet3, local): keeps only the speech, removing music, noise and room sound. The model (16 MB) is downloaded once.
   - **Detach audio from video** (Ctrl+Shift+D) and mute clip.
 - **Background removal:** cuts people out of videos without a green screen, using a local AI model (RobustVideoMatting on ONNX Runtime, downloaded once). Processing runs in the background and the result is used in preview and export.

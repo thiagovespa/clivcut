@@ -53,6 +53,13 @@
         </translation>
     </message>
     <message numerus="yes">
+        <source>%n beat(s) marked · %1 BPM</source>
+        <translation>
+            <numerusform>%n beat marked · %1 BPM</numerusform>
+            <numerusform>%n beats marked · %1 BPM</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
         <source>%n pause(s) removed</source>
         <translation>
             <numerusform>%n pause removed</numerusform>

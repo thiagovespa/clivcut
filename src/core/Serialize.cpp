@@ -552,8 +552,12 @@ QJsonObject toJson(const Project &p)
         });
     }
     QJsonArray markers;
-    for (const auto &m : p.markers)
-        markers.append(QJsonObject{{"id", m.id}, {"t", us(m.t)}, {"label", m.label}, {"color", m.color}});
+    for (const auto &m : p.markers) {
+        QJsonObject mo{{"id", m.id}, {"t", us(m.t)}, {"label", m.label}, {"color", m.color}};
+        if (m.beat)
+            mo.insert("beat", true);
+        markers.append(mo);
+    }
     QJsonObject out{
         {"format", "clivcut"},
         {"version", kProjectFormatVersion},
@@ -636,7 +640,7 @@ bool parseProject(const QByteArray &data, Project &out, QString *error)
     for (const auto &v : o.value("markers").toArray()) {
         const auto m = v.toObject();
         p.markers.push_back({m.value("id").toString(), toUs(m.value("t")), m.value("label").toString(),
-                             m.value("color").toString(QStringLiteral("#f5c242"))});
+                             m.value("color").toString(QStringLiteral("#f5c242")), m.value("beat").toBool()});
     }
     out = std::move(p);
     return true;

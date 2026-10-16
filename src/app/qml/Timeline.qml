@@ -252,6 +252,12 @@ Rectangle {
                         for (const mk of markers) {
                             const x = mk.t / 1e6 * scale - offset;
                             ctx.fillStyle = mk.color;
+                            if (mk.beat) { // batida: ponto pequeno, para não poluir a régua
+                                ctx.beginPath();
+                                ctx.arc(x, 17, 2.5, 0, 2 * Math.PI);
+                                ctx.fill();
+                                continue;
+                            }
                             ctx.beginPath();
                             ctx.moveTo(x - 5, 13);
                             ctx.lineTo(x + 5, 13);
@@ -505,7 +511,7 @@ Rectangle {
                         width: 1
                         height: flick.contentHeight
                         color: modelData.color
-                        opacity: 0.5
+                        opacity: modelData.beat ? 0.22 : 0.5
                     }
                 }
 

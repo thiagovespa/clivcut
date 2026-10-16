@@ -272,6 +272,7 @@ struct Marker {
     Micros t = 0;
     QString label;
     QString color = QStringLiteral("#f5c242");
+    bool beat = false; ///< criado pela detecção de batidas (substituído a cada nova detecção)
 };
 
 struct Project {

@@ -1221,6 +1221,38 @@ Atalhos: Espaço reproduz · Ctrl+B divide · Q/W exclui à esquerda/direita · 
         <translation>Para música de fundo: este clipe fica mais baixo (até -16 dB) sempre que os outros clipes têm fala, e volta nas pausas.</translation>
     </message>
     <message>
+        <source>Beats</source>
+        <translation>Batidas</translation>
+    </message>
+    <message>
+        <source>Clear</source>
+        <translation>Limpar</translation>
+    </message>
+    <message>
+        <source>Every beat</source>
+        <translation>Toda batida</translation>
+    </message>
+    <message>
+        <source>Every 2 beats</source>
+        <translation>A cada 2 batidas</translation>
+    </message>
+    <message>
+        <source>Every bar (4 beats)</source>
+        <translation>A cada compasso (4 batidas)</translation>
+    </message>
+    <message>
+        <source>Detecting…</source>
+        <translation>Detectando…</translation>
+    </message>
+    <message>
+        <source>Mark beats</source>
+        <translation>Marcar batidas</translation>
+    </message>
+    <message>
+        <source>Finds the rhythm of the music and adds markers on its beats; clips snap to them, so cuts land on the beat.</source>
+        <translation>Encontra o ritmo da música e põe marcadores nas batidas; os clipes grudam neles, e os cortes caem na batida.</translation>
+    </message>
+    <message>
         <source>Voice isolation (AI)</source>
         <translation>Isolamento de voz (IA)</translation>
     </message>
@@ -1609,6 +1641,14 @@ Atalhos: Espaço reproduz · Ctrl+B divide · Q/W exclui à esquerda/direita · 
     <message>
         <source>Remove silences</source>
         <translation>Remover silêncios</translation>
+    </message>
+    <message>
+        <source>Mark the beats of the selected music</source>
+        <translation>Marcar as batidas da música selecionada</translation>
+    </message>
+    <message>
+        <source>Clear beat markers</source>
+        <translation>Limpar marcadores de batida</translation>
     </message>
     <message>
         <source>Render preview</source>
@@ -2728,6 +2768,37 @@ Atalhos: Espaço reproduz · Ctrl+B divide · Q/W exclui à esquerda/direita · 
             <numerusform>%n pausa encontrada (%1)</numerusform>
             <numerusform>%n pausas encontradas (%1)</numerusform>
         </translation>
+    </message>
+    <message>
+        <source>Select a clip with music to detect its beats</source>
+        <translation>Selecione um clipe com música para detectar as batidas</translation>
+    </message>
+    <message>
+        <source>Detecting beats…</source>
+        <translation>Detectando batidas…</translation>
+    </message>
+    <message>
+        <source>The clip changed during the analysis; detect the beats again</source>
+        <translation>O clipe mudou durante a análise; detecte as batidas de novo</translation>
+    </message>
+    <message>
+        <source>No beats found in this clip</source>
+        <translation>Nenhuma batida encontrada neste clipe</translation>
+    </message>
+    <message>
+        <source>Mark beats</source>
+        <translation>Marcar batidas</translation>
+    </message>
+    <message numerus="yes">
+        <source>%n beat(s) marked · %1 BPM</source>
+        <translation>
+            <numerusform>%n batida marcada · %1 BPM</numerusform>
+            <numerusform>%n batidas marcadas · %1 BPM</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Clear beat markers</source>
+        <translation>Limpar marcadores de batida</translation>
     </message>
     <message>
         <source>The project changed after the analysis; analyze again</source>

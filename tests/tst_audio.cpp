@@ -3,6 +3,7 @@
 #include "core/Evaluate.h"
 #include "engine/AudioCleanup.h"
 #include "engine/AudioMixer.h"
+#include "engine/Beats.h"
 #include "engine/TimeStretch.h"
 #include "engine/VoiceEffects.h"
 #include "engine/VoiceIsolation.h"
@@ -330,6 +331,81 @@ private slots:
         QCOMPARE(edges.size(), size_t(2));
         QCOMPARE(edges[0].first, Micros(0));
         QVERIFY(std::abs(edges[1].second - 3 * kSecond) <= 20'000);
+    }
+
+    /** Bumbo (60 Hz que decai) e chimbal (ruído curto) a `bpm`; acento a cada 4 tempos. */
+    static std::vector<float> drumLoop(double bpm, double seconds, double firstBeat, bool accent)
+    {
+        std::vector<float> pcm(static_cast<size_t>(seconds * 16000));
+        unsigned seed = 7;
+        auto noise = [&] { seed = seed * 1103515245u + 12345u; return ((seed >> 9) & 0xffff) / 32768.f - 1.f; };
+        for (auto &x : pcm)
+            x = 0.01f * noise(); // chiado de fundo
+        const double period = 60.0 / bpm;
+        int k = 0;
+        for (double t = firstBeat; t < seconds; t += period, ++k) {
+            const float gain = accent && k % 4 == 0 ? 1.f : 0.45f;
+            const auto at = static_cast<size_t>(t * 16000);
+            for (size_t i = 0; i < 4000 && at + i < pcm.size(); ++i) {
+                const float tt = i / 16000.f;
+                pcm[at + i] += gain * 0.6f * std::sin(2 * float(M_PI) * 60 * tt) * std::exp(-tt * 18);
+                if (i < 800)
+                    pcm[at + i] += gain * 0.25f * noise() * std::exp(-tt * 120);
+            }
+            // Contratempo: só chimbal, mais fraco, para o ritmo não ser trivial.
+            const auto off = static_cast<size_t>((t + period / 2) * 16000);
+            for (size_t i = 0; i < 600 && off + i < pcm.size(); ++i)
+                pcm[off + i] += 0.12f * noise() * std::exp(-static_cast<float>(i) / 16000.f * 150);
+        }
+        return pcm;
+    }
+
+    void beatDetection_data()
+    {
+        QTest::addColumn<double>("bpm");
+        QTest::newRow("128") << 128.0;
+        QTest::newRow("90") << 90.0;
+        QTest::newRow("174") << 174.0;
+    }
+
+    void beatDetection()
+    {
+        QFETCH(double, bpm);
+        const double first = 0.37;
+        const auto pcm = drumLoop(bpm, 20, first, false);
+        const auto r = engine::detectBeatsPcm16k(pcm, 5 * kSecond);
+        // 174 BPM pode sair como meio andamento (87); os dois são aceitáveis.
+        const bool half = std::abs(r.bpm * 2 - bpm) < 1.5;
+        QVERIFY2(std::abs(r.bpm - bpm) < 1.0 || (bpm > 160 && half), qPrintable(QString::number(r.bpm)));
+        const double period = 60.0 / bpm; // grade dos golpes reais
+        // Cada batida cai a menos de 30 ms de um golpe real.
+        int matched = 0;
+        for (const Micros b : r.beats) {
+            const double t = static_cast<double>(b - 5 * kSecond) / kSecond - first;
+            const double phase = t / period - std::round(t / period);
+            if (std::abs(phase * period) < 0.03)
+                ++matched;
+        }
+        QVERIFY2(matched >= static_cast<int>(r.beats.size()) - 1, qPrintable(QStringLiteral("%1 of %2").arg(matched).arg(r.beats.size())));
+        QVERIFY(static_cast<double>(r.beats.size()) >= (20 - first) / (period * (half ? 2 : 1)) - 3);
+    }
+
+    void beatsEveryBar()
+    {
+        const double bpm = 120, first = 0.5;
+        const auto r = engine::detectBeatsPcm16k(drumLoop(bpm, 16, first, true), 0);
+        const auto bars = engine::everyNthBeat(r, 4);
+        QVERIFY(bars.size() >= 6);
+        // Os acentos caem em first + 2 s·k (um compasso de 4 tempos a 120 BPM).
+        for (const Micros b : bars) {
+            const double t = static_cast<double>(b) / kSecond - first;
+            QVERIFY2(std::abs(t - 2 * std::round(t / 2)) < 0.03, qPrintable(QString::number(t)));
+        }
+        QCOMPARE(engine::everyNthBeat(r, 1).size(), r.beats.size());
+        // Silêncio: nada.
+        const auto none = engine::detectBeatsPcm16k(std::vector<float>(16000 * 5, 0.f), 0);
+        QVERIFY(none.beats.empty());
+        QCOMPARE(none.bpm, 0.0);
     }
 
     void voiceIsolation()

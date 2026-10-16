@@ -694,6 +694,47 @@ private slots:
         QCOMPARE(m_ctrl->duration(), before);
     }
 
+    void beatMarkers()
+    {
+        // Bumbo a 120 BPM (um golpe a cada 0,5 s) por 8 s.
+        const QString file = m_dir.filePath(QStringLiteral("batida.wav"));
+        QProcess p;
+        p.start(QStringLiteral("ffmpeg"), {"-hide_banner", "-loglevel", "error", "-y", "-f", "lavfi", "-i",
+                                           "aevalsrc=0.8*sin(2*PI*60*t)*exp(-18*mod(t\\,0.5)):d=8:s=48000", "-ac", "2", file});
+        QVERIFY(p.waitForFinished(60000) && p.exitCode() == 0);
+        m_ctrl->newProject(1280, 720, 30);
+        m_ctrl->importMedia({QUrl::fromLocalFile(file)});
+        m_ctrl->addAssetToTimeline(m_ctrl->assets().first().toMap().value("id").toString());
+        QString clip;
+        for (const auto &t : m_ctrl->tracks())
+            for (const auto &c : t.toMap().value("clips").toList())
+                clip = c.toMap().value("id").toString();
+        QVERIFY(!clip.isEmpty());
+        m_ctrl->select(clip);
+        QVERIFY(!m_ctrl->hasBeatMarkers());
+
+        m_ctrl->detectBeats(1);
+        QTRY_VERIFY_WITH_TIMEOUT(!m_ctrl->detectingBeats(), 30000);
+        const QVariantList beats = m_ctrl->markers();
+        QVERIFY2(beats.size() >= 13, qPrintable(QString::number(beats.size())));
+        for (const auto &v : beats) {
+            const QVariantMap m = v.toMap();
+            QVERIFY(m.value("beat").toBool());
+            const double t = m.value("t").toDouble() / 1e6;
+            QVERIFY2(std::abs(t - 0.5 * std::round(t / 0.5)) < 0.04, qPrintable(QString::number(t)));
+        }
+        // A cada compasso: menos marcas, e as antigas do clipe são trocadas (não somadas).
+        m_ctrl->detectBeats(4);
+        QTRY_VERIFY_WITH_TIMEOUT(!m_ctrl->detectingBeats(), 30000);
+        QVERIFY(m_ctrl->markers().size() <= beats.size() / 4 + 1);
+        m_ctrl->addMarker(); // marcador manual fica ao limpar as batidas
+        m_ctrl->clearBeatMarkers();
+        QCOMPARE(m_ctrl->markers().size(), 1);
+        QVERIFY(!m_ctrl->hasBeatMarkers());
+        m_ctrl->undo();
+        QVERIFY(m_ctrl->hasBeatMarkers());
+    }
+
     void transcriptWorkflow()
     {
 #ifndef CLIVCUT_WHISPER_SAMPLES

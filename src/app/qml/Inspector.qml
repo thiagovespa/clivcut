@@ -852,6 +852,37 @@ Rectangle {
                     }
                     SectionLabel {
                         visible: root.isMedia && root.sel.hasAudio
+                        text: qsTr("Beats")
+                        actionText: Project.hasBeatMarkers ? qsTr("Clear") : ""
+                        onActionClicked: Project.clearBeatMarkers()
+                    }
+                    RowLayout {
+                        visible: root.isMedia && root.sel.hasAudio
+                        Layout.fillWidth: true
+                        ComboBox {
+                            id: beatEvery
+                            Layout.fillWidth: true
+                            focusPolicy: Qt.NoFocus
+                            model: [qsTr("Every beat"), qsTr("Every 2 beats"), qsTr("Every bar (4 beats)")]
+                            readonly property var values: [1, 2, 4]
+                        }
+                        Button {
+                            text: Project.detectingBeats ? qsTr("Detecting…") : qsTr("Mark beats")
+                            enabled: !Project.detectingBeats
+                            focusPolicy: Qt.NoFocus
+                            onClicked: Project.detectBeats(beatEvery.values[beatEvery.currentIndex])
+                        }
+                    }
+                    Text {
+                        visible: root.isMedia && root.sel.hasAudio
+                        Layout.fillWidth: true
+                        wrapMode: Text.Wrap
+                        color: Theme.textFaint
+                        font.pixelSize: Theme.fontSmall
+                        text: qsTr("Finds the rhythm of the music and adds markers on its beats; clips snap to them, so cuts land on the beat.")
+                    }
+                    SectionLabel {
+                        visible: root.isMedia && root.sel.hasAudio
                         text: qsTr("Voice isolation (AI)")
                     }
                     PropSlider {

@@ -63,6 +63,8 @@ QtObject {
         { id: "zoomFit", group: qsTr("Timeline"), name: qsTr("Fit timeline to window"), keys: ["Shift+Z"], edit: true },
         { id: "recordVoiceover", group: qsTr("Editing"), name: qsTr("Record voiceover"), keys: ["Alt+R"], edit: true },
         { id: "removeSilences", group: qsTr("Editing"), name: qsTr("Remove silences"), keys: ["Ctrl+Shift+R"], edit: true },
+        { id: "detectBeats", group: qsTr("Editing"), name: qsTr("Mark the beats of the selected music"), keys: [], edit: true },
+        { id: "clearBeats", group: qsTr("Editing"), name: qsTr("Clear beat markers"), keys: [], edit: true },
         { id: "renderPreview", group: qsTr("Timeline"), name: qsTr("Render preview"), keys: ["Ctrl+R"], edit: true },
         { id: "clearRenderCache", group: qsTr("Timeline"), name: qsTr("Clear render cache"), keys: [], edit: true },
 

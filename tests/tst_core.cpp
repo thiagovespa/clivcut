@@ -349,6 +349,7 @@ private slots:
         fx.effect = {QStringLiteral("rgbSplit"), 0.7};
         edit::insertClip(p, fx, -1);
         p.markers.push_back({newId("mrk"), kSecond, QStringLiteral("m"), QStringLiteral("#ff0000")});
+        p.markers.push_back({newId("mrk"), 2 * kSecond, QString(), QStringLiteral("#22d3ee"), true});
 
         Project q;
         QString err;
@@ -368,6 +369,8 @@ private slots:
         QCOMPARE(q.tracks[1].clips[0].effect.id, QStringLiteral("glow"));
         QCOMPARE(q.tracks[2].clips[0].effect.id, QStringLiteral("rgbSplit"));
         QCOMPARE(q.tracks[2].clips[0].effect.intensity, 0.7);
+        QVERIFY(!q.markers[0].beat);
+        QVERIFY(q.markers[1].beat);
     }
 
     void historyUndoRedo()

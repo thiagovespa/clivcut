@@ -20,6 +20,7 @@
 #include "engine/Matting.h"
 #include "engine/VoiceEffects.h"
 #include "engine/VoiceIsolation.h"
+#include "engine/Beats.h"
 #include "engine/Silence.h"
 #include "engine/Exporter.h"
 #include "engine/Proxy.h"
@@ -397,7 +398,7 @@ QVariantList ProjectController::markers() const
 {
     QVariantList out;
     for (const auto &m : m_project.markers)
-        out << QVariantMap{{"id", m.id}, {"t", static_cast<double>(m.t)}, {"label", m.label}, {"color", m.color}};
+        out << QVariantMap{{"id", m.id}, {"t", static_cast<double>(m.t)}, {"label", m.label}, {"color", m.color}, {"beat", m.beat}};
     return out;
 }
 
@@ -2737,6 +2738,65 @@ void ProjectController::analyzeSilences(double thresholdDb, double minPauseMs, d
                                            .arg(formatTime(static_cast<double>(total))));
         }, Qt::QueuedConnection);
     }).detach();
+}
+
+bool ProjectController::hasBeatMarkers() const
+{
+    return std::any_of(m_project.markers.begin(), m_project.markers.end(), [](const Marker &m) { return m.beat; });
+}
+
+void ProjectController::detectBeats(int every)
+{
+    if (m_detectingBeats)
+        return;
+    const QString clipId = primaryClipId();
+    const auto loc = edit::findClip(m_project, clipId);
+    const Clip *c = edit::clipById(m_project, clipId);
+    const MediaAsset *a = c && c->hasMedia() ? m_project.asset(c->assetId) : nullptr;
+    if (!loc || !a || !a->hasAudio) {
+        setStatus(tr("Select a clip with music to detect its beats"));
+        return;
+    }
+    m_detectingBeats = true;
+    emit beatsChanged();
+    setStatus(tr("Detecting beats…"));
+    auto snap = snapshot();
+    const int track = loc->track;
+    const Micros start = c->start, end = c->end();
+    every = std::clamp(every, 1, 8);
+    std::thread([this, snap, track, start, end, every, clipId] {
+        const engine::BeatResult r = engine::detectBeats(*snap, track, start, end);
+        const std::vector<Micros> beats = engine::everyNthBeat(r, every);
+        QMetaObject::invokeMethod(this, [this, beats, bpm = r.bpm, start, end, clipId] {
+            m_detectingBeats = false;
+            emit beatsChanged();
+            // O clipe mudou de lugar enquanto analisava: as batidas não valem mais.
+            const Clip *now = edit::clipById(m_project, clipId);
+            if (!now || now->start != start || now->end() != end) {
+                setStatus(tr("The clip changed during the analysis; detect the beats again"));
+                return;
+            }
+            if (beats.empty()) {
+                setStatus(tr("No beats found in this clip"));
+                return;
+            }
+            edit(tr("Mark beats"), [&](Project &p) {
+                std::erase_if(p.markers, [&](const Marker &m) { return m.beat && m.t >= start && m.t <= end; });
+                for (const Micros t : beats)
+                    p.markers.push_back({newId("mrk"), p.snapToFrame(t), QString(), QStringLiteral("#22d3ee"), true});
+                std::sort(p.markers.begin(), p.markers.end(), [](const Marker &x, const Marker &y) { return x.t < y.t; });
+                return true;
+            });
+            setStatus(tr("%n beat(s) marked · %1 BPM", nullptr, static_cast<int>(beats.size())).arg(std::lround(bpm)));
+        }, Qt::QueuedConnection);
+    }).detach();
+}
+
+void ProjectController::clearBeatMarkers()
+{
+    edit(tr("Clear beat markers"), [](Project &p) {
+        return std::erase_if(p.markers, [](const Marker &m) { return m.beat; }) > 0;
+    });
 }
 
 void ProjectController::removeSilences()
