@@ -149,9 +149,10 @@ QStringList availableHardwareCodecs()
     static const QStringList codecs = [] {
         QStringList out;
         for (VideoCodec c : {VideoCodec::H264, VideoCodec::HEVC, VideoCodec::AV1}) {
+            // 640x360: o VideoToolbox dos Macs Intel recusa sessões menores (-12903).
             EncodeSettings s;
-            s.width = 256;
-            s.height = 144;
+            s.width = 640;
+            s.height = 360;
             s.codec = c;
             s.hardware = true;
             s.audio = false;

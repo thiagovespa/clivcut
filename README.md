@@ -138,16 +138,27 @@ cmake --build build
 cd build && cpack -G NSIS      # clivcut-<version>-win64.exe installer (Qt and DLLs bundled)
 ```
 
-**macOS** (Homebrew):
+**macOS** (`.dmg` for Intel and Apple Silicon, built in Docker):
+
+```sh
+make dmg        # dist/clivcut-<version>-macos-<arch>.dmg for this Mac (x86_64 or arm64)
+make dmg-all    # both architectures
+make help       # other targets (builder image, DMG art preview, cleanup)
+```
+
+Only Docker is needed on the host. The builder (`packaging/macos/Dockerfile`) cross-compiles for macOS on Linux: osxcross (clang + Apple's ld64) against the SDK exported from this Mac's Command Line Tools (`make macos-sdk`, kept in `.cache/`), the official Qt binaries, and FFmpeg, codecs and SDL2 built for each architecture. `packaging/macos/bundle.py` makes the `.app` self-contained (Qt, plugins, QML, FFmpeg, ONNX Runtime) with an ad hoc signature, and `packaging/macos/dmg.py` writes the drag-to-Applications installer. The first `make dmg` takes about 40 minutes (image build); later runs reuse the image and the incremental build. The app is not notarized: a DMG downloaded from the internet must be opened once with right-click → Open.
+
+For development, a native build with Homebrew also works:
 
 ```sh
 brew install ninja pkg-config ffmpeg sdl2 qt
 cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH="$(brew --prefix qt)"
 cmake --build build
-cd build && cpack -G DragNDrop # clivcut-<version>-Darwin.dmg
 ```
 
-On Windows the GPU path uses Direct3D 11 and on macOS Metal, with the same shaders. CI (`.github/workflows/build.yml`) builds the AppImage, the Windows installer and the macOS DMG on every push.
+On Intel, ONNX Runtime is pinned to 1.23.2, the last official `osx-x86_64` build (set `CLIVCUT_ONNXRUNTIME_ROOT` to use another one, or `-DCLIVCUT_WITH_ONNX=OFF` to build without local AI). Homebrew no longer ships bottles for Intel Macs, so there `brew install qt` compiles Qt from source; prefer `make dmg`.
+
+On Windows the GPU path uses Direct3D 11 and on macOS Metal, with the same shaders. CI (`.github/workflows/build.yml`) builds the AppImage, the Windows installer and the macOS DMGs (Intel and Apple Silicon) on every push.
 
 ## Usage
 
@@ -165,7 +176,7 @@ build/src/cli/clivcut-render --transcribe --model small --language pt video.mp4 
 build/src/cli/clivcut-render --bench video_4k.mp4            # benchmark decoding (--no-hw compares with software)
 ```
 
-Transcription models live in `~/.local/share/clivcut/models`. Set `CLIVCUT_MODELS_DIR` to change the location. Download them from the app's **Captions** tab or manually:
+Transcription models live in `~/.local/share/clivcut/models` (`~/Library/Application Support/clivcut/models` on macOS). Set `CLIVCUT_MODELS_DIR` to change the location. Download them from the app's **Captions** tab or manually:
 `curl -L -o ~/.local/share/clivcut/models/ggml-small.bin https://huggingface.co/ggerganov/whisper.cpp/resolve/main/ggml-small.bin`
 
 Useful environment variables:

@@ -9,3 +9,10 @@ compile_commands.json
 .claude/
 _bmad/
 _bmad-output/
+__pycache__/
+
+# gerado no build do .dmg (packaging/macos/dmg.py --icns)
+packaging/macos/clivcut.icns
+
+# macOS
+.DS_Store
