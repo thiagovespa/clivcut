@@ -246,6 +246,8 @@ public:
     // --- timeline ---
     Q_INVOKABLE void addAssetToTimeline(const QString &assetId, int trackIndex = -1, double start = -1);
     Q_INVOKABLE void addText(const QString &text = {}, const QString &preset = {});
+    /// Forma (retângulo, círculo, estrela, seta, coração, balão...) no cursor, numa faixa de texto.
+    Q_INVOKABLE void addShape(const QString &kind);
     Q_INVOKABLE void splitAtPlayhead();
     Q_INVOKABLE void deleteSelection(bool ripple = false);
     Q_INVOKABLE void deleteLeft();

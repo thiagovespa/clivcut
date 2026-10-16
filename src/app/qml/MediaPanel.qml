@@ -316,6 +316,29 @@ Rectangle {
                         TileButton { glyph: "▭"; caption: qsTr("Subtitle"); tint: "#202024"; onClicked: Project.addText("", "subtitle") }
                         TileButton { glyph: "★"; caption: qsTr("Highlight"); tint: "#4d4310"; onClicked: Project.addText("", "highlight") }
                     }
+                    SectionLabel { text: qsTr("Shapes") }
+                    Flow {
+                        Layout.fillWidth: true
+                        spacing: 6
+                        Repeater {
+                            model: [
+                                { kind: "rect", glyph: "▬", name: qsTr("Rectangle") },
+                                { kind: "rounded", glyph: "▢", name: qsTr("Rounded") },
+                                { kind: "circle", glyph: "●", name: qsTr("Circle") },
+                                { kind: "triangle", glyph: "▲", name: qsTr("Triangle") },
+                                { kind: "star", glyph: "★", name: qsTr("Star") },
+                                { kind: "arrow", glyph: "➜", name: qsTr("Arrow") },
+                                { kind: "heart", glyph: "♥", name: qsTr("Heart") },
+                                { kind: "bubble", glyph: "❝", name: qsTr("Speech bubble") }
+                            ]
+                            TileButton {
+                                required property var modelData
+                                glyph: modelData.glyph
+                                caption: modelData.name
+                                onClicked: Project.addShape(modelData.kind)
+                            }
+                        }
+                    }
                     Text {
                         Layout.fillWidth: true
                         Layout.topMargin: 12

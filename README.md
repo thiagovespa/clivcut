@@ -31,7 +31,8 @@ Written in **C++20 + Qt 6 (Qt Quick / RHI) + FFmpeg**. Video compositing runs on
 - **Keyframes:**
   - On position, scale, rotation, opacity, volume, brightness, contrast and saturation, via the ◆ button next to each property.
   - **Graph editor** in the Keyframes tab: drag time and value and pick the curve for each segment (linear, ease in, ease out, smooth, hold or **custom Bézier** with handles).
-- **Text:** font, size, color, outline, shadow, background box and alignment. Title, subtitle and highlight presets.
+- **Text:** font, size, color, outline, shadow, background box and alignment, curved text, and words between *asterisks* in a highlight color. Title, subtitle and highlight presets.
+- **Shapes:** rectangle, rounded, circle, triangle, star, arrow, heart and speech bubble, with fill color and size, alone or behind text.
 - **Transitions:** dissolve, dip to black, wipes and slides in four directions, circle, zoom in and out, spin, white flash, glitch and blur.
 - **Video effects** (Alt+8): shake, blur, glitch, RGB split, VHS, glow, film grain, pixelate, mirror, snow, zoom pulse and strobe, with intensity, on a clip or as an effect layer over everything below.
 - **In and out animations:** fade, zoom and slide.

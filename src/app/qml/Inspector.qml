@@ -199,6 +199,60 @@ Rectangle {
                         focusPolicy: Qt.NoFocus
                         onToggled: root.setProp("shadow", checked)
                     }
+                    ColorField {
+                        label: qsTr("Highlight")
+                        color: root.isText ? root.sel.highlightColor : "#ffe14d"
+                        onPicked: (c) => root.setProp("highlightColor", c === "" ? "#ffe14d" : c)
+                    }
+                    Text {
+                        Layout.fillWidth: true
+                        wrapMode: Text.Wrap
+                        color: Theme.textFaint
+                        font.pixelSize: Theme.fontSmall
+                        text: qsTr("Put *asterisks* around words to show them in the highlight color.")
+                    }
+                    PropSlider {
+                        label: qsTr("Curve")
+                        from: -1; to: 1; stepSize: 0.05; displayScale: 100; decimals: 0; suffix: "%"
+                        value: root.isText ? root.sel.curve : 0
+                        onMoved: (v) => root.setProp("curve", v)
+                    }
+
+                    SectionLabel {
+                        text: qsTr("Shape")
+                        actionText: root.isText && root.sel.shape !== "" ? qsTr("Remove") : ""
+                        onActionClicked: root.setProp("shape", "")
+                    }
+                    ComboBox {
+                        id: shapeBox
+                        Layout.fillWidth: true
+                        focusPolicy: Qt.NoFocus
+                        readonly property var kinds: ["", "rect", "rounded", "circle", "triangle", "star", "arrow", "heart", "bubble"]
+                        model: [qsTr("None", "transition, mask or animation"), qsTr("Rectangle"), qsTr("Rounded"), qsTr("Circle"), qsTr("Triangle"), qsTr("Star"),
+                                qsTr("Arrow"), qsTr("Heart"), qsTr("Speech bubble")]
+                        currentIndex: root.isText ? Math.max(0, kinds.indexOf(root.sel.shape)) : 0
+                        onActivated: (i) => root.setProp("shape", kinds[i])
+                    }
+                    ColorField {
+                        visible: root.isText && root.sel.shape !== ""
+                        label: qsTr("Fill")
+                        color: root.isText ? root.sel.shapeColor : "#f5a524"
+                        onPicked: (c) => root.setProp("shapeColor", c === "" ? "#f5a524" : c)
+                    }
+                    PropSlider {
+                        visible: root.isText && root.sel.shape !== ""
+                        label: qsTr("Width")
+                        from: 20; to: 1920; stepSize: 10; decimals: 0; suffix: " px"
+                        value: root.isText ? root.sel.shapeWidth : 480
+                        onMoved: (v) => root.setProp("shapeWidth", v)
+                    }
+                    PropSlider {
+                        visible: root.isText && root.sel.shape !== ""
+                        label: qsTr("Height")
+                        from: 20; to: 1080; stepSize: 10; decimals: 0; suffix: " px"
+                        value: root.isText ? root.sel.shapeHeight : 270
+                        onMoved: (v) => root.setProp("shapeHeight", v)
+                    }
                     Button {
                         visible: root.isText && root.sel.inCaptionTrack
                         Layout.fillWidth: true

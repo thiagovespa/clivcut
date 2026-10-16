@@ -328,6 +328,12 @@ QJsonObject clipToJson(const Clip &c)
                               {"background", s.background},
                               {"align", s.align},
                               {"shadow", s.shadow},
+                              {"highlightColor", s.highlightColor},
+                              {"curve", s.curve},
+                              {"shape", s.shape},
+                              {"shapeColor", s.shapeColor},
+                              {"shapeWidth", s.shapeWidth},
+                              {"shapeHeight", s.shapeHeight},
                           });
         return o;
     }
@@ -430,6 +436,12 @@ Clip clipFromJson(const QJsonObject &o)
         c.style.background = s.value("background").toString();
         c.style.align = s.value("align").toInt(d.align);
         c.style.shadow = s.value("shadow").toBool(d.shadow);
+        c.style.highlightColor = s.value("highlightColor").toString(d.highlightColor);
+        c.style.curve = std::clamp(s.value("curve").toDouble(), -1.0, 1.0);
+        c.style.shape = s.value("shape").toString();
+        c.style.shapeColor = s.value("shapeColor").toString(d.shapeColor);
+        c.style.shapeWidth = std::max(4.0, s.value("shapeWidth").toDouble(d.shapeWidth));
+        c.style.shapeHeight = std::max(4.0, s.value("shapeHeight").toDouble(d.shapeHeight));
         return c;
     }
 

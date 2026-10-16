@@ -188,6 +188,15 @@ struct TextStyle {
     QString background; ///< vazio = sem caixa de fundo
     int align = 1; ///< 0 esquerda, 1 centro, 2 direita
     bool shadow = true;
+    /// Palavras entre *asteriscos* no texto saem nesta cor (destaque por palavra).
+    QString highlightColor = QStringLiteral("#ffe14d");
+    /// Curvatura do texto (-1..1): positivo arqueia para cima, 1 = meio círculo.
+    double curve = 0;
+    /// Forma atrás do texto: "", "rect", "rounded", "circle", "triangle", "star", "arrow", "heart", "bubble".
+    QString shape;
+    QString shapeColor = QStringLiteral("#f5a524");
+    double shapeWidth = 480;  ///< em pixels de um canvas 1080p
+    double shapeHeight = 270;
 };
 
 /// Adjust: clipe de filtro/ajuste que altera tudo o que está abaixo dele na composição.

@@ -291,10 +291,22 @@ QVariantList ProjectController::tracks() const
                         kfTimes << static_cast<double>(k.t);
                     }
                 }
-            QString label = c.isText()     ? c.text.section(QLatin1Char('\n'), 0, 0)
-                            : c.isAdjust() ? (findBuiltinFilter(c.color.filter) ? findBuiltinFilter(c.color.filter)->name
-                                                                                : tr("Adjustment"))
-                            : (a ? a->name : tr("Missing media"));
+            QString label;
+            if (c.isText()) {
+                label = c.text.section(QLatin1Char('\n'), 0, 0);
+                label.remove(QLatin1Char('*'));
+                if (label.trimmed().isEmpty() && !c.style.shape.isEmpty())
+                    label = tr("Shape");
+            } else if (c.isAdjust()) {
+                // Camada de efeito ou de filtro: mostra o nome do que ela aplica.
+                const auto fx = std::find_if(clv::videoEffects().begin(), clv::videoEffects().end(),
+                                             [&](const VideoEffect &e) { return e.id == c.effect.id; });
+                label = fx != clv::videoEffects().end() ? QCoreApplication::translate("Effects", fx->name.toUtf8())
+                        : findBuiltinFilter(c.color.filter) ? QCoreApplication::translate("Filters", findBuiltinFilter(c.color.filter)->name.toUtf8())
+                                                            : tr("Adjustment");
+            }
+            if (c.hasMedia())
+                label = a ? a->name : tr("Missing media");
             if (c.speed <= 0)
                 label = tr("Frozen · %1").arg(label);
             else if (c.speedCurve.size() >= 2)
@@ -436,6 +448,12 @@ QVariantMap ProjectController::selectedClip() const
                   {"strokeColor", s.strokeColor},
                   {"strokeWidth", s.strokeWidth},
                   {"background", s.background},
+                  {"highlightColor", s.highlightColor},
+                  {"curve", s.curve},
+                  {"shape", s.shape},
+                  {"shapeColor", s.shapeColor},
+                  {"shapeWidth", s.shapeWidth},
+                  {"shapeHeight", s.shapeHeight},
                   {"align", s.align},
                   {"shadow", s.shadow},
                   {"effect", c->effect.id},
@@ -798,6 +816,30 @@ QString ProjectController::defaultTextFor(const QString &preset) const
     return tr("Text");
 }
 
+void ProjectController::addShape(const QString &kind)
+{
+    QString id;
+    edit(tr("Add shape"), [&](Project &p) {
+        Clip c = createTextClip(QString(), m_playhead);
+        c.style.shape = kind;
+        c.style.strokeWidth = 0;
+        if (kind == QLatin1String("bubble")) {
+            // Balão já vem com texto escuro, pronto para escrever a fala.
+            c.style.shapeColor = QStringLiteral("#ffffff");
+            c.style.color = QStringLiteral("#111111");
+            c.style.fontSize = 56;
+            c.text = tr("Hello!");
+        }
+        id = edit::insertClip(p, std::move(c), -1);
+        return !id.isEmpty();
+    });
+    if (!id.isEmpty()) {
+        m_selection = {id};
+        emit selectionChanged();
+        emit selectedClipChanged();
+    }
+}
+
 void ProjectController::addText(const QString &text, const QString &preset)
 {
     QString id;
@@ -1130,6 +1172,12 @@ bool applyClipProperty(Project &p, Clip *c, Micros rel, const QString &key, cons
     else if (key == QLatin1String("background")) s.background = value.toString();
     else if (key == QLatin1String("align")) s.align = value.toInt();
     else if (key == QLatin1String("shadow")) s.shadow = value.toBool();
+    else if (key == QLatin1String("highlightColor")) s.highlightColor = value.toString();
+    else if (key == QLatin1String("curve")) s.curve = std::clamp(value.toDouble(), -1.0, 1.0);
+    else if (key == QLatin1String("shape")) s.shape = value.toString();
+    else if (key == QLatin1String("shapeColor")) s.shapeColor = value.toString();
+    else if (key == QLatin1String("shapeWidth")) s.shapeWidth = std::clamp(value.toDouble(), 4.0, 4000.0);
+    else if (key == QLatin1String("shapeHeight")) s.shapeHeight = std::clamp(value.toDouble(), 4.0, 4000.0);
     else if (key == QLatin1String("fadeIn")) c->fadeIn = std::clamp<Micros>(static_cast<Micros>(value.toDouble()), 0, c->duration);
     else if (key == QLatin1String("fadeOut")) c->fadeOut = std::clamp<Micros>(static_cast<Micros>(value.toDouble()), 0, c->duration);
     else if (key == QLatin1String("reverse")) c->reverse = value.toBool();

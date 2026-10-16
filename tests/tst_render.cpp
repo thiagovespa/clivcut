@@ -4,6 +4,7 @@
 #include "core/Lut.h"
 #include "render/Compositor.h"
 #include "render/OffscreenRhi.h"
+#include "render/TextRaster.h"
 
 #include <QFile>
 #include <QTemporaryDir>
@@ -240,6 +241,54 @@ private slots:
                 if (img.pixelColor(x, y).green() > 200 && img.pixelColor(x, y).red() < 60)
                     ++green;
         QVERIFY2(green > 500, qPrintable(QString::number(green)));
+    }
+
+    void textHighlightCurveAndShapes()
+    {
+        Clip t = createTextClip(QStringLiteral("AAA *BBB*"), 0);
+        t.style.fontSize = 80;
+        t.style.color = QStringLiteral("#00ff00");
+        t.style.highlightColor = QStringLiteral("#ff0000");
+        t.style.strokeWidth = 0;
+        t.style.shadow = false;
+        auto count = [](const QImage &img, auto pred) {
+            int n = 0;
+            for (int y = 0; y < img.height(); ++y)
+                for (int x = 0; x < img.width(); ++x)
+                    n += pred(img.pixelColor(x, y)) ? 1 : 0;
+            return n;
+        };
+        auto isGreen = [](QColor c) { return c.alpha() > 200 && c.green() > 200 && c.red() < 60; };
+        auto isRed = [](QColor c) { return c.alpha() > 200 && c.red() > 200 && c.green() < 60; };
+        QImage img = render::rasterizeText(t, 1.0);
+        // As duas palavras aparecem, cada uma com sua cor; os asteriscos somem.
+        QVERIFY(count(img, isGreen) > 300);
+        QVERIFY(count(img, isRed) > 300);
+        t.text = QStringLiteral("AAA BBB");
+        const QImage plain = render::rasterizeText(t, 1.0);
+        QVERIFY(img.width() < plain.width() + 4); // sem largura extra dos asteriscos
+
+        // Curvado: o texto ocupa mais altura (arco) que reto.
+        t.style.curve = 0.8;
+        const QImage curved = render::rasterizeText(t, 1.0);
+        QVERIFY2(curved.height() > plain.height() + 20, qPrintable(QStringLiteral("%1 vs %2").arg(curved.height()).arg(plain.height())));
+        t.style.curve = -0.8;
+        QVERIFY(render::rasterizeText(t, 1.0).height() > plain.height() + 20);
+
+        // Forma sem texto: imagem do tamanho da forma, preenchida no centro.
+        Clip shape = createTextClip(QString(), 0);
+        shape.style.shape = QStringLiteral("rounded");
+        shape.style.shapeColor = QStringLiteral("#3366ff");
+        shape.style.shapeWidth = 200;
+        shape.style.shapeHeight = 100;
+        shape.style.shadow = false;
+        const QImage s = render::rasterizeText(shape, 1.0);
+        QVERIFY(std::abs(s.width() - 200) < 12 && std::abs(s.height() - 100) < 12);
+        QCOMPARE(s.pixelColor(s.width() / 2, s.height() / 2), QColor(0x33, 0x66, 0xff));
+        for (const char *kind : {"rect", "circle", "triangle", "star", "arrow", "heart", "bubble"}) {
+            shape.style.shape = QString::fromLatin1(kind);
+            QVERIFY2(!render::rasterizeText(shape, 1.0).isNull(), kind);
+        }
     }
 
     void filtersAndLuts()

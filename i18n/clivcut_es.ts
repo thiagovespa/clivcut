@@ -828,6 +828,46 @@ Atajos: Espacio reproduce · Ctrl+B divide · Q/W eliminan a la izquierda/derech
         <translation>Sombra</translation>
     </message>
     <message>
+        <source>Highlight</source>
+        <translation>Destacado</translation>
+    </message>
+    <message>
+        <source>Put *asterisks* around words to show them in the highlight color.</source>
+        <translation>Pon *asteriscos* alrededor de las palabras para mostrarlas en el color destacado.</translation>
+    </message>
+    <message>
+        <source>Shape</source>
+        <translation>Forma</translation>
+    </message>
+    <message>
+        <source>Rounded</source>
+        <translation>Redondeado</translation>
+    </message>
+    <message>
+        <source>Triangle</source>
+        <translation>Triángulo</translation>
+    </message>
+    <message>
+        <source>Star</source>
+        <translation>Estrella</translation>
+    </message>
+    <message>
+        <source>Arrow</source>
+        <translation>Flecha</translation>
+    </message>
+    <message>
+        <source>Heart</source>
+        <translation>Corazón</translation>
+    </message>
+    <message>
+        <source>Speech bubble</source>
+        <translation>Bocadillo</translation>
+    </message>
+    <message>
+        <source>Fill</source>
+        <translation>Relleno</translation>
+    </message>
+    <message>
         <source>Apply to all captions</source>
         <translation>Aplicar a todos los subtítulos</translation>
     </message>
@@ -1896,6 +1936,38 @@ Atajos: Espacio reproduce · Ctrl+B divide · Q/W eliminan a la izquierda/derech
         <translation>Destacado</translation>
     </message>
     <message>
+        <source>Shapes</source>
+        <translation>Formas</translation>
+    </message>
+    <message>
+        <source>Rectangle</source>
+        <translation>Rectángulo</translation>
+    </message>
+    <message>
+        <source>Rounded</source>
+        <translation>Redondeado</translation>
+    </message>
+    <message>
+        <source>Triangle</source>
+        <translation>Triángulo</translation>
+    </message>
+    <message>
+        <source>Star</source>
+        <translation>Estrella</translation>
+    </message>
+    <message>
+        <source>Arrow</source>
+        <translation>Flecha</translation>
+    </message>
+    <message>
+        <source>Heart</source>
+        <translation>Corazón</translation>
+    </message>
+    <message>
+        <source>Speech bubble</source>
+        <translation>Bocadillo</translation>
+    </message>
+    <message>
         <source>Text is added at the timeline playhead, on a text track. Edit the content and style in the right panel.</source>
         <translation>El texto se añade en el cursor de la línea de tiempo, en una pista de texto. Edita el contenido y el estilo en el panel derecho.</translation>
     </message>
@@ -2221,6 +2293,10 @@ Atajos: Espacio reproduce · Ctrl+B divide · Q/W eliminan a la izquierda/derech
         <translation>Nuevo proyecto</translation>
     </message>
     <message>
+        <source>Shape</source>
+        <translation>Forma</translation>
+    </message>
+    <message>
         <source>Project created (%1×%2, %3 fps)</source>
         <translation>Proyecto creado (%1×%2, %3 fps)</translation>
     </message>
@@ -2298,6 +2374,14 @@ Atajos: Espacio reproduce · Ctrl+B divide · Q/W eliminan a la izquierda/derech
     <message>
         <source>Text</source>
         <translation>Texto</translation>
+    </message>
+    <message>
+        <source>Add shape</source>
+        <translation>Añadir forma</translation>
+    </message>
+    <message>
+        <source>Hello!</source>
+        <translation>¡Hola!</translation>
     </message>
     <message>
         <source>Add text</source>
