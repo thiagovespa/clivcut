@@ -41,4 +41,13 @@ cmake --build build --target update_translations
 linguist i18n/clivcut_pt_BR.ts
 ```
 
+`tools/translate.py` does both steps from a table on stdin (`English|Português|Español`, or five fields for `%n` plurals) and reuses existing translations of the same text in other contexts:
+
+```sh
+python3 tools/translate.py <<'EOF'
+Export|Exportar|Exportar
+%n clip(s) copied|%n clipe copiado|%n clipes copiados|%n clip copiado|%n clips copiados
+EOF
+```
+
 The `.qm` files are compiled and embedded in the app on every build. To add a language, add `i18n/clivcut_<code>.ts` to `TS_FILES` in `src/app/CMakeLists.txt` and its native name to `kLanguages` in `src/app/Language.cpp`.
