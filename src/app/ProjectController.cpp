@@ -2877,7 +2877,7 @@ void ProjectController::analyzeSilences(double thresholdDb, double minPauseMs, d
     m_silences.clear();
     emit silencesChanged();
     auto snap = snapshot();
-    const quint64 revision = m_revisionCounter;
+    const int revision = m_revisionCounter;
     std::thread([this, snap, opts, revision] {
         const auto ranges = engine::detectSilences(*snap, opts, [this](double f) {
             QMetaObject::invokeMethod(this, [this, f] {
@@ -3019,7 +3019,7 @@ void ProjectController::generateTranscript(const QString &modelId, const QString
     emit transcribeChanged();
 
     auto snap = snapshot();
-    const quint64 revision = m_revisionCounter;
+    const int revision = m_revisionCounter;
     std::thread([this, snap, opts, revision] {
         std::vector<CaptionSegment> words;
         QString err;

@@ -528,9 +528,9 @@ private:
     mutable std::mutex m_scopeMutex;
     QImage m_scopeFrame;
     QVariantList m_transcript;
-    quint64 m_transcriptRevision = 0;
+    int m_transcriptRevision = 0;
     QVariantList m_silences;
-    quint64 m_silenceRevision = 0;
+    int m_silenceRevision = 0;
     bool m_analyzingSilences = false;
     bool m_detectingBeats = false;
     double m_silenceProgress = 0;
