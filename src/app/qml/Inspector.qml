@@ -955,6 +955,52 @@ Rectangle {
                               : root.sel.voiceState === "ready" ? qsTr("✓ Isolated voice in use (processed locally)")
                               : qsTr("Keeps only the speech: removes background music, noise and room sound. Runs on your computer.")
                     }
+                    SectionLabel {
+                        visible: root.perMediaAudio && root.sel.stemsState !== "unavailable"
+                        text: qsTr("Separate music (AI)")
+                    }
+                    RowLayout {
+                        visible: root.perMediaAudio && root.sel.stemsState !== "unavailable" && root.sel.stemsState !== "needsModel"
+                        Layout.fillWidth: true
+                        ComboBox {
+                            id: stemMode
+                            Layout.fillWidth: true
+                            focusPolicy: Qt.NoFocus
+                            model: [qsTr("Vocals, drums, bass, other"), qsTr("Vocals only"), qsTr("Instrumental (no vocals)")]
+                        }
+                        Button {
+                            text: root.isMedia && root.sel.stemsState === "processing" ? qsTr("Separating…") : qsTr("Separate")
+                            enabled: root.isMedia && (root.sel.stemsState === "off" || root.sel.stemsState === "ready")
+                            focusPolicy: Qt.NoFocus
+                            onClicked: Project.separateStems(stemMode.currentIndex)
+                        }
+                    }
+                    ProgressBar {
+                        visible: root.perMediaAudio && (root.sel.stemsState === "processing"
+                                                        || (root.sel.stemsState === "needsModel" && Project.downloadingModel === "htdemucs"))
+                        Layout.fillWidth: true
+                        value: root.sel.stemsState === "processing" ? root.sel.stemsProgress : Project.modelDownloadProgress
+                    }
+                    PillButton {
+                        visible: root.perMediaAudio && root.sel.stemsState === "needsModel" && Project.downloadingModel !== "htdemucs"
+                        enabled: Project.downloadingModel === ""
+                        text: qsTr("Download model (166 MB)")
+                        iconName: "download"
+                        onClicked: Project.downloadModel("htdemucs")
+                    }
+                    Text {
+                        visible: root.perMediaAudio && root.sel.stemsState !== "unavailable"
+                        Layout.fillWidth: true
+                        wrapMode: Text.Wrap
+                        color: Theme.textFaint
+                        font.pixelSize: Theme.fontSmall
+                        text: !root.isMedia ? ""
+                              : root.sel.stemsState === "needsModel" ? (Project.downloadingModel === "htdemucs" ? qsTr("Downloading the music separation model…")
+                                                                         : qsTr("Requires the music separation model (HT-Demucs, MIT), downloaded only once."))
+                              : root.sel.stemsState === "processing" ? qsTr("Separating the music… %1% (this takes a while on the CPU)").arg(Math.round(root.sel.stemsProgress * 100))
+                              : root.sel.stemsState === "busy" ? qsTr("Another clip is being separated…")
+                              : qsTr("Splits a song into new audio tracks under the same timing; the original clip is muted, not removed. Runs on your computer.")
+                    }
                     PropSlider {
                         enabled: root.isMedia && root.sel.hasAudio
                         label: qsTr("Fade in")

@@ -4,6 +4,7 @@
 #include "core/Serialize.h"
 #include "Scopes.h"
 #include "engine/AudioMixer.h"
+#include "engine/AiModels.h"
 #include "media/Loudness.h"
 #include "engine/WhisperModels.h"
 #include "media/MediaProbe.h"
@@ -821,6 +822,53 @@ private slots:
         QVERIFY(f.layers.front().stab.zoom >= 1.0);
         m_ctrl->undo();
         QCOMPARE(m_ctrl->selectedClip().value("stabilize").toDouble(), 0.0);
+    }
+
+    void separateMusic()
+    {
+#ifndef CLIVCUT_WHISPER_SAMPLES
+        QSKIP("sem amostras de fala");
+#else
+        if (!clv::engine::aiModelInstalled(clv::engine::kStemsModel))
+            QSKIP("modelo HT-Demucs não instalado");
+        const QString song = m_dir.filePath(QStringLiteral("musica.wav"));
+        QProcess p;
+        p.start(QStringLiteral("ffmpeg"), {"-hide_banner", "-loglevel", "error", "-y", "-i",
+                                           QStringLiteral(CLIVCUT_WHISPER_SAMPLES "/jfk.wav"), "-f", "lavfi", "-i",
+                                           "aevalsrc='0.5*sin(2*PI*55*t)*exp(-12*mod(t\\,0.5))':s=16000:d=4", "-filter_complex",
+                                           "[0]atrim=0:4[v];[v][1]amix=inputs=2:normalize=0:duration=shortest", "-ac", "2", "-ar", "48000", song});
+        QVERIFY(p.waitForFinished(60000) && p.exitCode() == 0);
+        m_ctrl->newProject(640, 360, 30);
+        m_ctrl->importMedia({QUrl::fromLocalFile(song)});
+        m_ctrl->addAssetToTimeline(m_ctrl->assets().first().toMap().value("id").toString());
+        QString clip;
+        for (const auto &t : m_ctrl->tracks())
+            for (const auto &c : t.toMap().value("clips").toList())
+                clip = c.toMap().value("id").toString();
+        m_ctrl->select(clip);
+        auto clips = [this] {
+            int n = 0;
+            for (const auto &t : m_ctrl->tracks())
+                n += t.toMap().value("clips").toList().size();
+            return n;
+        };
+        m_ctrl->separateStems(0);
+        QCOMPARE(m_ctrl->selectedClip().value("stemsState").toString(), QStringLiteral("processing"));
+        QTRY_COMPARE_WITH_TIMEOUT(clips(), 5, 120000);
+        QCOMPARE(m_ctrl->selection().size(), 4);
+        QCOMPARE(m_ctrl->assets().size(), 5);
+        // O original fica mudo, no mesmo lugar.
+        m_ctrl->select(clip);
+        QVERIFY(m_ctrl->selectedClip().value("audioMuted").toBool());
+        m_ctrl->undo();
+        QCOMPARE(clips(), 1);
+        m_ctrl->select(clip);
+        QVERIFY(!m_ctrl->selectedClip().value("audioMuted").toBool());
+        // Já em cache: só a voz entra na hora.
+        QCOMPARE(m_ctrl->selectedClip().value("stemsState").toString(), QStringLiteral("ready"));
+        m_ctrl->separateStems(1);
+        QCOMPARE(clips(), 2);
+#endif
     }
 
     void beatMarkers()

@@ -87,6 +87,13 @@
             <numerusform>%n words removed</numerusform>
         </translation>
     </message>
+    <message numerus="yes">
+        <source>Music separated into %n track(s)</source>
+        <translation>
+            <numerusform>Music separated into %n track</numerusform>
+            <numerusform>Music separated into %n tracks</numerusform>
+        </translation>
+    </message>
 </context>
 <context>
     <name>SilenceDialog</name>

@@ -66,6 +66,7 @@ Written in **C++20 + Qt 6 (Qt Quick / RHI) + FFmpeg**. Video compositing runs on
   - **Ducking:** background music gets quieter automatically while there is speech on the other clips.
   - **Beat detection:** finds the tempo of a music clip and adds beat markers (every beat, every 2 beats or every bar); clips snap to them, so cuts land on the beat.
   - **AI voice isolation** (DeepFilterNet3, local): keeps only the speech, removing music, noise and room sound. The model (16 MB) is downloaded once.
+  - **AI music separation** (HT-Demucs v4, local): splits a song into vocals, drums, bass and other instruments, or just the vocals or the instrumental, as new audio tracks with the same timing; the original clip is muted. The model (166 MB, MIT) is downloaded once and checked by SHA-256.
   - **Detach audio from video** (Ctrl+Shift+D) and mute clip.
 - **Stabilization:** smooths out camera shake with an adjustable strength. Each video is analyzed once in the background (block phase correlation and a robust shift/rotation/zoom fit); the correction, with a slight zoom that hides the moving edges, is applied while rendering, so changing the strength is instant and preview matches export.
 - **Background removal:** cuts people out of videos without a green screen, using a local AI model (RobustVideoMatting on ONNX Runtime, downloaded once). Processing runs in the background and the result is used in preview and export.

@@ -23,6 +23,7 @@
 #include "engine/Beats.h"
 #include "engine/Silence.h"
 #include "engine/Stabilization.h"
+#include "engine/StemSeparation.h"
 #include "engine/Exporter.h"
 #include "engine/Proxy.h"
 #include "engine/Transcriber.h"
@@ -145,6 +146,7 @@ ProjectController::~ProjectController()
     *m_denoiseCancel = true;
     *m_matteCancel = true;
     *m_stabCancel = true;
+    *m_stemsCancel = true;
     *m_voiceCancel = true;
     *m_effectCancel = true;
     *m_renderCancel = true;
@@ -574,6 +576,20 @@ QVariantMap ProjectController::selectedClip() const
               {"voiceProgress", m_voiceProgress},
               {"removeBackground", c->removeBackground},
               {"keepPitch", c->keepPitch},
+              {"stemsState", [&] {
+                   if (!a || !a->hasAudio)
+                       return QStringLiteral("off");
+                   if (!engine::stemSeparationAvailable())
+                       return QStringLiteral("unavailable");
+                   if (m_stemsBuilding == a->path)
+                       return QStringLiteral("processing");
+                   if (!m_stemsBuilding.isEmpty())
+                       return QStringLiteral("busy");
+                   if (engine::stemsReady(a->path))
+                       return QStringLiteral("ready");
+                   return engine::aiModelInstalled(engine::kStemsModel) ? QStringLiteral("off") : QStringLiteral("needsModel");
+               }()},
+              {"stemsProgress", m_stemsProgress},
               {"stabilize", c->stabilize},
               {"stabilizeState", [&] {
                    if (!a || c->stabilize <= 0)
@@ -3551,6 +3567,141 @@ void ProjectController::startNextEffect()
 
 // ---------------------------------------------------------------------------
 // Isolamento de voz (IA, em segundo plano)
+
+void ProjectController::separateStems(int mode)
+{
+    const QString clipId = primaryClipId();
+    const Clip *c = edit::clipById(m_project, clipId);
+    const MediaAsset *a = c && c->hasMedia() ? m_project.asset(c->assetId) : nullptr;
+    if (!a || !a->hasAudio || !QFileInfo::exists(a->path) || !engine::stemSeparationAvailable())
+        return;
+    mode = std::clamp(mode, 0, 2);
+    if (engine::stemsReady(a->path)) {
+        placeStems(clipId, mode);
+        return;
+    }
+    if (!engine::aiModelInstalled(engine::kStemsModel)) {
+        setStatus(tr("Download the music separation model first"));
+        return;
+    }
+    if (!m_stemsBuilding.isEmpty()) {
+        if (m_stemsBuilding == a->path)
+            m_stemRequests.push_back({clipId, mode});
+        else
+            setStatus(tr("Wait for the current music separation to finish"));
+        return;
+    }
+    m_stemsBuilding = a->path;
+    m_stemsProgress = 0;
+    m_stemRequests = {{clipId, mode}};
+    m_stemsCancel = std::make_shared<std::atomic<bool>>(false);
+    auto cancel = m_stemsCancel;
+    const QString path = a->path;
+    const QString model = engine::aiModelPath(engine::kStemsModel);
+    emit selectedClipChanged();
+    setStatus(tr("Separating the music in %1…").arg(QFileInfo(path).fileName()));
+    std::thread([this, path, model, cancel] {
+        QString err;
+        double lastSent = 0;
+        const bool ok = engine::separateStems(
+            path, model,
+            [&](double f) {
+                if (f - lastSent >= 0.01 && !*cancel) {
+                    lastSent = f;
+                    QMetaObject::invokeMethod(this, [this, f] {
+                        m_stemsProgress = f;
+                        emit selectedClipChanged();
+                    }, Qt::QueuedConnection);
+                }
+                return !*cancel;
+            },
+            &err);
+        if (*cancel)
+            return;
+        QMetaObject::invokeMethod(this, [this, ok, err] {
+            m_stemsBuilding.clear();
+            const auto requests = std::move(m_stemRequests);
+            m_stemRequests.clear();
+            if (ok) {
+                for (const auto &r : requests)
+                    placeStems(r.clipId, r.mode);
+            } else {
+                emit errorOccurred(tr("Music separation failed: %1").arg(err));
+            }
+            emit selectedClipChanged();
+        }, Qt::QueuedConnection);
+    }).detach();
+}
+
+void ProjectController::placeStems(const QString &clipId, int mode)
+{
+    const Clip *orig = edit::clipById(m_project, clipId);
+    const MediaAsset *src = orig && orig->hasMedia() ? m_project.asset(orig->assetId) : nullptr;
+    if (!src || !engine::stemsReady(src->path)) {
+        setStatus(tr("The clip was removed before the separation finished"));
+        return;
+    }
+    using engine::Stem;
+    const std::vector<Stem> stems = mode == 1 ? std::vector<Stem>{Stem::Vocals}
+                                    : mode == 2 ? std::vector<Stem>{Stem::Instrumental}
+                                                : std::vector<Stem>{Stem::Vocals, Stem::Drums, Stem::Bass, Stem::Other};
+    const QString srcName = src->name;
+    QStringList created;
+    edit(tr("Separate music"), [&](Project &p) {
+        Clip *c = edit::clipById(p, clipId);
+        if (!c)
+            return false;
+        const Clip base = *c;
+        for (const Stem s : stems) {
+            const QString path = engine::stemPathFor(src->path, s);
+            // A mesma faixa já importada é reaproveitada.
+            QString assetId;
+            for (const auto &[id, a] : p.assets)
+                if (a.path == path)
+                    assetId = id;
+            if (assetId.isEmpty()) {
+                MediaAsset a;
+                if (!media::probe(path, a))
+                    continue;
+                a.id = newId("ast");
+                a.name = QStringLiteral("%1 · %2").arg(srcName, engine::stemName(s));
+                assetId = a.id;
+                p.assets.emplace(a.id, a);
+            }
+            // Mesmo trecho, tempo e volume do original; processamentos de voz não se repetem.
+            Clip sc = base;
+            sc.id = newId("clp");
+            sc.groupId.clear();
+            sc.assetId = assetId;
+            sc.audioOnly = false;
+            sc.audioMuted = false;
+            sc.denoise = 0;
+            sc.voiceIsolation = 0;
+            sc.voiceEffect.clear();
+            sc.removeBackground = false;
+            sc.stabilize = 0;
+            sc.transitionIn.reset();
+            Track t = createTrack(TrackKind::Audio, engine::stemName(s));
+            t.clips.push_back(sc);
+            p.tracks.push_back(std::move(t));
+            created << sc.id;
+        }
+        if (created.isEmpty())
+            return false;
+        c = edit::clipById(p, clipId);
+        c->audioMuted = true; // o original continua lá, sem som (para comparar ou voltar)
+        return true;
+    });
+    if (created.isEmpty())
+        return;
+    refreshProxies();
+    emit assetsChanged();
+    m_selection = created;
+    m_primary = created.first();
+    emit selectionChanged();
+    emit selectedClipChanged();
+    setStatus(tr("Music separated into %n track(s)", nullptr, static_cast<int>(created.size())));
+}
 
 void ProjectController::refreshVoice()
 {

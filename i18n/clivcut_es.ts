@@ -471,6 +471,38 @@
         <source>Could not read the video frames</source>
         <translation>No se pudieron leer los fotogramas del vídeo</translation>
     </message>
+    <message>
+        <source>Drums</source>
+        <translation>Batería</translation>
+    </message>
+    <message>
+        <source>Bass</source>
+        <translation>Bajo</translation>
+    </message>
+    <message>
+        <source>Other instruments</source>
+        <translation>Otros instrumentos</translation>
+    </message>
+    <message>
+        <source>Vocals</source>
+        <translation>Voz</translation>
+    </message>
+    <message>
+        <source>Instrumental</source>
+        <translation>Instrumental</translation>
+    </message>
+    <message>
+        <source>Stem separation model not found: %1</source>
+        <translation>No se encontró el modelo de separación de música: %1</translation>
+    </message>
+    <message>
+        <source>Could not set up the audio resampler</source>
+        <translation>No se pudo preparar el remuestreador de audio</translation>
+    </message>
+    <message>
+        <source>Stem separation cancelled</source>
+        <translation>Separación de música cancelada</translation>
+    </message>
 </context>
 <context>
     <name>ExportDialog</name>
@@ -1315,6 +1347,54 @@ Atajos: Espacio reproduce · Ctrl+B divide · Q/W eliminan a la izquierda/derech
     <message>
         <source>Keeps only the speech: removes background music, noise and room sound. Runs on your computer.</source>
         <translation>Conserva solo la voz: quita la música de fondo, el ruido y el sonido de la sala. Se ejecuta en tu ordenador.</translation>
+    </message>
+    <message>
+        <source>Separate music (AI)</source>
+        <translation>Separar música (IA)</translation>
+    </message>
+    <message>
+        <source>Vocals, drums, bass, other</source>
+        <translation>Voz, batería, bajo, otros</translation>
+    </message>
+    <message>
+        <source>Vocals only</source>
+        <translation>Solo la voz</translation>
+    </message>
+    <message>
+        <source>Instrumental (no vocals)</source>
+        <translation>Instrumental (sin voz)</translation>
+    </message>
+    <message>
+        <source>Separating…</source>
+        <translation>Separando…</translation>
+    </message>
+    <message>
+        <source>Separate</source>
+        <translation>Separar</translation>
+    </message>
+    <message>
+        <source>Download model (166 MB)</source>
+        <translation>Descargar modelo (166 MB)</translation>
+    </message>
+    <message>
+        <source>Downloading the music separation model…</source>
+        <translation>Descargando el modelo de separación de música…</translation>
+    </message>
+    <message>
+        <source>Requires the music separation model (HT-Demucs, MIT), downloaded only once.</source>
+        <translation>Requiere el modelo de separación de música (HT-Demucs, MIT), que se descarga una sola vez.</translation>
+    </message>
+    <message>
+        <source>Separating the music… %1% (this takes a while on the CPU)</source>
+        <translation>Separando la música… %1% (tarda un poco en la CPU)</translation>
+    </message>
+    <message>
+        <source>Another clip is being separated…</source>
+        <translation>Se está separando otro clip…</translation>
+    </message>
+    <message>
+        <source>Splits a song into new audio tracks under the same timing; the original clip is muted, not removed. Runs on your computer.</source>
+        <translation>Divide una canción en nuevas pistas de audio con el mismo tiempo; el clip original se silencia, no se elimina. Se ejecuta en tu equipo.</translation>
     </message>
     <message>
         <source>Fade in</source>
@@ -2223,6 +2303,14 @@ Atajos: Espacio reproduce · Ctrl+B divide · Q/W eliminan a la izquierda/derech
         <source>Separates speech from noise, music and room sound</source>
         <translation>Separa la voz del ruido, la música y el sonido de la sala</translation>
     </message>
+    <message>
+        <source>Music separation (HT-Demucs)</source>
+        <translation>Separación de música (HT-Demucs)</translation>
+    </message>
+    <message>
+        <source>Splits music into vocals, drums, bass and other instruments</source>
+        <translation>Divide la música en voz, batería, bajo y otros instrumentos</translation>
+    </message>
 </context>
 <context>
     <name>NewProjectDialog</name>
@@ -2623,6 +2711,10 @@ Atajos: Espacio reproduce · Ctrl+B divide · Q/W eliminan a la izquierda/derech
         <translation>No se pudo escribir en %1</translation>
     </message>
     <message>
+        <source>the downloaded file is corrupted (checksum mismatch)</source>
+        <translation>el archivo descargado está dañado (la suma de verificación no coincide)</translation>
+    </message>
+    <message>
         <source>Model %1 installed</source>
         <translation>Modelo %1 instalado</translation>
     </message>
@@ -2975,6 +3067,37 @@ Atajos: Espacio reproduce · Ctrl+B divide · Q/W eliminan a la izquierda/derech
     <message>
         <source>Voice effect failed: %1</source>
         <translation>Error en el efecto de voz: %1</translation>
+    </message>
+    <message>
+        <source>Download the music separation model first</source>
+        <translation>Descarga primero el modelo de separación de música</translation>
+    </message>
+    <message>
+        <source>Wait for the current music separation to finish</source>
+        <translation>Espera a que termine la separación de música actual</translation>
+    </message>
+    <message>
+        <source>Separating the music in %1…</source>
+        <translation>Separando la música en %1…</translation>
+    </message>
+    <message>
+        <source>Music separation failed: %1</source>
+        <translation>Error en la separación de música: %1</translation>
+    </message>
+    <message>
+        <source>The clip was removed before the separation finished</source>
+        <translation>El clip se eliminó antes de que terminara la separación</translation>
+    </message>
+    <message>
+        <source>Separate music</source>
+        <translation>Separar música</translation>
+    </message>
+    <message numerus="yes">
+        <source>Music separated into %n track(s)</source>
+        <translation>
+            <numerusform>Música separada en %n pista</numerusform>
+            <numerusform>Música separada en %n pistas</numerusform>
+        </translation>
     </message>
     <message>
         <source>Isolating voice in %1…</source>

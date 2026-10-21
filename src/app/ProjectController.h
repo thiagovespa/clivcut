@@ -292,6 +292,8 @@ public:
     Q_INVOKABLE void detachAudio();
     /// Mede a loudness (EBU R128) dos clipes selecionados e ajusta o ganho para o alvo (LUFS).
     Q_INVOKABLE void normalizeLoudness(double targetLufs);
+    /// Separa a música do clipe selecionado (IA): 0 = quatro faixas, 1 = só a voz, 2 = só o instrumental.
+    Q_INVOKABLE void separateStems(int mode);
 
     // --- seleção e propriedades ---
     Q_INVOKABLE void select(const QString &clipId, bool additive = false);
@@ -553,6 +555,15 @@ private:
     QString m_voiceBuilding;
     double m_voiceProgress = 0;
     std::shared_ptr<std::atomic<bool>> m_voiceCancel = std::make_shared<std::atomic<bool>>(false);
+    struct StemRequest {
+        QString clipId;
+        int mode = 0;
+    };
+    QString m_stemsBuilding; ///< mídia sendo separada em faixas
+    double m_stemsProgress = 0;
+    std::vector<StemRequest> m_stemRequests; ///< clipes à espera das faixas dessa mídia
+    std::shared_ptr<std::atomic<bool>> m_stemsCancel = std::make_shared<std::atomic<bool>>(false);
+    void placeStems(const QString &clipId, int mode);
     QStringList m_stabQueue; ///< vídeos aguardando a análise de movimento (estabilização)
     QString m_stabBuilding;
     double m_stabProgress = 0;
