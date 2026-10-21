@@ -94,7 +94,9 @@ Written in **C++20 + Qt 6 (Qt Quick / RHI) + FFmpeg**. Video compositing runs on
 - **Languages:** English, Português (Brasil) and Español. The interface follows the system language and can be switched live from the logo menu, the command palette or the welcome screen.
 - **`clivcut-render`:** headless rendering, conversion and transcription (`--transcribe`) from the command line.
 
-See the [roadmap](docs/ROADMAP.md) for what comes next: interactive cutout, stem separation and more.
+New to clivcut? The **[user guide](docs/guide/README.md)** explains each feature by task, and the app has a one-minute guided tour (logo menu → Help → Take the tour).
+
+See the [roadmap](docs/ROADMAP.md) for what comes next: AI text-to-speech, interactive cutout, frame interpolation and more.
 
 ## Building
 
