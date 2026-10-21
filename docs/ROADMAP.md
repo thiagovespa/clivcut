@@ -44,7 +44,7 @@
 | 5 | Scopes (histogram, waveform, vectorscope) | ✅ | read back from the composited frame (what gets exported), up to 10 times per second; RGB parade missing |
 | 6 | Local background removal | 🟡 | RobustVideoMatting on ONNX Runtime: matte generated in the background, cached and applied as clip alpha in preview and export; model downloaded on demand from the Inspector. Interactive cutout (SAM 2) missing |
 | 7 | Object tracking | ⬜ | |
-| 8 | Stabilization (vid.stab) | ⬜ | |
+| 8 | Stabilization | ✅ | own motion analysis (phase correlation + robust similarity fit), live smoothing with auto zoom; no rolling-shutter correction |
 | 9 | Audio cleanup | 🟡 | noise reduction (afftdn), loudness normalization (EBU R128) and AI voice isolation (DeepFilterNet3) done; music/stem separation (Demucs) missing |
 | 10 | Transcript-based editing and silence removal | ✅ | word-level transcript panel (whisper.cpp) where deleting words cuts the video with ripple, filler-word selection, and silence removal with a preview on the ruler |
 | 11 | Local TTS (Piper) | ⬜ | |

@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 #include "RenderCache.h"
 
+#include "core/Stabilize.h"
+
 #include "DecoderFrameSource.h"
 #include "Matting.h"
 #include "core/Evaluate.h"
@@ -77,8 +79,12 @@ std::vector<QString> renderChunkKeys(const Project &p)
                 continue;
             QByteArray data = QByteArray::number(static_cast<int>(ti)) + '|'
                               + QJsonDocument(clipToJson(c)).toJson(QJsonDocument::Compact);
-            if (const MediaAsset *a = p.asset(c.assetId))
+            if (const MediaAsset *a = p.asset(c.assetId)) {
                 data += mediaStamp(*a);
+                // A estabilização só vale depois da análise: o trecho muda quando ela termina.
+                if (c.stabilize > 0 && registeredMotion(a->path))
+                    data += "|motion";
+            }
             clips.push_back({c.start, c.end(), QCryptographicHash::hash(data, QCryptographicHash::Sha1)});
         }
     }

@@ -324,6 +324,36 @@ Rectangle {
                             onMoved: (v) => root.setProp(modelData.key, v)
                         }
                     }
+                    SectionLabel {
+                        visible: root.isMedia && root.sel.mediaKind === "video"
+                        text: qsTr("Stabilization")
+                        actionText: root.isMedia && root.sel.stabilize > 0 ? qsTr("Off") : ""
+                        onActionClicked: root.setProp("stabilize", 0)
+                    }
+                    PropSlider {
+                        visible: root.isMedia && root.sel.mediaKind === "video"
+                        label: qsTr("Strength")
+                        from: 0; to: 1; stepSize: 0.05; displayScale: 100; decimals: 0; suffix: "%"
+                        value: root.isMedia ? root.sel.stabilize : 0
+                        onMoved: (v) => root.setProp("stabilize", v)
+                    }
+                    ProgressBar {
+                        visible: root.isMedia && root.sel.stabilizeState === "processing"
+                        Layout.fillWidth: true
+                        value: root.isMedia ? root.sel.stabilizeProgress : 0
+                    }
+                    Text {
+                        visible: root.isMedia && root.sel.mediaKind === "video"
+                        Layout.fillWidth: true
+                        wrapMode: Text.Wrap
+                        color: root.isMedia && root.sel.stabilizeState === "ready" ? Theme.accent : Theme.textFaint
+                        font.pixelSize: Theme.fontSmall
+                        text: !root.isMedia ? ""
+                              : root.sel.stabilizeState === "processing" ? qsTr("Analyzing the camera motion… %1%").arg(Math.round(root.sel.stabilizeProgress * 100))
+                              : root.sel.stabilizeState === "queued" ? qsTr("Queued…")
+                              : root.sel.stabilizeState === "ready" ? qsTr("✓ Stabilized (zooms in slightly to hide the moving edges)")
+                              : qsTr("Smooths out camera shake. The video is analyzed once in the background; more strength smooths more and zooms in a bit more.")
+                    }
                 }
 
                 // ---------------- Ajustes de cor ----------------

@@ -3,6 +3,8 @@
 
 #include "AudioMixer.h"
 #include "DecoderFrameSource.h"
+#include "Matting.h"
+#include "Stabilization.h"
 #include "core/Evaluate.h"
 #include "render/Compositor.h"
 #include "render/OffscreenRhi.h"
@@ -24,6 +26,16 @@ bool Exporter::run(const Project &p, ExportOptions opts, const Progress &progres
             *error = msg;
         return false;
     };
+    // Análises já feitas (recorte de fundo, movimento) ficam em cache: quem exporta fora do
+    // app (linha de comando) também as usa.
+    p.forEachClip([&](const Clip &c) {
+        const MediaAsset *a = c.hasMedia() ? p.asset(c.assetId) : nullptr;
+        if (a && c.removeBackground)
+            discoverMatte(a->path);
+        // Sem análise ainda (ex.: linha de comando): analisa agora, para o vídeo sair estabilizado.
+        if (a && c.stabilize > 0 && a->kind == MediaKind::Video && !discoverMotion(a->path))
+            analyzeMotion(a->path, motionPathFor(a->path), {}, nullptr);
+    });
     media::EncodeSettings &enc = opts.encode;
     if (enc.width <= 0 || enc.height <= 0) {
         enc.width = p.width;

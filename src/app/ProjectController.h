@@ -553,6 +553,12 @@ private:
     QString m_voiceBuilding;
     double m_voiceProgress = 0;
     std::shared_ptr<std::atomic<bool>> m_voiceCancel = std::make_shared<std::atomic<bool>>(false);
+    QStringList m_stabQueue; ///< vídeos aguardando a análise de movimento (estabilização)
+    QString m_stabBuilding;
+    double m_stabProgress = 0;
+    std::shared_ptr<std::atomic<bool>> m_stabCancel = std::make_shared<std::atomic<bool>>(false);
+    void refreshStabilize();
+    void startNextStabilize();
     QStringList m_matteQueue;       ///< mídias aguardando remoção de fundo
     QString m_matteBuilding;
     double m_matteProgress = 0;

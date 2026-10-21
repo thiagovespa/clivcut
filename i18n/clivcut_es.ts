@@ -459,6 +459,18 @@
         <source>Unknown voice effect: %1</source>
         <translation>Efecto de voz desconocido: %1</translation>
     </message>
+    <message>
+        <source>Stabilization only applies to videos</source>
+        <translation>La estabilización solo se aplica a vídeos</translation>
+    </message>
+    <message>
+        <source>Canceled</source>
+        <translation>Cancelado</translation>
+    </message>
+    <message>
+        <source>Could not read the video frames</source>
+        <translation>No se pudieron leer los fotogramas del vídeo</translation>
+    </message>
 </context>
 <context>
     <name>ExportDialog</name>
@@ -926,6 +938,30 @@ Atajos: Espacio reproduce · Ctrl+B divide · Q/W eliminan a la izquierda/derech
     <message>
         <source>Bottom</source>
         <translation>Abajo</translation>
+    </message>
+    <message>
+        <source>Stabilization</source>
+        <translation>Estabilización</translation>
+    </message>
+    <message>
+        <source>Off</source>
+        <translation>Desactivar</translation>
+    </message>
+    <message>
+        <source>Strength</source>
+        <translation>Intensidad</translation>
+    </message>
+    <message>
+        <source>Analyzing the camera motion… %1%</source>
+        <translation>Analizando el movimiento de la cámara… %1%</translation>
+    </message>
+    <message>
+        <source>✓ Stabilized (zooms in slightly to hide the moving edges)</source>
+        <translation>✓ Estabilizado (amplía un poco para ocultar los bordes que se mueven)</translation>
+    </message>
+    <message>
+        <source>Smooths out camera shake. The video is analyzed once in the background; more strength smooths more and zooms in a bit more.</source>
+        <translation>Suaviza el temblor de la cámara. El vídeo se analiza una vez en segundo plano; más intensidad suaviza más y amplía un poco más.</translation>
     </message>
     <message>
         <source>Intensity</source>
@@ -2963,6 +2999,18 @@ Atajos: Espacio reproduce · Ctrl+B divide · Q/W eliminan a la izquierda/derech
     <message>
         <source>Background removal failed: %1</source>
         <translation>Error al quitar el fondo: %1</translation>
+    </message>
+    <message>
+        <source>Analyzing camera motion in %1…</source>
+        <translation>Analizando el movimiento de la cámara en %1…</translation>
+    </message>
+    <message>
+        <source>Stabilization ready: %1</source>
+        <translation>Estabilización lista: %1</translation>
+    </message>
+    <message>
+        <source>Stabilization failed: %1</source>
+        <translation>Error en la estabilización: %1</translation>
     </message>
 </context>
 <context>

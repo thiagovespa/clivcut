@@ -459,6 +459,18 @@
         <source>Unknown voice effect: %1</source>
         <translation>Efeito de voz desconhecido: %1</translation>
     </message>
+    <message>
+        <source>Stabilization only applies to videos</source>
+        <translation>A estabilização só vale para vídeos</translation>
+    </message>
+    <message>
+        <source>Canceled</source>
+        <translation>Cancelado</translation>
+    </message>
+    <message>
+        <source>Could not read the video frames</source>
+        <translation>Não foi possível ler os quadros do vídeo</translation>
+    </message>
 </context>
 <context>
     <name>ExportDialog</name>
@@ -926,6 +938,30 @@ Atalhos: Espaço reproduz · Ctrl+B divide · Q/W exclui à esquerda/direita · 
     <message>
         <source>Bottom</source>
         <translation>Base</translation>
+    </message>
+    <message>
+        <source>Stabilization</source>
+        <translation>Estabilização</translation>
+    </message>
+    <message>
+        <source>Off</source>
+        <translation>Desligar</translation>
+    </message>
+    <message>
+        <source>Strength</source>
+        <translation>Intensidade</translation>
+    </message>
+    <message>
+        <source>Analyzing the camera motion… %1%</source>
+        <translation>Analisando o movimento da câmera… %1%</translation>
+    </message>
+    <message>
+        <source>✓ Stabilized (zooms in slightly to hide the moving edges)</source>
+        <translation>✓ Estabilizado (amplia um pouco para esconder as bordas que se mexem)</translation>
+    </message>
+    <message>
+        <source>Smooths out camera shake. The video is analyzed once in the background; more strength smooths more and zooms in a bit more.</source>
+        <translation>Suaviza a tremedeira da câmera. O vídeo é analisado uma vez em segundo plano; mais intensidade suaviza mais e amplia um pouco mais.</translation>
     </message>
     <message>
         <source>Intensity</source>
@@ -2963,6 +2999,18 @@ Atalhos: Espaço reproduz · Ctrl+B divide · Q/W exclui à esquerda/direita · 
     <message>
         <source>Background removal failed: %1</source>
         <translation>Falha ao remover o fundo: %1</translation>
+    </message>
+    <message>
+        <source>Analyzing camera motion in %1…</source>
+        <translation>Analisando o movimento da câmera em %1…</translation>
+    </message>
+    <message>
+        <source>Stabilization ready: %1</source>
+        <translation>Estabilização pronta: %1</translation>
+    </message>
+    <message>
+        <source>Stabilization failed: %1</source>
+        <translation>Falha na estabilização: %1</translation>
     </message>
 </context>
 <context>

@@ -22,6 +22,7 @@
 #include "engine/VoiceIsolation.h"
 #include "engine/Beats.h"
 #include "engine/Silence.h"
+#include "engine/Stabilization.h"
 #include "engine/Exporter.h"
 #include "engine/Proxy.h"
 #include "engine/Transcriber.h"
@@ -142,6 +143,7 @@ ProjectController::~ProjectController()
     *m_proxyCancel = true;
     *m_denoiseCancel = true;
     *m_matteCancel = true;
+    *m_stabCancel = true;
     *m_voiceCancel = true;
     *m_effectCancel = true;
     *m_renderCancel = true;
@@ -207,6 +209,7 @@ void ProjectController::commitChange()
     ++m_revisionCounter;
     refreshDenoise();
     refreshMattes();
+    refreshStabilize();
     refreshVoice();
     refreshEffects();
     m_cacheTimer.start();
@@ -570,6 +573,17 @@ QVariantMap ProjectController::selectedClip() const
               {"voiceProgress", m_voiceProgress},
               {"removeBackground", c->removeBackground},
               {"keepPitch", c->keepPitch},
+              {"stabilize", c->stabilize},
+              {"stabilizeState", [&] {
+                   if (!a || c->stabilize <= 0)
+                       return QStringLiteral("off");
+                   if (registeredMotion(a->path))
+                       return QStringLiteral("ready");
+                   if (m_stabBuilding == a->path)
+                       return QStringLiteral("processing");
+                   return m_stabQueue.contains(a->path) ? QStringLiteral("queued") : QStringLiteral("off");
+               }()},
+              {"stabilizeProgress", m_stabProgress},
               {"matteState", [&] {
                    if (!a || !c->removeBackground)
                        return QStringLiteral("off");
@@ -1197,6 +1211,7 @@ bool applyClipProperty(Project &p, Clip *c, Micros rel, const QString &key, cons
     else if (key == QLatin1String("gainDb")) c->gainDb = std::clamp(value.toDouble(), -24.0, 24.0);
     else if (key == QLatin1String("denoise")) c->denoise = engine::quantizedDenoise(value.toDouble());
     else if (key == QLatin1String("removeBackground")) c->removeBackground = value.toBool();
+    else if (key == QLatin1String("stabilize")) c->stabilize = std::clamp(std::round(value.toDouble() * 20) / 20, 0.0, 1.0);
     else if (key == QLatin1String("effect")) c->effect.id = effectShaderIndex(value.toString()) > 0 ? value.toString() : QString();
     else if (key == QLatin1String("effectIntensity")) c->effect.intensity = std::clamp(value.toDouble(), 0.0, 1.0);
     else if (key == QLatin1String("voiceEffect")) c->voiceEffect = engine::findVoiceEffect(value.toString()) ? value.toString() : QString();
@@ -3665,6 +3680,69 @@ void ProjectController::startNextMatte()
             }
             emit selectedClipChanged();
             startNextMatte();
+        }, Qt::QueuedConnection);
+    }).detach();
+}
+
+void ProjectController::refreshStabilize()
+{
+    bool changed = false;
+    m_project.forEachClip([&](const Clip &c) {
+        const MediaAsset *a = c.hasMedia() && c.stabilize > 0 ? m_project.asset(c.assetId) : nullptr;
+        if (!a || a->kind != MediaKind::Video || !QFileInfo::exists(a->path))
+            return;
+        if (registeredMotion(a->path) || engine::discoverMotion(a->path))
+            return;
+        if (a->path != m_stabBuilding && !m_stabQueue.contains(a->path)) {
+            m_stabQueue << a->path;
+            changed = true;
+        }
+    });
+    if (changed) {
+        emit selectedClipChanged();
+        startNextStabilize();
+    }
+}
+
+void ProjectController::startNextStabilize()
+{
+    if (!m_stabBuilding.isEmpty() || m_stabQueue.isEmpty())
+        return;
+    m_stabBuilding = m_stabQueue.takeFirst();
+    m_stabProgress = 0;
+    m_stabCancel = std::make_shared<std::atomic<bool>>(false);
+    const QString path = m_stabBuilding;
+    auto cancel = m_stabCancel;
+    emit selectedClipChanged();
+    setStatus(tr("Analyzing camera motion in %1…").arg(QFileInfo(path).fileName()));
+    std::thread([this, path, cancel] {
+        QString err;
+        double lastSent = 0;
+        const bool ok = engine::analyzeMotion(
+            path, engine::motionPathFor(path),
+            [&](double f) {
+                if (f - lastSent >= 0.01 && !*cancel) {
+                    lastSent = f;
+                    QMetaObject::invokeMethod(this, [this, f] {
+                        m_stabProgress = f;
+                        emit selectedClipChanged();
+                    }, Qt::QueuedConnection);
+                }
+                return !*cancel;
+            },
+            &err);
+        if (*cancel)
+            return;
+        QMetaObject::invokeMethod(this, [this, ok, err, path] {
+            m_stabBuilding.clear();
+            if (ok) {
+                setStatus(tr("Stabilization ready: %1").arg(QFileInfo(path).fileName()));
+                commitChange(); // o quadro e as chaves do cache de render mudam
+            } else {
+                emit errorOccurred(tr("Stabilization failed: %1").arg(err));
+            }
+            emit selectedClipChanged();
+            startNextStabilize();
         }, Qt::QueuedConnection);
     }).detach();
 }

@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 #include "ProjectController.h"
+#include "core/Evaluate.h"
 #include "core/Serialize.h"
 #include "Scopes.h"
 #include "engine/AudioMixer.h"
@@ -800,6 +801,26 @@ private slots:
         QCOMPARE(texts(), 1); // o texto voltou
         m_ctrl->closeCompound();
         QCOMPARE(m_ctrl->undoText(), QStringLiteral("Create compound clip")); // fechar sem mudar não cria passo
+    }
+
+    void stabilizationJob()
+    {
+        m_ctrl->newProject(640, 360, 30);
+        m_ctrl->importMedia({QUrl::fromLocalFile(m_video)});
+        m_ctrl->addAssetToTimeline(m_ctrl->assets().first().toMap().value("id").toString());
+        const QString clip = clipsOf(0).first().toMap().value("id").toString();
+        m_ctrl->select(clip);
+        QCOMPARE(m_ctrl->selectedClip().value("stabilizeState").toString(), QStringLiteral("off"));
+        m_ctrl->setClipProperty(clip, QStringLiteral("stabilize"), 0.62);
+        QCOMPARE(m_ctrl->selectedClip().value("stabilize").toDouble(), 0.6); // passos de 5%
+        QTRY_COMPARE_WITH_TIMEOUT(m_ctrl->selectedClip().value("stabilizeState").toString(), QStringLiteral("ready"), 60000);
+        QVERIFY(clv::registeredMotion(m_video));
+        // O quadro avaliado já traz a correção (o zoom pelo menos 1).
+        const auto f = clv::evaluate(*m_ctrl->snapshot(), 1'000'000);
+        QVERIFY(!f.layers.empty());
+        QVERIFY(f.layers.front().stab.zoom >= 1.0);
+        m_ctrl->undo();
+        QCOMPARE(m_ctrl->selectedClip().value("stabilize").toDouble(), 0.0);
     }
 
     void beatMarkers()
