@@ -134,4 +134,18 @@ QStringList breakCompound(Project &p, const QString &clipId);
 /** Remove as sequências que nenhum clipe composto usa mais. */
 void pruneCompounds(Project &p);
 
+/**
+ * Projeto de trabalho para editar o conteúdo de um clipe composto: o mesmo projeto, com as
+ * faixas da sequência no lugar das faixas da timeline (a primeira é sempre de vídeo), sem
+ * marcadores nem entrada/saída e sem faixa magnética.
+ */
+std::optional<Project> compoundWorkspace(const Project &outer, const QString &seqId);
+
+/**
+ * Devolve ao projeto de fora o que foi feito no projeto de trabalho: as faixas da sequência,
+ * mídias importadas e outras sequências criadas ou mudadas lá dentro. Clipes compostos que
+ * usam a sequência são encurtados se o conteúdo ficou menor (e somem se ficou vazio).
+ */
+void mergeCompoundWorkspace(Project &outer, const QString &seqId, const Project &inner);
+
 } // namespace clv::edit

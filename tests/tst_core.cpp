@@ -453,6 +453,59 @@ private slots:
         QCOMPARE(p.tracks[0].clips.size(), size_t(4));
     }
 
+    void compoundWorkspaceRoundTrip()
+    {
+        Project p = createProject();
+        p.mainTrackMagnet = true;
+        auto a = videoAsset(p, 10 * kSecond);
+        auto c1 = createMediaClip(a, 0);
+        c1.duration = 3 * kSecond;
+        auto c2 = createMediaClip(a, 3 * kSecond);
+        c2.duration = 3 * kSecond;
+        auto c3 = createMediaClip(a, 6 * kSecond);
+        c3.duration = 2 * kSecond;
+        const QString id1 = edit::insertClip(p, c1, 0), id2 = edit::insertClip(p, c2, 0), id3 = edit::insertClip(p, c3, 0);
+        const QString title = edit::insertClip(p, createTextClip(QStringLiteral("T"), 0, 6 * kSecond), -1);
+        const QString cmpA = edit::createCompound(p, {id1, id2, title}, QStringLiteral("A"));
+        // Outro composto, usado só fora (não pode sumir ao editar o A).
+        const QString cmpB = edit::createCompound(p, {id3}, QStringLiteral("B"));
+        QVERIFY(!cmpA.isEmpty() && !cmpB.isEmpty());
+        const QString seqA = edit::clipById(p, cmpA)->compoundId;
+        QCOMPARE(p.compounds.size(), size_t(2));
+
+        auto w = edit::compoundWorkspace(p, seqA);
+        QVERIFY(w);
+        QCOMPARE(w->tracks.size(), size_t(2));
+        QVERIFY(w->tracks[0].kind == TrackKind::Video);
+        QVERIFY(!w->mainTrackMagnet);
+        QCOMPARE(w->duration(), 6 * kSecond);
+        // Dentro: apaga o segundo vídeo e encurta o título (o conteúdo fica com 3 s),
+        // importa uma mídia nova e roda uma limpeza que não enxerga os clipes de fora.
+        QVERIFY(edit::deleteClips(*w, {id2}, false));
+        QVERIFY(edit::trimClip(*w, title, edit::Edge::End, 2 * kSecond));
+        auto extra = videoAsset(*w, kSecond);
+        w->background = QStringLiteral("#123456");
+        edit::pruneCompounds(*w);
+        QVERIFY(w->compounds.empty());
+
+        edit::mergeCompoundWorkspace(p, seqA, *w);
+        QCOMPARE(p.compounds.size(), size_t(2)); // A e B continuam
+        QCOMPARE(p.compound(seqA)->duration(), 3 * kSecond);
+        QCOMPARE(edit::clipById(p, cmpA)->duration, 3 * kSecond); // composto encurtado
+        QCOMPARE(edit::clipById(p, cmpB)->start, 3 * kSecond);    // principal magnética fecha o buraco
+        QVERIFY(p.assets.count(extra.id));
+        QCOMPARE(p.background, QStringLiteral("#123456"));
+
+        // Esvaziar o conteúdo remove o composto e a sequência.
+        auto w2 = edit::compoundWorkspace(p, seqA);
+        for (auto &t : w2->tracks)
+            t.clips.clear();
+        edit::mergeCompoundWorkspace(p, seqA, *w2);
+        QVERIFY(!edit::clipById(p, cmpA));
+        QVERIFY(!p.compound(seqA));
+        QVERIFY(edit::clipById(p, cmpB));
+    }
+
     void historyUndoRedo()
     {
         Project p = createProject();

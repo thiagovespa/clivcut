@@ -929,4 +929,71 @@ void pruneCompounds(Project &p)
     }
 }
 
+
+std::optional<Project> compoundWorkspace(const Project &outer, const QString &seqId)
+{
+    const Sequence *seq = outer.compound(seqId);
+    if (!seq)
+        return std::nullopt;
+    Project w = outer;
+    w.tracks = seq->tracks;
+    if (w.tracks.empty() || w.tracks.front().kind != TrackKind::Video)
+        w.tracks.insert(w.tracks.begin(), createTrack(TrackKind::Video));
+    w.markers.clear();
+    w.inPoint = -1;
+    w.outPoint = -1;
+    w.mainTrackMagnet = false;
+    return w;
+}
+
+void mergeCompoundWorkspace(Project &outer, const QString &seqId, const Project &inner)
+{
+    // Ajustes do projeto valem para tudo, mesmo mudados de dentro de um composto.
+    outer.name = inner.name;
+    outer.width = inner.width;
+    outer.height = inner.height;
+    outer.fps = inner.fps;
+    outer.background = inner.background;
+    outer.backgroundBlur = inner.backgroundBlur;
+    // Mídias e sequências: atualiza ou acrescenta pelo id, sem apagar o que só é usado fora.
+    for (const auto &[id, a] : inner.assets)
+        outer.assets[id] = a;
+    for (const Sequence &s : inner.compounds) {
+        auto it = std::find_if(outer.compounds.begin(), outer.compounds.end(), [&](const Sequence &o) { return o.id == s.id; });
+        if (it == outer.compounds.end())
+            outer.compounds.push_back(s);
+        else if (s.id != seqId)
+            *it = s;
+    }
+    auto seq = std::find_if(outer.compounds.begin(), outer.compounds.end(), [&](const Sequence &o) { return o.id == seqId; });
+    if (seq == outer.compounds.end())
+        return;
+    seq->tracks.clear();
+    for (const Track &t : inner.tracks)
+        if (!t.clips.empty())
+            seq->tracks.push_back(t);
+    const Micros len = seq->duration();
+
+    // Clipes compostos que mostram esta sequência cabem no novo conteúdo.
+    const Micros minLen = outer.frameDuration();
+    auto fit = [&](std::vector<Track> &tracks) {
+        for (Track &t : tracks) {
+            std::erase_if(t.clips, [&](const Clip &c) { return c.isCompound() && c.compoundId == seqId && len <= 0; });
+            for (Clip &c : t.clips) {
+                if (!c.isCompound() || c.compoundId != seqId)
+                    continue;
+                c.sourceIn = std::clamp<Micros>(c.sourceIn, 0, std::max<Micros>(0, len - minLen));
+                c.duration = std::clamp<Micros>(c.duration, std::min(minLen, len), len - c.sourceIn);
+            }
+        }
+    };
+    fit(outer.tracks);
+    for (Sequence &s : outer.compounds)
+        if (s.id != seqId)
+            fit(s.tracks);
+    packMainTrack(outer);
+    removeEmptyTracks(outer);
+    pruneCompounds(outer);
+}
+
 } // namespace clv::edit
