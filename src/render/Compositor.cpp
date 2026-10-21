@@ -56,7 +56,8 @@ struct Compositor::LayerUbo {
 };
 
 struct Compositor::Slot {
-    std::unique_ptr<QRhiTexture> tex; ///< nulo em camadas de ajuste (usam o backdrop)
+    std::unique_ptr<QRhiTexture> tex; ///< nulo em camadas de ajuste (usam o backdrop) e em compostos
+    QRhiTexture *external = nullptr;  ///< composto: a saída da composição interna
     std::unique_ptr<QRhiShaderResourceBindings> srb;
     QRhiTexture *filterLut = nullptr;
     QRhiTexture *userLut = nullptr;
@@ -230,15 +231,18 @@ void Compositor::ensureResources(QRhiResourceUpdateBatch *u)
 }
 
 Compositor::Slot &Compositor::slotFor(const QString &key, QSize texSize, QRhiTexture *filterLut, QRhiTexture *userLut,
-                                      QRhiTexture *gradeLut, bool usesBackdrop)
+                                      QRhiTexture *gradeLut, bool usesBackdrop, QRhiTexture *external)
 {
     auto &ptr = m_slots[key];
     if (!ptr)
         ptr = std::make_shared<Slot>();
     Slot &s = *ptr;
     bool rebuild = !s.srb || s.filterLut != filterLut || s.userLut != userLut || s.gradeLut != gradeLut
-                   || s.usesBackdrop != usesBackdrop;
-    if (!usesBackdrop && (!s.tex || s.size != texSize)) {
+                   || s.usesBackdrop != usesBackdrop || s.external != external;
+    if (external) {
+        s.tex.reset();
+        s.size = texSize;
+    } else if (!usesBackdrop && (!s.tex || s.size != texSize)) {
         s.tex.reset(m_rhi->newTexture(QRhiTexture::RGBA8, texSize));
         s.tex->create();
         s.size = texSize;
@@ -252,7 +256,8 @@ Compositor::Slot &Compositor::slotFor(const QString &key, QSize texSize, QRhiTex
         s.userLut = userLut;
         s.gradeLut = gradeLut;
         s.usesBackdrop = usesBackdrop;
-        QRhiTexture *layerTex = usesBackdrop ? m_backdrop.get() : s.tex.get();
+        s.external = external;
+        QRhiTexture *layerTex = external ? external : usesBackdrop ? m_backdrop.get() : s.tex.get();
         s.srb.reset(m_rhi->newShaderResourceBindings());
         s.srb->setBindings({
             QRhiShaderResourceBinding::uniformBufferWithDynamicOffset(
@@ -302,6 +307,7 @@ void Compositor::fillUbo(LayerUbo &u, const VisualLayer &l, const Project &p, do
     u.effect[0] = static_cast<float>(l.effect);
     u.effect[1] = static_cast<float>(std::clamp(l.effectIntensity, 0.0, 1.0));
     u.effect[2] = static_cast<float>(l.effectTime);
+    u.effect[3] = l.nested ? 1.f : 0.f;
     u.misc[0] = static_cast<float>(std::clamp(l.opacity, 0.0, 1.0));
     u.misc[1] = static_cast<float>(blendIndex(l.blend));
     u.misc[2] = m_rhi->isYUpInFramebuffer() ? 1.f : 0.f;
@@ -377,6 +383,19 @@ const QImage &Compositor::blurredBackground(const QImage &frame, double amount)
 void Compositor::composite(QRhiCommandBuffer *cb, const Project &p, const FrameDesc &frame, FrameSource &source)
 {
     ++m_frameCounter;
+    // Clipes compostos primeiro: cada um vira uma textura do tamanho do canvas, com fundo transparente.
+    for (const VisualLayer &l : frame.layers) {
+        if (!l.nested || !l.clip || l.opacity <= 0.001)
+            continue;
+        auto &[child, used] = m_children[l.clip->id];
+        if (!child) {
+            child = std::make_unique<Compositor>(m_rhi);
+            child->setTransparentBackground(true);
+        }
+        child->setRenderSize(m_size);
+        child->composite(cb, p, *l.nested, source);
+        used = m_frameCounter;
+    }
     QRhiResourceUpdateBatch *u = m_rhi->nextResourceUpdateBatch();
     ensureResources(u);
 
@@ -450,7 +469,16 @@ void Compositor::composite(QRhiCommandBuffer *cb, const Project &p, const FrameD
         QSizeF natural; // tamanho natural em px do projeto antes de escala
         double fit = 1;
         qint64 imageKey;
-        if (l.clip->isText()) {
+        QRhiTexture *external = nullptr;
+        if (l.nested) {
+            const auto child = m_children.find(l.clip->id);
+            if (child == m_children.end() || !child->second.first->output())
+                continue;
+            external = child->second.first->output();
+            key = l.clip->id;
+            natural = QSizeF(p.width, p.height);
+            imageKey = -1;
+        } else if (l.clip->isText()) {
             const double pxScale = p.height / kTextReferenceHeight * k;
             const quint64 tkey = textCacheKey(*l.clip, pxScale);
             key = l.clip->id;
@@ -473,8 +501,8 @@ void Compositor::composite(QRhiCommandBuffer *cb, const Project &p, const FrameD
             fit = std::min(p.width / natural.width(), p.height / natural.height());
         }
 
-        const QSize texSize = img.isNull() ? m_slots[key]->size : img.size();
-        Slot &slot = slotFor(key, texSize, filterLut, userLut, gradeLut, false);
+        const QSize texSize = external ? m_size : img.isNull() ? m_slots[key]->size : img.size();
+        Slot &slot = slotFor(key, texSize, filterLut, userLut, gradeLut, false, external);
         if (!img.isNull() && slot.imageKey != imageKey) {
             u->uploadTexture(slot.tex.get(), img);
             slot.imageKey = imageKey;
@@ -497,7 +525,10 @@ void Compositor::composite(QRhiCommandBuffer *cb, const Project &p, const FrameD
             const double px = (cx + lx * cs - ly * sn) * k;
             const double py = (cy + lx * sn + ly * cs) * k;
             const double tu = l.flipH ? 1 - c[0] : c[0];
-            const double tv = l.flipV ? 1 - c[1] : c[1];
+            double tv = l.flipV ? 1 - c[1] : c[1];
+            // Textura de render (composto) fica de cabeça para baixo onde o framebuffer tem Y para cima.
+            if (external && m_rhi->isYUpInFramebuffer())
+                tv = 1 - tv;
             verts.insert(verts.end(), {static_cast<float>(px), static_cast<float>(py), static_cast<float>(tu),
                                        static_cast<float>(tv)});
         }
@@ -540,6 +571,7 @@ void Compositor::composite(QRhiCommandBuffer *cb, const Project &p, const FrameD
             else
                 ++it;
         }
+        std::erase_if(m_children, [&](const auto &kv) { return m_frameCounter - kv.second.second > 240; });
     }
 }
 

@@ -18,7 +18,7 @@ layout(std140, binding = 0) uniform buf {
     vec4 clipMaskGeom; // centro x, centro y, largura, altura (frações do quadro)
     vec4 clipMaskExtra; // rotação (rad), proporção do quadro
     vec4 grade;        // correção avançada (curvas/HSL/rodas) ativa
-    vec4 effect;       // efeito de vídeo: índice, intensidade, tempo no clipe (s)
+    vec4 effect;       // efeito de vídeo: índice, intensidade, tempo no clipe (s); w = fonte pré-multiplicada
 } ubuf;
 
 layout(binding = 1) uniform sampler2D layerTex;
@@ -249,6 +249,9 @@ float blendChannel(int mode, float b, float s)
 void main()
 {
     vec4 tex = effectSample(vUV);
+    // Clipe composto: a fonte é outra composição (alfa pré-multiplicado).
+    if (ubuf.effect.w > 0.5 && ubuf.misc.w < 0.5)
+        tex.rgb = tex.a > 0.0 ? tex.rgb / tex.a : vec3(0.0);
 
     // Nitidez: máscara de nitidez com 4 vizinhos.
     if (ubuf.adjust3.y > 0.0) {

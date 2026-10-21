@@ -66,7 +66,7 @@ private:
 
     void ensureResources(QRhiResourceUpdateBatch *u);
     Slot &slotFor(const QString &key, QSize texSize, QRhiTexture *filterLut, QRhiTexture *userLut, QRhiTexture *gradeLut,
-                  bool usesBackdrop);
+                  bool usesBackdrop, QRhiTexture *external = nullptr);
     /** Textura 3D de um LUT (filtro embutido ou .cube); identidade se não houver. */
     QRhiTexture *lutTexture(const QString &key, QRhiResourceUpdateBatch *u);
     std::unique_ptr<QRhiTexture> uploadLut(const Lut3D &lut, QRhiResourceUpdateBatch *u);
@@ -99,6 +99,8 @@ private:
     QRhiTexture *m_blitSrbTex = nullptr;
 
     QHash<QString, std::shared_ptr<Slot>> m_slots;
+    /// Composições internas dos clipes compostos (por id do clipe) e o último quadro em que apareceram.
+    std::unordered_map<QString, std::pair<std::unique_ptr<Compositor>, quint64>> m_children;
     std::unique_ptr<QRhiTexture> m_identityLut;
     std::unordered_map<QString, std::unique_ptr<QRhiTexture>> m_luts;
     std::unordered_map<QString, quint64> m_lutUsed; ///< último quadro em que cada LUT de correção foi usado

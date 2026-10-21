@@ -432,6 +432,53 @@ private slots:
         QVERIFY2(near(out, QColor(220, 30, 30), 4), qPrintable(out.name()));
     }
 
+    void compoundClip()
+    {
+        // Composto: vermelho em tela cheia com verde no quadrante superior esquerdo,
+        // reduzido à metade e levado para o quadrante inferior direito.
+        Project p = createProject(QStringLiteral("t"), 320, 180, 30);
+        auto red = imageAsset(p);
+        auto green = imageAsset(p);
+        const QString r = edit::insertClip(p, createMediaClip(red, 0), 0);
+        auto g = createMediaClip(green, 0);
+        g.transform.scale = 0.5;
+        g.transform.x = -0.5;
+        g.transform.y = -0.5;
+        const QString gid = edit::insertClip(p, g, -1);
+        const QString cmp = edit::createCompound(p, {r, gid}, QStringLiteral("c"));
+        QVERIFY(!cmp.isEmpty());
+        Clip *cc = edit::clipById(p, cmp);
+        cc->transform.scale = 0.5;
+        cc->transform.x = 0.5;
+        cc->transform.y = 0.5;
+        SolidSource src;
+        src.images[red.id] = solid(Qt::red);
+        src.images[green.id] = solid(Qt::green);
+        QImage img = renderAt(p, 0, src);
+        QVERIFY2(near(px(img, 180, 100), Qt::green), qPrintable(px(img, 180, 100).name()));
+        QVERIFY2(near(px(img, 300, 170), Qt::red), qPrintable(px(img, 300, 170).name()));
+        QVERIFY2(near(px(img, 230, 160), Qt::red), qPrintable(px(img, 230, 160).name()));
+        QVERIFY(near(px(img, 20, 20), Qt::black));
+        QVERIFY(near(px(img, 300, 20), Qt::black));
+
+        // Por dentro transparente: só o verde, a 50% de opacidade, sobre azul.
+        Project q = createProject(QStringLiteral("t"), 320, 180, 30);
+        auto blue = imageAsset(q);
+        auto green2 = imageAsset(q);
+        edit::insertClip(q, createMediaClip(blue, 0), 0);
+        auto g2 = createMediaClip(green2, 0);
+        g2.transform.scale = 0.5;
+        const QString g2id = edit::insertClip(q, g2, -1);
+        const QString cmp2 = edit::createCompound(q, {g2id}, QStringLiteral("c"));
+        QVERIFY(!cmp2.isEmpty());
+        edit::clipById(q, cmp2)->transform.opacity = 0.5;
+        src.images[blue.id] = solid(Qt::blue);
+        src.images[green2.id] = solid(Qt::green);
+        img = renderAt(q, 0, src);
+        QVERIFY2(near(px(img, 20, 20), Qt::blue), qPrintable(px(img, 20, 20).name()));
+        QVERIFY2(near(px(img, 160, 90), QColor(0, 128, 127), 8), qPrintable(px(img, 160, 90).name()));
+    }
+
     void cleanupTestCase() { m_comp.reset(); }
 };
 
