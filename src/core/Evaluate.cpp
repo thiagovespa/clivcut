@@ -213,6 +213,13 @@ double audioGainAt(const Clip &c, Micros rel)
     return std::max(0.0, g);
 }
 
+bool touchesPrevious(const Project &p, const std::vector<Clip> &clips, int index)
+{
+    if (index <= 0 || index >= static_cast<int>(clips.size()))
+        return false;
+    return std::abs(clips[index - 1].end() - clips[index].start) <= p.frameDuration() / 2;
+}
+
 FrameDesc evaluate(const Project &p, Micros t)
 {
     return evaluateTracks(p, p.tracks, t, 0);
@@ -229,18 +236,21 @@ FrameDesc evaluateTracks(const Project &p, const std::vector<Track> &tracks, Mic
         for (int ci = 0; ci < static_cast<int>(clips.size()); ++ci) {
             const Clip &c = clips[ci];
 
-            // Transição no corte entre clips[ci-1] e clips[ci] (clipes encostados).
+            // Transição no corte entre clips[ci-1] e clips[ci] (clipes encostados). O corte é o
+            // início do clipe que entra; uma folga de meio quadro fica com o clipe que sai.
             const Clip *next = ci + 1 < static_cast<int>(clips.size()) ? &clips[ci + 1] : nullptr;
-            const bool nextHasTransition = next && next->transitionIn && next->start == c.end();
-            const bool hasTransition = c.transitionIn && ci > 0 && clips[ci - 1].end() == c.start;
+            const bool nextHasTransition = next && next->transitionIn && touchesPrevious(p, clips, ci + 1);
+            const bool hasTransition = c.transitionIn && touchesPrevious(p, clips, ci);
             const Micros half = hasTransition ? c.transitionIn->duration / 2 : 0;
             const Micros nextHalf = nextHasTransition ? next->transitionIn->duration / 2 : 0;
+            const Micros ownEnd = nextHasTransition ? next->start : c.end();
 
             const bool inside = t >= c.start && t < c.end();
+            const bool insideVisual = t >= c.start && t < ownEnd;
 
             // Uma transição ocupa [corte - d/2, corte + d/2). Cada metade é emitida pelo
             // clipe que contém t; o outro clipe é estendido além da borda (origem extrapolada).
-            if (inside && track.isVisual() && !track.hidden && !c.audioOnly) {
+            if (insideVisual && track.isVisual() && !track.hidden && !c.audioOnly) {
                 VisualLayer cur = resolveLayer(p, ti, c, t - c.start, depth);
                 if (hasTransition && t < c.start + half) {
                     const Clip &prev = clips[ci - 1];
@@ -249,7 +259,7 @@ FrameDesc evaluateTracks(const Project &p, const std::vector<Track> &tracks, Mic
                     applyTransition(c.transitionIn->kind, prog, out, cur);
                     f.layers.push_back(out);
                     f.layers.push_back(cur);
-                } else if (nextHasTransition && t >= c.end() - nextHalf) {
+                } else if (nextHasTransition && t >= next->start - nextHalf) {
                     VisualLayer in = resolveLayer(p, ti, *next, t - next->start, depth);
                     const double prog = static_cast<double>(t - (next->start - nextHalf)) / next->transitionIn->duration;
                     applyTransition(next->transitionIn->kind, prog, cur, in);

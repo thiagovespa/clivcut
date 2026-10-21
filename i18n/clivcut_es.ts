@@ -2180,12 +2180,16 @@ Atajos: Espacio reproduce · Ctrl+B divide · Q/W eliminan a la izquierda/derech
         <translation>El texto se añade en el cursor de la línea de tiempo, en una pista de texto. Edita el contenido y el estilo en el panel derecho.</translation>
     </message>
     <message>
-        <source>In transition of the selected clip</source>
-        <translation>Transición de entrada del clip seleccionado</translation>
+        <source>Transition at the cut</source>
+        <translation>Transición en el corte</translation>
     </message>
     <message>
-        <source>Select a clip that comes right after another on the same track.</source>
-        <translation>Selecciona un clip que vaya justo después de otro en la misma pista.</translation>
+        <source>This clip doesn&apos;t touch another one on the same track. Close the gap to add a transition.</source>
+        <translation>Este clip no toca otro en la misma pista. Cierra el hueco para añadir una transición.</translation>
+    </message>
+    <message>
+        <source>Select a clip that touches another one on the same track.</source>
+        <translation>Selecciona un clip que toque otro en la misma pista.</translation>
     </message>
     <message>
         <source>None</source>

@@ -66,6 +66,12 @@ Micros sourceTimeAt(const Project &p, const Clip &c, Micros rel);
 /** Ganho linear de áudio num tempo relativo (volume + keyframes + fades). */
 double audioGainAt(const Clip &c, Micros rel);
 
+/**
+ * O clipe `index` encosta no anterior da mesma faixa, com folga de meio quadro:
+ * o corte entre os dois aceita uma transição.
+ */
+bool touchesPrevious(const Project &p, const std::vector<Clip> &clips, int index);
+
 FrameDesc evaluate(const Project &p, Micros t);
 
 } // namespace clv

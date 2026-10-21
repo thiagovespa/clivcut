@@ -158,6 +158,16 @@ private slots:
         const QString second = clipsOf(0).at(1).toMap().value("id").toString();
         m_ctrl->setTransition(second, QStringLiteral("dissolve"), 400000);
         QCOMPARE(clipsOf(0).at(1).toMap().value("transition").toString(), QStringLiteral("dissolve"));
+
+        // No primeiro clipe, a transição vai para o corte com o seguinte.
+        const QString first = clipsOf(0).at(0).toMap().value("id").toString();
+        m_ctrl->select(first);
+        QCOMPARE(m_ctrl->selectedClip().value("transitionClip").toString(), second);
+        QCOMPARE(m_ctrl->selectedClip().value("transition").toString(), QStringLiteral("dissolve"));
+        m_ctrl->setTransition(first, QStringLiteral("wipeLeft"), 400000);
+        QCOMPARE(clipsOf(0).at(0).toMap().value("transition").toString(), QString());
+        QCOMPARE(clipsOf(0).at(1).toMap().value("transition").toString(), QStringLiteral("wipeLeft"));
+        m_ctrl->setTransition(second, QStringLiteral("dissolve"), 400000);
     }
 
     void freezeAndDeleteLeft()

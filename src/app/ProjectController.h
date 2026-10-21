@@ -503,6 +503,8 @@ private:
     QStringList m_selection;
     QString m_primary; ///< último clipe clicado (inspetor e "copiar atributos" em seleções múltiplas)
     QString primaryClipId() const;
+    /// Clipe cuja transição de entrada a seleção edita: ele mesmo, ou o seguinte se só encosta nele; vazio sem corte.
+    QString transitionTarget(const QString &clipId) const;
     bool m_snapping = true;
 
     clv::Micros m_playhead = 0;

@@ -316,6 +316,29 @@ private slots:
         QCOMPARE(f.layers[1].opacity, 0.25);
     }
 
+    void transitionAcrossTinyGap()
+    {
+        // Clipes soltos a olho deixam uma folga menor que meio quadro: o corte ainda vale.
+        Project p = createProject(); // 30 fps
+        auto a = videoAsset(p, 4 * kSecond);
+        edit::insertClip(p, createMediaClip(a, 0), 0);
+        auto second = createMediaClip(a, 4 * kSecond + 10'000);
+        second.transitionIn = Transition{TransitionKind::Dissolve, kSecond};
+        edit::insertClip(p, second, 0);
+        QVERIFY(touchesPrevious(p, p.tracks[0].clips, 1));
+        auto f = evaluate(p, 4 * kSecond + 10'000);
+        QCOMPARE(f.layers.size(), size_t(2));
+        QCOMPARE(f.layers[1].opacity, 0.5);
+        // Dentro da folga, o clipe que sai continua na tela junto do que entra.
+        f = evaluate(p, 4 * kSecond + 5'000);
+        QCOMPARE(f.layers.size(), size_t(2));
+
+        // Um espaço de verdade não tem corte.
+        p.tracks[0].clips[1].start = 5 * kSecond;
+        QVERIFY(!touchesPrevious(p, p.tracks[0].clips, 1));
+        QCOMPARE(evaluate(p, 5 * kSecond).layers.size(), size_t(1));
+    }
+
     void audioFades()
     {
         Project p = createProject();

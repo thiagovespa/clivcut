@@ -297,6 +297,8 @@ QVariantList ProjectController::tracks() const
         QVariantList clips;
         for (const Clip &c : t.clips) {
             const MediaAsset *a = c.hasMedia() ? m_project.asset(c.assetId) : nullptr;
+            // Transição guardada num clipe que não encosta no anterior não aparece no vídeo.
+            const bool effectiveTransition = touchesPrevious(m_project, t.clips, static_cast<int>(&c - t.clips.data()));
             bool hasKf = false;
             QVariantList kfTimes;
             QSet<Micros> seen;
@@ -352,8 +354,8 @@ QVariantList ProjectController::tracks() const
                 {"assetDuration", a ? static_cast<double>(a->duration) : seq ? static_cast<double>(seq->duration()) : 0.0},
                 {"hasAudio", (a && a->hasAudio) || (seq && compoundHasAudio(*seq))},
                 {"missing", a && !QFileInfo::exists(a->path)},
-                {"transition", c.transitionIn ? transitionName(c.transitionIn->kind) : QString()},
-                {"transitionDuration", c.transitionIn ? static_cast<double>(c.transitionIn->duration) : 0.0},
+                {"transition", c.transitionIn && effectiveTransition ? transitionName(c.transitionIn->kind) : QString()},
+                {"transitionDuration", c.transitionIn && effectiveTransition ? static_cast<double>(c.transitionIn->duration) : 0.0},
                 {"hasKeyframes", hasKf},
                 {"keyframeTimes", kfTimes},
                 {"fadeIn", static_cast<double>(c.fadeIn)},
@@ -640,8 +642,18 @@ QVariantMap ProjectController::selectedClip() const
               {"cropTop", c->crop.top},
               {"cropRight", c->crop.right},
               {"cropBottom", c->crop.bottom},
-              {"transition", c->transitionIn ? transitionName(c->transitionIn->kind) : QString()},
-              {"transitionDuration", c->transitionIn ? static_cast<double>(c->transitionIn->duration) : 500000.0}});
+              {"transitionClip", QString()},
+              {"transition", QString()},
+              {"transitionDuration", 500000.0}});
+    // A transição mostrada é a do corte que a seleção edita (ver transitionTarget).
+    const QString trTarget = transitionTarget(c->id);
+    if (const Clip *tc = trTarget.isEmpty() ? nullptr : edit::clipById(m_project, trTarget)) {
+        m["transitionClip"] = trTarget;
+        if (tc->transitionIn) {
+            m["transition"] = transitionName(tc->transitionIn->kind);
+            m["transitionDuration"] = static_cast<double>(tc->transitionIn->duration);
+        }
+    }
     return m;
 }
 
@@ -1322,11 +1334,28 @@ void ProjectController::toggleKeyframe(const QString &clipId, const QString &pro
     });
 }
 
+QString ProjectController::transitionTarget(const QString &clipId) const
+{
+    const auto ref = edit::findClip(m_project, clipId);
+    if (!ref)
+        return {};
+    const auto &clips = m_project.tracks[ref->track].clips;
+    if (touchesPrevious(m_project, clips, ref->index))
+        return clipId;
+    // Primeiro clipe de uma sequência: a transição vai para o corte com o seguinte.
+    if (touchesPrevious(m_project, clips, ref->index + 1))
+        return clips[ref->index + 1].id;
+    return {};
+}
+
 void ProjectController::setTransition(const QString &clipId, const QString &kind, double durationUs)
 {
+    const QString target = transitionTarget(clipId);
+    if (target.isEmpty())
+        return;
     edit(tr("Transition"), [&](Project &p) {
-        auto ref = edit::findClip(p, clipId);
-        if (!ref || ref->index == 0)
+        auto ref = edit::findClip(p, target);
+        if (!ref)
             return false;
         Clip &c = p.tracks[ref->track].clips[ref->index];
         if (kind.isEmpty() || kind == QLatin1String("none")) {
@@ -1337,7 +1366,7 @@ void ProjectController::setTransition(const QString &clipId, const QString &kind
         const Micros maxD = std::min(prev.duration, c.duration);
         c.transitionIn = Transition{transitionFromName(kind), std::clamp<Micros>(static_cast<Micros>(durationUs), 100'000, maxD)};
         return true;
-    }, clipId + QStringLiteral("transition"));
+    }, target + QStringLiteral("transition"));
 }
 
 void ProjectController::setAnimation(const QString &clipId, bool in, const QString &kind, double durationUs)

@@ -2180,12 +2180,16 @@ Atalhos: Espaço reproduz · Ctrl+B divide · Q/W exclui à esquerda/direita · 
         <translation>O texto entra no cursor da timeline, numa faixa de texto. Edite o conteúdo e o estilo no painel à direita.</translation>
     </message>
     <message>
-        <source>In transition of the selected clip</source>
-        <translation>Transição de entrada do clipe selecionado</translation>
+        <source>Transition at the cut</source>
+        <translation>Transição no corte</translation>
     </message>
     <message>
-        <source>Select a clip that comes right after another on the same track.</source>
-        <translation>Selecione um clipe que venha logo depois de outro na mesma faixa.</translation>
+        <source>This clip doesn&apos;t touch another one on the same track. Close the gap to add a transition.</source>
+        <translation>Este clipe não encosta em outro na mesma faixa. Feche o espaço para adicionar uma transição.</translation>
+    </message>
+    <message>
+        <source>Select a clip that touches another one on the same track.</source>
+        <translation>Selecione um clipe que encoste em outro na mesma faixa.</translation>
     </message>
     <message>
         <source>None</source>

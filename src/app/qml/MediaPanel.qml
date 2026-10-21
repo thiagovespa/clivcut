@@ -398,19 +398,23 @@ Rectangle {
                     x: 10
                     y: 10
                     width: parent.width - 20
-                    SectionLabel { text: qsTr("In transition of the selected clip") }
+                    // A transição fica no corte: o do início do clipe ou, no primeiro clipe, o do fim.
+                    readonly property bool canTransition: root.hasSel && root.sel.type === "media" && root.sel.transitionClip !== ""
+                    SectionLabel { text: qsTr("Transition at the cut") }
                     Text {
                         Layout.fillWidth: true
-                        visible: !root.hasSel || root.sel.type !== "media"
+                        visible: !trCol.canTransition
                         wrapMode: Text.Wrap
                         color: Theme.textFaint
                         font.pixelSize: Theme.fontSmall
-                        text: qsTr("Select a clip that comes right after another on the same track.")
+                        text: root.hasSel && root.sel.type === "media"
+                              ? qsTr("This clip doesn't touch another one on the same track. Close the gap to add a transition.")
+                              : qsTr("Select a clip that touches another one on the same track.")
                     }
                     Flow {
                         Layout.fillWidth: true
                         spacing: 8
-                        enabled: root.hasSel && root.sel.type === "media"
+                        enabled: trCol.canTransition
                         opacity: enabled ? 1 : 0.4
                         Repeater {
                             model: [
@@ -437,13 +441,13 @@ Rectangle {
                                 required property var modelData
                                 glyph: modelData.glyph
                                 caption: modelData.name
-                                selected: root.hasSel && (root.sel.transition === modelData.kind || (modelData.kind === "none" && !root.sel.transition))
+                                selected: trCol.canTransition && (root.sel.transition === modelData.kind || (modelData.kind === "none" && !root.sel.transition))
                                 onClicked: Project.setTransition(root.sel.id, modelData.kind, root.sel.transitionDuration > 0 ? root.sel.transitionDuration : 500000)
                             }
                         }
                     }
                     PropSlider {
-                        visible: root.hasSel && root.sel.transition !== undefined && root.sel.transition !== ""
+                        visible: trCol.canTransition && root.sel.transition !== ""
                         label: qsTr("Duration")
                         from: 0.1
                         to: 3
