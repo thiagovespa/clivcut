@@ -150,7 +150,9 @@ bool transcribePcm16k(const std::vector<float> &pcm, const TranscribeOptions &op
 
     const QByteArray lang = opts.language.isEmpty() ? QByteArray("auto") : opts.language.toLatin1();
     whisper_full_params wp = whisper_full_default_params(WHISPER_SAMPLING_BEAM_SEARCH);
-    wp.n_threads = opts.threads > 0 ? opts.threads : std::max(1, std::min(QThread::idealThreadCount(), 8));
+    // Metade dos núcleos lógicos: as threads do ggml esperam girando, e com todos ocupados
+    // (hyper-threading, um build ou uma exportação ao lado) a transcrição fica dezenas de vezes mais lenta.
+    wp.n_threads = opts.threads > 0 ? opts.threads : std::clamp(QThread::idealThreadCount() / 2, 1, 8);
     wp.language = lang.constData();
     wp.detect_language = false;
     wp.translate = opts.translateToEnglish;
