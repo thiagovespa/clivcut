@@ -5,7 +5,9 @@ add_library(clivcut_engine STATIC
     RenderCache.h RenderCache.cpp
     VoiceIsolation.h VoiceIsolation.cpp
     Silence.h Silence.cpp
+    PhaseCorrelation.h PhaseCorrelation.cpp
     Stabilization.h Stabilization.cpp
+    MotionTracking.h MotionTracking.cpp
     StemSeparation.h StemSeparation.cpp
     Beats.h Beats.cpp
     VoiceEffects.h VoiceEffects.cpp

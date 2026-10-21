@@ -5,6 +5,7 @@
 #include "engine/Matting.h"
 #include "engine/RenderCache.h"
 #include "engine/Stabilization.h"
+#include "engine/MotionTracking.h"
 #include "engine/Proxy.h"
 #include "media/MediaProbe.h"
 
@@ -247,6 +248,37 @@ private slots:
         registerMotion(shaky, nullptr);
         QVERIFY(engine::discoverMotion(shaky));
         QCOMPARE(registeredMotion(shaky)->frames(), track->frames());
+    }
+
+    void regionTracking()
+    {
+        // Quadrado 80×80 (um quadro parado do padrão de teste) andando sobre um fundo de fractal: x = 200 + 260·t,
+        // y = 150 + 90·sin(2πt/3), num vídeo 1280×720 de 4 s.
+        const QString clip = m_dir.filePath(QStringLiteral("objeto.mp4"));
+        QProcess p;
+        p.start(QStringLiteral("ffmpeg"), {"-hide_banner", "-loglevel", "error", "-y", "-f", "lavfi", "-i",
+                                           "mandelbrot=size=1280x720:rate=30:end_pts=0.01,loop=loop=-1:size=1,trim=duration=4",
+                                           "-f", "lavfi", "-i", "testsrc2=size=80x80:rate=30:duration=0.04,loop=loop=-1:size=1,trim=duration=4", "-filter_complex",
+                                           "[0][1]overlay=x='200+260*t':y='150+90*sin(2*PI*t/3)':eof_action=pass",
+                                           "-c:v", "libx264", "-preset", "ultrafast", "-crf", "14", "-pix_fmt", "yuv420p", clip});
+        QVERIFY(p.waitForFinished(120000) && p.exitCode() == 0);
+        auto truth = [](double t) {
+            return QPointF((200 + 260 * t + 40) / 1280.0, (150 + 90 * std::sin(2 * M_PI * t / 3) + 40) / 720.0);
+        };
+        const Micros mid = 2 * kSecond;
+        const QPointF c = truth(2.0);
+        QString err;
+        for (const Micros to : {Micros(3'800'000), Micros(200'000)}) { // para a frente e para trás
+            const auto pts = engine::trackRegion(clip, mid, to, c.x(), c.y(), 80 / 1280.0, 80 / 720.0, {}, &err);
+            QVERIFY2(pts.size() > 40, qPrintable(err));
+            double worst = 0;
+            for (const auto &pt : pts) {
+                const QPointF e = truth(static_cast<double>(pt.t) / kSecond);
+                worst = std::max(worst, std::hypot((pt.u - e.x()) * 1280, (pt.v - e.y()) * 720));
+            }
+            qInfo() << "erro máximo (px):" << worst;
+            QVERIFY2(worst < 4, qPrintable(QStringLiteral("erro máximo %1 px").arg(worst)));
+        }
     }
 
     void cancel()
