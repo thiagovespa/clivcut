@@ -8,6 +8,8 @@
 #include "engine/VoiceEffects.h"
 #include "engine/VoiceIsolation.h"
 #include "engine/Silence.h"
+#include "engine/StemSeparation.h"
+#include "engine/AiModels.h"
 #include "engine/WhisperModels.h"
 #include "media/AudioDecoder.h"
 #include "media/Loudness.h"
@@ -442,6 +444,59 @@ private slots:
         const auto none = engine::detectBeatsPcm16k(std::vector<float>(16000 * 5, 0.f), 0);
         QVERIFY(none.beats.empty());
         QCOMPARE(none.bpm, 0.0);
+    }
+
+    void stemSeparation()
+    {
+#ifndef CLIVCUT_WHISPER_SAMPLES
+        QSKIP("sem amostras de fala");
+#else
+        const QString model = engine::aiModelPath(engine::kStemsModel);
+        if (!engine::stemSeparationAvailable() || !engine::aiModelInstalled(engine::kStemsModel))
+            QSKIP("modelo HT-Demucs não instalado");
+        // Fala (jfk.wav, 11 s) sobre bateria e baixo sintéticos.
+        const QString voice = m_dir.filePath(QStringLiteral("voz.wav")), band = m_dir.filePath(QStringLiteral("banda.wav")),
+                      mix = m_dir.filePath(QStringLiteral("mistura.wav"));
+        QProcess p;
+        p.start(QStringLiteral("ffmpeg"), {"-hide_banner", "-loglevel", "error", "-y", "-i",
+                                           QStringLiteral(CLIVCUT_WHISPER_SAMPLES "/jfk.wav"), "-ac", "2", "-ar", "48000", voice});
+        QVERIFY(p.waitForFinished(60000) && p.exitCode() == 0);
+        p.start(QStringLiteral("ffmpeg"), {"-hide_banner", "-loglevel", "error", "-y", "-f", "lavfi", "-i",
+                                           "aevalsrc='0.5*sin(2*PI*55*t)*exp(-12*mod(t\\,0.5))"
+                                           "+0.25*sin(2*PI*82.4*t)*(0.6+0.4*sin(2*PI*0.5*t))"
+                                           "+0.15*(random(0)-0.5)*exp(-60*mod(t+0.25\\,0.5))':s=48000:d=11",
+                                           "-ac", "2", band});
+        QVERIFY(p.waitForFinished(60000) && p.exitCode() == 0);
+        p.start(QStringLiteral("ffmpeg"), {"-hide_banner", "-loglevel", "error", "-y", "-i", voice, "-i", band, "-filter_complex",
+                                           "amix=inputs=2:normalize=0:duration=shortest", "-ar", "48000", mix});
+        QVERIFY(p.waitForFinished(60000) && p.exitCode() == 0);
+
+        QString err;
+        QVERIFY2(engine::separateStems(mix, model, {}, &err), qPrintable(err));
+        QVERIFY(engine::stemsReady(mix));
+        auto load = [](const QString &path) {
+            media::AudioDecoder d;
+            std::vector<float> v(48000 * 10 * 2);
+            if (d.open(path))
+                d.read(500'000, v.data(), 48000 * 10);
+            return v;
+        };
+        auto corr = [](const std::vector<float> &a, const std::vector<float> &b) {
+            double ab = 0, aa = 0, bb = 0;
+            for (size_t i = 0; i < a.size(); ++i) {
+                ab += a[i] * b[i];
+                aa += a[i] * a[i];
+                bb += b[i] * b[i];
+            }
+            return ab / std::sqrt(aa * bb + 1e-12);
+        };
+        const auto v = load(voice), vocals = load(engine::stemPathFor(mix, engine::Stem::Vocals));
+        const auto inst = load(engine::stemPathFor(mix, engine::Stem::Instrumental));
+        const double cv = corr(vocals, v), ci = corr(inst, v);
+        qInfo() << "vocals~voice" << cv << "instrumental~voice" << ci;
+        QVERIFY2(cv > 0.8, qPrintable(QString::number(cv)));
+        QVERIFY2(std::abs(ci) < 0.3, qPrintable(QString::number(ci)));
+#endif
     }
 
     void voiceIsolation()

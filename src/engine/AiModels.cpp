@@ -28,6 +28,14 @@ const std::vector<AiModel> &aiModels()
                         QStringLiteral("voice"), QStringLiteral("deepfilternet3_streaming.onnx"),
                         QUrl(QStringLiteral("https://huggingface.co/kimtos-labs/denoiser-dfn3/resolve/main/denoiser_model.onnx")),
                         QStringLiteral("MIT OR Apache-2.0")});
+        // Exportação ONNX do HT-Demucs v4 (pesos em fp16), presa a um commit e conferida pelo hash.
+        list.push_back({kStemsModel, QString::fromUtf8(QT_TRANSLATE_NOOP("Models", "Music separation (HT-Demucs)")), 165'612'636,
+                        QString::fromUtf8(QT_TRANSLATE_NOOP("Models", "Splits music into vocals, drums, bass and other instruments")),
+                        QStringLiteral("stems"), QStringLiteral("htdemucs_fp16weights.onnx"),
+                        QUrl(QStringLiteral("https://huggingface.co/StemSplitio/htdemucs-onnx/resolve/"
+                                            "d54ed9eb60e258ea82131c6ee14578628816456a/htdemucs_fp16weights.onnx")),
+                        QStringLiteral("MIT"),
+                        QStringLiteral("d05c269d0178d2a72ad484b10b11dd370193fc923201c3b27a99f848745db70a")});
         return list;
     }();
     return models;

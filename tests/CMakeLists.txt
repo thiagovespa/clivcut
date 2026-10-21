@@ -43,4 +43,7 @@ add_test(NAME proxy COMMAND tst_proxy)
 
 add_executable(tst_audio tst_audio.cpp)
 target_link_libraries(tst_audio PRIVATE clivcut_engine Qt6::Test)
+if(CLIVCUT_WHISPER_SAMPLES)
+    target_compile_definitions(tst_audio PRIVATE CLIVCUT_WHISPER_SAMPLES="${CLIVCUT_WHISPER_SAMPLES}")
+endif()
 add_test(NAME audio COMMAND tst_audio)

@@ -43,6 +43,7 @@
 #include <QKeySequence>
 #include <QQmlEngine>
 #include <QDateTime>
+#include <QCryptographicHash>
 #include <QDir>
 #include <QJsonDocument>
 #include <QJsonObject>
@@ -1737,8 +1738,19 @@ void ProjectController::downloadModel(const QString &id)
     connect(m_modelReply, &QNetworkReply::finished, this, [this, file, finalPath, id] {
         file->write(m_modelReply->readAll());
         file->close();
-        const bool ok = m_modelReply->error() == QNetworkReply::NoError && file->size() > 1'000'000;
-        const QString err = m_modelReply->errorString();
+        bool ok = m_modelReply->error() == QNetworkReply::NoError && file->size() > 1'000'000;
+        QString err = m_modelReply->errorString();
+        // Conferência do conteúdo baixado (modelos com hash conhecido).
+        const engine::AiModel *m = engine::findAiModel(id);
+        if (ok && m && !m->sha256.isEmpty() && file->open(QIODevice::ReadOnly)) {
+            QCryptographicHash h(QCryptographicHash::Sha256);
+            h.addData(file);
+            file->close();
+            if (QString::fromLatin1(h.result().toHex()) != m->sha256) {
+                ok = false;
+                err = tr("the downloaded file is corrupted (checksum mismatch)");
+            }
+        }
         const bool cancelled = m_modelReply->error() == QNetworkReply::OperationCanceledError;
         if (ok) {
             QFile::remove(finalPath);

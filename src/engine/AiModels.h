@@ -18,6 +18,7 @@ struct AiModel {
     QString fileName; ///< nome do arquivo na pasta de modelos
     QUrl url;
     QString license;
+    QString sha256 = {}; ///< conferido depois do download (vazio = sem verificação)
 };
 
 const std::vector<AiModel> &aiModels();
@@ -29,5 +30,7 @@ bool aiModelInstalled(const QString &id);
 inline const QString kMattingModel = QStringLiteral("rvm");
 /// Isolamento de voz (DeepFilterNet3 em streaming, MIT ou Apache-2.0).
 inline const QString kVoiceModel = QStringLiteral("dfn3");
+/// Separação de música em faixas (HT-Demucs v4, MIT).
+inline const QString kStemsModel = QStringLiteral("htdemucs");
 
 } // namespace clv::engine
