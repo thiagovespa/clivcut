@@ -148,6 +148,42 @@ private slots:
         QVERIFY(std::abs(level(p) / original - 2.0) < 0.05); // +6 dB ≈ 2×
     }
 
+    void compoundClipAudio()
+    {
+        Project p = createProject();
+        MediaAsset a;
+        QVERIFY(media::probe(m_noisy, a));
+        a.id = newId("ast");
+        p.assets.emplace(a.id, a);
+        const QString id = edit::insertClip(p, createMediaClip(a, 0), -1);
+        auto play = [&](const Project &proj) {
+            engine::AudioMixer mixer;
+            std::vector<float> buf(48000 * 2);
+            mixer.mix(proj, 1'500'000, buf.data(), 48000); // atravessa a entrada do sinal forte (2 s)
+            return buf;
+        };
+        const std::vector<float> original = play(p);
+        const QString cmp = edit::createCompound(p, {id}, QStringLiteral("c"));
+        QVERIFY(!cmp.isEmpty());
+        QCOMPARE(edit::trackKindFor(p, *edit::clipById(p, cmp)), TrackKind::Audio);
+        const std::vector<float> inside = play(p);
+        double diff = 0, energy = 0;
+        for (size_t i = 0; i < original.size(); ++i) {
+            diff = std::max(diff, static_cast<double>(std::abs(original[i] - inside[i])));
+            energy += original[i] * original[i];
+        }
+        QVERIFY(energy > 1);
+        QVERIFY2(diff < 1e-5, qPrintable(QString::number(diff)));
+        // Volume do composto vale para tudo o que está dentro.
+        edit::clipById(p, cmp)->volume = 0.5;
+        const std::vector<float> half = play(p);
+        for (size_t i = 0; i < original.size(); i += 997)
+            QVERIFY(std::abs(half[i] - 0.5f * original[i]) < 1e-4);
+        edit::clipById(p, cmp)->audioMuted = true;
+        const std::vector<float> muted = play(p);
+        QVERIFY(std::all_of(muted.begin(), muted.end(), [](float x) { return x == 0.f; }));
+    }
+
     void timeStretchIdentityAndPitch()
     {
         // Velocidade 1: saída idêntica à entrada, em blocos de qualquer tamanho.

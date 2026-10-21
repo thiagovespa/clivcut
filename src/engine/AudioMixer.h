@@ -44,7 +44,9 @@ private:
     };
     media::AudioDecoder *decoderFor(const Clip &c, const MediaAsset &a);
     /** Mixa um clipe no bloco [t, t + frames) somando em `dst`. */
-    void mixClip(const Project &p, const Clip &c, Micros t, int frames, float *dst);
+    void mixClip(const Project &p, const Clip &c, Micros t, int frames, float *dst, int depth = 0);
+    /// Clipe composto: mistura as faixas internas no tempo da sequência, com o volume do composto.
+    void mixCompound(const Project &p, const Clip &c, Micros t, int frames, float *dst, int depth);
     Entry &entryFor(const Clip &c) { return m_decoders[c.id]; }
     void readStream(Entry &e, std::int64_t k, float *dst, int frames);
 

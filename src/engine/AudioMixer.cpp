@@ -93,10 +93,46 @@ void AudioMixer::readStream(Entry &e, std::int64_t k, float *dst, int frames)
     }
 }
 
-void AudioMixer::mixClip(const Project &p, const Clip &c, Micros t, int frames, float *dst)
+void AudioMixer::mixCompound(const Project &p, const Clip &c, Micros t, int frames, float *dst, int depth)
+{
+    const Sequence *seq = depth < 8 ? p.compound(c.compoundId) : nullptr;
+    if (!seq)
+        return;
+    const Micros span = static_cast<Micros>(static_cast<double>(frames) * kSecond / kSampleRate);
+    const Micros segStart = std::max(t, c.start);
+    const Micros segEnd = std::min(t + span, c.end());
+    const int off = static_cast<int>(std::llround(static_cast<double>(segStart - t) * kSampleRate / kSecond));
+    const int n = std::min(frames - off,
+                           static_cast<int>(std::llround(static_cast<double>(segEnd - segStart) * kSampleRate / kSecond)));
+    if (n <= 0)
+        return;
+    const Micros rel = segStart - c.start;
+    const Micros inner = c.sourceIn + rel; // compostos tocam a 1x
+    std::vector<float> buf(static_cast<size_t>(n) * kChannels, 0.f);
+    for (const Track &track : seq->tracks) {
+        if (track.muted || track.kind == TrackKind::Text)
+            continue;
+        for (const Clip &ic : track.clips)
+            mixClip(p, ic, inner, n, buf.data(), depth + 1);
+    }
+    const double g0 = audioGainAt(c, rel);
+    const double g1 = audioGainAt(c, rel + (segEnd - segStart));
+    for (int i = 0; i < n; ++i) {
+        const double g = g0 + (g1 - g0) * (static_cast<double>(i) / n);
+        dst[(off + i) * 2] += static_cast<float>(buf[static_cast<size_t>(i) * 2] * g);
+        dst[(off + i) * 2 + 1] += static_cast<float>(buf[static_cast<size_t>(i) * 2 + 1] * g);
+    }
+}
+
+void AudioMixer::mixClip(const Project &p, const Clip &c, Micros t, int frames, float *dst, int depth)
 {
     const Micros span = static_cast<Micros>(static_cast<double>(frames) * kSecond / kSampleRate);
     const Micros tEnd = t + span;
+    if (c.isCompound()) {
+        if (!c.audioMuted && c.end() > t && c.start < tEnd)
+            mixCompound(p, c, t, frames, dst, depth);
+        return;
+    }
     if (!c.hasMedia() || c.audioMuted || c.end() <= t || c.start >= tEnd || c.speed <= 0)
         return;
     const MediaAsset *a = p.asset(c.assetId);
@@ -179,7 +215,7 @@ void AudioMixer::mix(const Project &p, Micros t, float *out, int frames)
         if (track.muted || track.kind == TrackKind::Text)
             continue;
         for (const Clip &c : track.clips) {
-            if (!c.hasMedia() || c.audioMuted || c.end() <= t || c.start >= tEnd || c.speed <= 0)
+            if (!(c.hasMedia() || c.isCompound()) || c.audioMuted || c.end() <= t || c.start >= tEnd || c.speed <= 0)
                 continue;
             if (c.ducking > 0)
                 ducked.push_back(&c);
