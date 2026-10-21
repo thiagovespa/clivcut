@@ -578,6 +578,8 @@ Rectangle {
         MenuSeparator {}
         MenuItem { text: qsTr("Group") + "\t" + Keymap.label("group"); enabled: Project.selection.length > 1; onTriggered: Project.groupSelection() }
         MenuItem { text: qsTr("Ungroup") + "\t" + Keymap.label("ungroup"); enabled: Project.selection.length > 0; onTriggered: Project.ungroupSelection() }
+        MenuItem { text: qsTr("Create compound clip") + "\t" + Keymap.label("createCompound"); enabled: Project.selection.length > 0; onTriggered: Project.createCompound() }
+        MenuItem { text: qsTr("Break compound clip") + "\t" + Keymap.label("breakCompound"); enabled: Project.selectedClip.mediaKind === "compound"; onTriggered: Project.breakCompound() }
         MenuSeparator {}
         MenuItem { text: qsTr("Split at playhead") + "\t" + Keymap.label("split"); onTriggered: Project.splitAtPlayhead() }
         MenuItem { text: qsTr("Freeze frame") + "\t" + Keymap.label("freeze"); enabled: clipMenu.clipId !== ""; onTriggered: Project.freezeFrame() }

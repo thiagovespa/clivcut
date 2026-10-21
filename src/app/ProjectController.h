@@ -271,6 +271,9 @@ public:
     Q_INVOKABLE double snapTime(double t, const QStringList &ignore, double thresholdUs) const;
     Q_INVOKABLE void setTrackFlag(int trackIndex, const QString &flag, bool value);
     Q_INVOKABLE void addMarker();
+    /// Junta os clipes selecionados num clipe composto / devolve o conteúdo do composto à timeline.
+    Q_INVOKABLE void createCompound();
+    Q_INVOKABLE void breakCompound();
     /// Marca entrada/saída no cursor (I/O); limpar com clearInOut (Alt+X).
     Q_INVOKABLE void markIn();
     Q_INVOKABLE void markOut();
@@ -430,6 +433,7 @@ signals:
     void recentProjectsChanged();
 
 private:
+    bool compoundHasAudio(const clv::Sequence &seq) const;
     /** Executa uma edição com registro no histórico. `coalesceKey` agrupa edições contínuas. */
     template <typename F>
     bool edit(const QString &label, F &&fn, const QString &coalesceKey = {});

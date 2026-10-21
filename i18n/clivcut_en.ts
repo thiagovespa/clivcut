@@ -39,6 +39,13 @@
         </translation>
     </message>
     <message numerus="yes">
+        <source>%n clip(s) combined into %1</source>
+        <translation>
+            <numerusform>%n clip combined into %1</numerusform>
+            <numerusform>%n clips combined into %1</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
         <source>Loudness normalized to %1 LUFS (%n clip(s))</source>
         <translation>
             <numerusform>Loudness normalized to %1 LUFS (%n clip)</numerusform>

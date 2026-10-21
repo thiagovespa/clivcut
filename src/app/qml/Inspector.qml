@@ -16,6 +16,9 @@ Rectangle {
     readonly property bool hasColor: isAdjust || (isMedia && sel.mediaKind !== "audio")
     readonly property bool isAudioOnly: isMedia && (sel.mediaKind === "audio" || sel.audioOnly)
     readonly property bool hasVisual: hasSel && !isAudioOnly && !isAdjust
+    /// Clipe composto: sem arquivo de origem, então sem velocidade nem processamentos de áudio por mídia.
+    readonly property bool isCompound: isMedia && sel.mediaKind === "compound"
+    readonly property bool perMediaAudio: isMedia && sel.hasAudio && !isCompound
 
     function setProp(key, value) { Project.setClipProperty(sel.id, key, value) }
 
@@ -23,6 +26,7 @@ Rectangle {
     readonly property var pages: !hasSel ? ["project"]
         : isText ? ["text", "transform", "keyframes", "animation"]
         : isAdjust ? ["color", "mask", "keyframes"]
+        : isCompound ? ["transform", "color", "mask", "keyframes", "audio", "advanced"]
         : isAudioOnly ? ["audio", "speed", "keyframes"]
         : sel.mediaKind === "image" ? ["transform", "color", "mask", "keyframes", "advanced"]
         : ["transform", "color", "mask", "keyframes", "audio", "speed", "advanced"]
@@ -747,7 +751,7 @@ Rectangle {
                         onMoved: (v) => root.setProp("gainDb", v)
                     }
                     RowLayout {
-                        visible: root.isMedia && root.sel.hasAudio
+                        visible: root.perMediaAudio
                         Layout.fillWidth: true
                         ComboBox {
                             id: loudTarget
@@ -766,18 +770,18 @@ Rectangle {
                         }
                     }
                     SectionLabel {
-                        visible: root.isMedia && root.sel.hasAudio
+                        visible: root.perMediaAudio
                         text: qsTr("Noise reduction")
                     }
                     PropSlider {
-                        visible: root.isMedia && root.sel.hasAudio
+                        visible: root.perMediaAudio
                         label: qsTr("Intensity")
                         from: 0; to: 1; stepSize: 0.1; displayScale: 100; decimals: 0; suffix: "%"
                         value: root.isMedia ? root.sel.denoise : 0
                         onMoved: (v) => root.setProp("denoise", v)
                     }
                     Text {
-                        visible: root.isMedia && root.sel.hasAudio
+                        visible: root.perMediaAudio
                         Layout.fillWidth: true
                         wrapMode: Text.Wrap
                         color: root.isMedia && root.sel.denoiseState === "ready" ? Theme.accent : Theme.textFaint
@@ -789,13 +793,13 @@ Rectangle {
                               : qsTr("Removes hiss, hum and constant background noise. Processing runs in the background.")
                     }
                     SectionLabel {
-                        visible: root.isMedia && root.sel.hasAudio
+                        visible: root.perMediaAudio
                         text: qsTr("Voice effect")
                         actionText: root.isMedia && root.sel.voiceEffect !== "" ? qsTr("Remove") : ""
                         onActionClicked: root.setProp("voiceEffect", "")
                     }
                     Flow {
-                        visible: root.isMedia && root.sel.hasAudio
+                        visible: root.perMediaAudio
                         Layout.fillWidth: true
                         spacing: 6
                         Repeater {
@@ -821,7 +825,7 @@ Rectangle {
                         }
                     }
                     Text {
-                        visible: root.isMedia && root.sel.hasAudio && root.sel.voiceEffect !== ""
+                        visible: root.perMediaAudio && root.sel.voiceEffect !== ""
                         Layout.fillWidth: true
                         wrapMode: Text.Wrap
                         color: root.isMedia && root.sel.effectState === "ready" ? Theme.accent : Theme.textFaint
@@ -851,13 +855,13 @@ Rectangle {
                         text: qsTr("For background music: this clip gets quieter (up to -16 dB) whenever the other clips have speech, and comes back up in the pauses.")
                     }
                     SectionLabel {
-                        visible: root.isMedia && root.sel.hasAudio
+                        visible: root.perMediaAudio
                         text: qsTr("Beats")
                         actionText: Project.hasBeatMarkers ? qsTr("Clear") : ""
                         onActionClicked: Project.clearBeatMarkers()
                     }
                     RowLayout {
-                        visible: root.isMedia && root.sel.hasAudio
+                        visible: root.perMediaAudio
                         Layout.fillWidth: true
                         ComboBox {
                             id: beatEvery
@@ -874,7 +878,7 @@ Rectangle {
                         }
                     }
                     Text {
-                        visible: root.isMedia && root.sel.hasAudio
+                        visible: root.perMediaAudio
                         Layout.fillWidth: true
                         wrapMode: Text.Wrap
                         color: Theme.textFaint
@@ -882,11 +886,11 @@ Rectangle {
                         text: qsTr("Finds the rhythm of the music and adds markers on its beats; clips snap to them, so cuts land on the beat.")
                     }
                     SectionLabel {
-                        visible: root.isMedia && root.sel.hasAudio
+                        visible: root.perMediaAudio
                         text: qsTr("Voice isolation (AI)")
                     }
                     PropSlider {
-                        visible: root.isMedia && root.sel.hasAudio
+                        visible: root.perMediaAudio
                         enabled: root.isMedia && root.sel.voiceState !== "unavailable"
                         label: qsTr("Intensity")
                         from: 0; to: 1; stepSize: 0.1; displayScale: 100; decimals: 0; suffix: "%"
@@ -907,7 +911,7 @@ Rectangle {
                         onClicked: Project.downloadModel("dfn3")
                     }
                     Text {
-                        visible: root.isMedia && root.sel.hasAudio
+                        visible: root.perMediaAudio
                         Layout.fillWidth: true
                         wrapMode: Text.Wrap
                         color: root.isMedia && root.sel.voiceState === "ready" ? Theme.accent : Theme.textFaint

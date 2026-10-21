@@ -12,6 +12,7 @@
 #include <QJsonObject>
 
 #include <algorithm>
+#include <functional>
 
 namespace clv {
 
@@ -44,13 +45,25 @@ TrackKind trackKindFromName(const QString &s)
 Clipboard copyClips(const Project &p, const QStringList &ids)
 {
     Clipboard c;
-    QSet<QString> assetIds;
+    QSet<QString> assetIds, seqIds;
+    // Mídias e sequências usadas, descendo por compostos dentro de compostos.
+    std::function<void(const Clip &)> collect = [&](const Clip &clip) {
+        if (clip.hasMedia())
+            assetIds.insert(clip.assetId);
+        const Sequence *seq = clip.isCompound() && !seqIds.contains(clip.compoundId) ? p.compound(clip.compoundId) : nullptr;
+        if (!seq)
+            return;
+        seqIds.insert(seq->id);
+        c.compounds.push_back(*seq);
+        for (const auto &t : seq->tracks)
+            for (const auto &inner : t.clips)
+                collect(inner);
+    };
     for (int ti = 0; ti < static_cast<int>(p.tracks.size()); ++ti)
         for (const Clip &clip : p.tracks[ti].clips)
             if (ids.contains(clip.id)) {
                 c.items.push_back({ti, p.tracks[ti].kind, clip});
-                if (clip.hasMedia())
-                    assetIds.insert(clip.assetId);
+                collect(clip);
             }
     for (const QString &id : assetIds)
         if (const MediaAsset *a = p.asset(id))
@@ -65,7 +78,10 @@ QByteArray clipboardToJson(const Clipboard &c)
         items.append(QJsonObject{{"track", it.track}, {"kind", trackKindName(it.kind)}, {"clip", clipToJson(it.clip)}});
     for (const auto &a : c.assets)
         assets.append(assetToJson(a));
-    return QJsonDocument(QJsonObject{{"format", "clivcut-clips"}, {"items", items}, {"assets", assets}})
+    QJsonArray compounds;
+    for (const auto &s : c.compounds)
+        compounds.append(sequenceToJson(s));
+    return QJsonDocument(QJsonObject{{"format", "clivcut-clips"}, {"items", items}, {"assets", assets}, {"compounds", compounds}})
         .toJson(QJsonDocument::Compact);
 }
 
@@ -82,6 +98,8 @@ bool clipboardFromJson(const QByteArray &data, Clipboard &out)
     }
     for (const auto &v : doc.object().value("assets").toArray())
         c.assets.push_back(assetFromJson(v.toObject()));
+    for (const auto &v : doc.object().value("compounds").toArray())
+        c.compounds.push_back(sequenceFromJson(v.toObject()));
     out = std::move(c);
     return !out.empty();
 }
@@ -108,6 +126,18 @@ QStringList pasteClips(Project &p, const Clipboard &c, Micros at)
             p.assets.emplace(found, copy);
         }
         assetMap.insert(a.id, found);
+    }
+
+    // Sequências: as que o projeto já tem (mesmo id) são reaproveitadas; as outras entram
+    // com as mídias internas remapeadas.
+    for (Sequence s : c.compounds) {
+        if (p.compound(s.id))
+            continue;
+        for (auto &t : s.tracks)
+            for (auto &inner : t.clips)
+                if (inner.hasMedia())
+                    inner.assetId = assetMap.value(inner.assetId, inner.assetId);
+        p.compounds.push_back(std::move(s));
     }
 
     Micros origin = c.items.front().clip.start;

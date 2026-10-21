@@ -579,6 +579,16 @@ std::vector<Track> tracksFromJson(const QJsonArray &arr)
 
 } // namespace
 
+QJsonObject sequenceToJson(const Sequence &s)
+{
+    return QJsonObject{{"id", s.id}, {"name", s.name}, {"tracks", tracksToJson(s.tracks)}};
+}
+
+Sequence sequenceFromJson(const QJsonObject &o)
+{
+    return {o.value("id").toString(), o.value("name").toString(), tracksFromJson(o.value("tracks").toArray())};
+}
+
 QJsonObject toJson(const Project &p)
 {
     QJsonArray assets;
@@ -591,7 +601,7 @@ QJsonObject toJson(const Project &p)
         bool used = false;
         p.forEachClip([&](const Clip &c) { used = used || (c.isCompound() && c.compoundId == s.id); });
         if (used)
-            compounds.append(QJsonObject{{"id", s.id}, {"name", s.name}, {"tracks", tracksToJson(s.tracks)}});
+            compounds.append(sequenceToJson(s));
     }
     QJsonArray markers;
     for (const auto &m : p.markers) {
@@ -666,10 +676,8 @@ bool parseProject(const QByteArray &data, Project &out, QString *error)
         p.assets.emplace(m.id, m);
     }
     p.tracks = tracksFromJson(o.value("tracks").toArray());
-    for (const auto &v : o.value("compounds").toArray()) {
-        const auto s = v.toObject();
-        p.compounds.push_back({s.value("id").toString(), s.value("name").toString(), tracksFromJson(s.value("tracks").toArray())});
-    }
+    for (const auto &v : o.value("compounds").toArray())
+        p.compounds.push_back(sequenceFromJson(v.toObject()));
     if (p.tracks.empty())
         p.tracks.push_back(createTrack(TrackKind::Video, QCoreApplication::translate("Track", "Main")));
     for (const auto &v : o.value("markers").toArray()) {

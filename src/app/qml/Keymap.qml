@@ -44,6 +44,8 @@ QtObject {
         { id: "pasteAttributes", group: qsTr("Editing"), name: qsTr("Paste attributes"), keys: ["Ctrl+Alt+V"], edit: true },
         { id: "group", group: qsTr("Editing"), name: qsTr("Group clips"), keys: ["Ctrl+G"], edit: true },
         { id: "ungroup", group: qsTr("Editing"), name: qsTr("Ungroup"), keys: ["Ctrl+Shift+G"], edit: true },
+        { id: "createCompound", group: qsTr("Editing"), name: qsTr("Create compound clip"), keys: ["Alt+G"], edit: true },
+        { id: "breakCompound", group: qsTr("Editing"), name: qsTr("Break compound clip"), keys: ["Alt+Shift+G"], edit: true },
         { id: "detachAudio", group: qsTr("Editing"), name: qsTr("Detach audio from video"), keys: ["Ctrl+Shift+D"], edit: true },
         { id: "freeze", group: qsTr("Editing"), name: qsTr("Freeze frame"), keys: ["Alt+F"], edit: true },
         { id: "addText", group: qsTr("Editing"), name: qsTr("Add text"), keys: ["Ctrl+T"], edit: true },

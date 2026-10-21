@@ -16,6 +16,9 @@ QJsonObject gradeToJson(const ColorAdjust &c);
 void gradeFromJson(const QJsonObject &o, ColorAdjust &c);
 Clip clipFromJson(const QJsonObject &o);
 QJsonObject assetToJson(const MediaAsset &a);
+/// Sequência de clipe composto (id, nome e faixas).
+QJsonObject sequenceToJson(const Sequence &s);
+Sequence sequenceFromJson(const QJsonObject &o);
 MediaAsset assetFromJson(const QJsonObject &o);
 QByteArray serializeProject(const Project &p);
 

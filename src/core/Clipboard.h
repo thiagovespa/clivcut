@@ -23,6 +23,7 @@ struct ClipboardItem {
 struct Clipboard {
     std::vector<ClipboardItem> items;
     std::vector<MediaAsset> assets; ///< mídias usadas (para colar em outro projeto)
+    std::vector<Sequence> compounds; ///< sequências dos clipes compostos copiados (inclusive aninhadas)
     bool empty() const { return items.empty(); }
 };
 

@@ -694,6 +694,49 @@ private slots:
         QCOMPARE(m_ctrl->duration(), before);
     }
 
+    void compoundClipWorkflow()
+    {
+        m_ctrl->newProject(640, 360, 30);
+        m_ctrl->importMedia({QUrl::fromLocalFile(m_video)});
+        m_ctrl->addAssetToTimeline(m_ctrl->assets().first().toMap().value("id").toString());
+        m_ctrl->seek(500'000);
+        m_ctrl->addText(QStringLiteral("Hi"));
+        auto total = [this] {
+            int n = 0;
+            for (const auto &t : m_ctrl->tracks())
+                n += t.toMap().value("clips").toList().size();
+            return n;
+        };
+        QCOMPARE(total(), 2);
+        m_ctrl->selectAll();
+        m_ctrl->createCompound();
+        QCOMPARE(total(), 1);
+        QVariantMap sel = m_ctrl->selectedClip();
+        QCOMPARE(sel.value("mediaKind").toString(), QStringLiteral("compound"));
+        QVERIFY(sel.value("hasAudio").toBool()); // o vídeo de teste tem som
+        QCOMPARE(clipsOf(0).first().toMap().value("label").toString(), QStringLiteral("Compound clip 1"));
+        m_ctrl->undo();
+        QCOMPARE(total(), 2);
+        m_ctrl->redo();
+        QCOMPARE(total(), 1);
+
+        // Copiar o composto e colar num projeto novo leva a sequência e a mídia junto.
+        m_ctrl->select(clipsOf(0).first().toMap().value("id").toString());
+        m_ctrl->copySelection();
+        m_ctrl->newProject(640, 360, 30);
+        m_ctrl->paste();
+        QCOMPARE(total(), 1);
+        const QString pasted = clipsOf(0).first().toMap().value("id").toString();
+        QCOMPARE(clipsOf(0).first().toMap().value("mediaKind").toString(), QStringLiteral("compound"));
+        QCOMPARE(m_ctrl->assets().size(), 1);
+
+        // Desfazer o composto devolve o vídeo e o texto.
+        m_ctrl->select(pasted);
+        m_ctrl->breakCompound();
+        QCOMPARE(total(), 2);
+        QCOMPARE(m_ctrl->selection().size(), 2);
+    }
+
     void beatMarkers()
     {
         // Bumbo a 120 BPM (um golpe a cada 0,5 s) por 8 s.

@@ -15,6 +15,7 @@ Item {
     readonly property bool isAdjust: clipData.type === "adjust"
     readonly property bool isAudio: clipData.mediaKind === "audio" || clipData.audioOnly
     readonly property bool isImage: clipData.mediaKind === "image"
+    readonly property bool isCompound: clipData.mediaKind === "compound"
 
     // Estado de interação (pré-visualização local até soltar).
     property real dragDx: 0
@@ -29,8 +30,8 @@ Item {
     width: Math.max(4, timeline.xOf(clipData.duration) - trimStartDx + trimEndDx)
     z: body.drag.active || dragDx !== 0 || dragDy !== 0 ? 50 : (selected ? 2 : 1)
 
-    readonly property color baseColor: isText ? Theme.clipText : isAdjust ? Theme.clipAdjust : isAudio ? Theme.clipAudio
-                                       : isImage ? Theme.clipImage : Theme.clipVideo
+    readonly property color baseColor: isText ? Theme.clipText : isAdjust ? Theme.clipAdjust : isCompound ? Theme.clipCompound
+                                       : isAudio ? Theme.clipAudio : isImage ? Theme.clipImage : Theme.clipVideo
 
     Rectangle {
         id: bg
@@ -43,7 +44,7 @@ Item {
 
         // Tira de miniaturas (vídeo/imagem)
         Row {
-            visible: !root.isText && !root.isAdjust && !root.isAudio && !clipData.missing
+            visible: !root.isText && !root.isAdjust && !root.isAudio && !root.isCompound && !clipData.missing
             anchors.fill: parent
             anchors.margins: 1
             readonly property real tileW: Math.max(24, height * 16 / 9)
@@ -110,7 +111,7 @@ Item {
                 anchors.verticalCenter: parent.verticalCenter
                 x: 5
                 width: parent.width - 8
-                text: (root.clipData.audioMuted ? "🔇 " : "") + (root.clipData.groupId !== "" ? "⛓ " : "") + (root.isText ? "T  " : root.isAdjust ? "◐  " : "") + root.clipData.label + "  " + Project.formatTime(root.clipData.duration).substring(0, 5)
+                text: (root.clipData.audioMuted ? "🔇 " : "") + (root.clipData.groupId !== "" ? "⛓ " : "") + (root.isText ? "T  " : root.isAdjust ? "◐  " : root.isCompound ? "▣  " : "") + root.clipData.label + "  " + Project.formatTime(root.clipData.duration).substring(0, 5)
                 color: "white"
                 font.pixelSize: 10
                 elide: Text.ElideRight

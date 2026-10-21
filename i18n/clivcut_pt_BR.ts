@@ -1567,6 +1567,14 @@ Atalhos: Espaço reproduz · Ctrl+B divide · Q/W exclui à esquerda/direita · 
         <translation>Desagrupar</translation>
     </message>
     <message>
+        <source>Create compound clip</source>
+        <translation>Criar clipe composto</translation>
+    </message>
+    <message>
+        <source>Break compound clip</source>
+        <translation>Desfazer clipe composto</translation>
+    </message>
+    <message>
         <source>Detach audio from video</source>
         <translation>Separar áudio do vídeo</translation>
     </message>
@@ -2345,6 +2353,10 @@ Atalhos: Espaço reproduz · Ctrl+B divide · Q/W exclui à esquerda/direita · 
         <translation>Forma</translation>
     </message>
     <message>
+        <source>Compound clip</source>
+        <translation>Clipe composto</translation>
+    </message>
+    <message>
         <source>Project created (%1×%2, %3 fps)</source>
         <translation>Projeto criado (%1×%2, %3 fps)</translation>
     </message>
@@ -2678,6 +2690,37 @@ Atalhos: Espaço reproduz · Ctrl+B divide · Q/W exclui à esquerda/direita · 
     <message>
         <source>Paste attributes</source>
         <translation>Colar atributos</translation>
+    </message>
+    <message>
+        <source>Compound clip %1</source>
+        <translation>Clipe composto %1</translation>
+    </message>
+    <message>
+        <source>Create compound clip</source>
+        <translation>Criar clipe composto</translation>
+    </message>
+    <message>
+        <source>Unlock the tracks to create a compound clip</source>
+        <translation>Desbloqueie as faixas para criar um clipe composto</translation>
+    </message>
+    <message>
+        <source>On the main track, select neighboring clips that cover the whole compound clip</source>
+        <translation>Na faixa principal, selecione clipes vizinhos que cubram todo o clipe composto</translation>
+    </message>
+    <message>
+        <source>Select the clips to combine</source>
+        <translation>Selecione os clipes para combinar</translation>
+    </message>
+    <message numerus="yes">
+        <source>%n clip(s) combined into %1</source>
+        <translation>
+            <numerusform>%n clipe combinado em %1</numerusform>
+            <numerusform>%n clipes combinados em %1</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Break compound clip</source>
+        <translation>Desfazer clipe composto</translation>
     </message>
     <message>
         <source>Group</source>
@@ -3192,6 +3235,14 @@ Atalhos: Espaço reproduz · Ctrl+B divide · Q/W exclui à esquerda/direita · 
     <message>
         <source>Ungroup</source>
         <translation>Desagrupar</translation>
+    </message>
+    <message>
+        <source>Create compound clip</source>
+        <translation>Criar clipe composto</translation>
+    </message>
+    <message>
+        <source>Break compound clip</source>
+        <translation>Desfazer clipe composto</translation>
     </message>
     <message>
         <source>Detach audio</source>

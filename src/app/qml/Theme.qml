@@ -36,6 +36,7 @@ QtObject {
     readonly property color clipAudio: dark ? "#2f6e57" : "#3f8f6f"
     readonly property color clipText: dark ? "#7a54a8" : "#8d68bd"
     readonly property color clipAdjust: dark ? "#a3612f" : "#c27a43"
+    readonly property color clipCompound: dark ? "#4a4c8c" : "#6a6db5"
     readonly property color clipSelected: accent
 
     readonly property int radius: 7

@@ -311,6 +311,9 @@ QVariantList ProjectController::tracks() const
             }
             if (c.hasMedia())
                 label = a ? a->name : tr("Missing media");
+            const Sequence *seq = c.isCompound() ? m_project.compound(c.compoundId) : nullptr;
+            if (c.isCompound())
+                label = seq ? seq->name : tr("Compound clip");
             if (c.speed <= 0)
                 label = tr("Frozen · %1").arg(label);
             else if (c.speedCurve.size() >= 2)
@@ -328,13 +331,13 @@ QVariantList ProjectController::tracks() const
                 {"audioMuted", c.audioMuted},
                 {"groupId", c.groupId},
                 {"assetId", c.assetId},
-                {"mediaKind", a ? mediaKindName(a->kind) : (c.isAdjust() ? "adjust" : "text")},
+                {"mediaKind", a ? mediaKindName(a->kind) : c.isCompound() ? "compound" : (c.isAdjust() ? "adjust" : "text")},
                 {"label", label},
                 {"sourceIn", static_cast<double>(c.sourceIn)},
                 {"speed", c.speed},
                 {"reverse", c.reverse},
-                {"assetDuration", a ? static_cast<double>(a->duration) : 0.0},
-                {"hasAudio", a && a->hasAudio},
+                {"assetDuration", a ? static_cast<double>(a->duration) : seq ? static_cast<double>(seq->duration()) : 0.0},
+                {"hasAudio", (a && a->hasAudio) || (seq && compoundHasAudio(*seq))},
                 {"missing", a && !QFileInfo::exists(a->path)},
                 {"transition", c.transitionIn ? transitionName(c.transitionIn->kind) : QString()},
                 {"transitionDuration", c.transitionIn ? static_cast<double>(c.transitionIn->duration) : 0.0},
@@ -369,9 +372,7 @@ QVariantList ProjectController::assets() const
     QVariantList out;
     for (const MediaAsset *a : list) {
         int uses = 0;
-        for (const auto &t : m_project.tracks)
-            for (const auto &c : t.clips)
-                uses += c.assetId == a->id;
+        m_project.forEachClip([&](const Clip &c) { uses += c.assetId == a->id; });
         out << QVariantMap{
             {"id", a->id},
             {"name", a->name},
@@ -513,9 +514,10 @@ QVariantMap ProjectController::selectedClip() const
     if (c->isAdjust())
         return m;
     const MediaAsset *a = m_project.asset(c->assetId);
-    m.insert({{"assetName", a ? a->name : QString()},
-              {"mediaKind", a ? mediaKindName(a->kind) : "video"},
-              {"hasAudio", a && a->hasAudio},
+    const Sequence *seq = c->isCompound() ? m_project.compound(c->compoundId) : nullptr;
+    m.insert({{"assetName", a ? a->name : seq ? seq->name : QString()},
+              {"mediaKind", a ? mediaKindName(a->kind) : seq ? "compound" : "video"},
+              {"hasAudio", (a && a->hasAudio) || (seq && compoundHasAudio(*seq))},
               {"audioOnly", c->audioOnly},
               {"audioMuted", c->audioMuted},
               {"gainDb", c->gainDb},
@@ -2152,6 +2154,64 @@ void ProjectController::pasteAttributesToSelection()
     });
 }
 
+bool ProjectController::compoundHasAudio(const Sequence &seq) const
+{
+    for (const auto &t : seq.tracks)
+        for (const auto &c : t.clips) {
+            if (c.audioMuted || t.muted)
+                continue;
+            if (const Sequence *inner = c.isCompound() ? m_project.compound(c.compoundId) : nullptr) {
+                if (inner != &seq && compoundHasAudio(*inner))
+                    return true;
+            } else if (const MediaAsset *a = c.hasMedia() ? m_project.asset(c.assetId) : nullptr; a && a->hasAudio) {
+                return true;
+            }
+        }
+    return false;
+}
+
+void ProjectController::createCompound()
+{
+    const QStringList ids = edit::expandToGroups(m_project, m_selection);
+    if (ids.isEmpty())
+        return;
+    edit::CompoundError err = edit::CompoundError::None;
+    QString id;
+    const QString name = tr("Compound clip %1").arg(m_project.compounds.size() + 1);
+    edit(tr("Create compound clip"), [&](Project &p) {
+        id = edit::createCompound(p, ids, name, &err);
+        return !id.isEmpty();
+    });
+    if (id.isEmpty()) {
+        setStatus(err == edit::CompoundError::Locked ? tr("Unlock the tracks to create a compound clip")
+                  : err == edit::CompoundError::MainTrackGap
+                      ? tr("On the main track, select neighboring clips that cover the whole compound clip")
+                      : tr("Select the clips to combine"));
+        return;
+    }
+    select(id);
+    setStatus(tr("%n clip(s) combined into %1", nullptr, static_cast<int>(ids.size())).arg(name));
+}
+
+void ProjectController::breakCompound()
+{
+    const QString id = primaryClipId();
+    const Clip *c = edit::clipById(m_project, id);
+    if (!c || !c->isCompound())
+        return;
+    QStringList back;
+    edit(tr("Break compound clip"), [&](Project &p) {
+        back = edit::breakCompound(p, id);
+        return !back.isEmpty();
+    });
+    if (!back.isEmpty()) {
+        m_selection = back;
+        m_primary = back.first();
+        emit selectionChanged();
+        emit selectedClipChanged();
+    }
+}
+
 void ProjectController::groupSelection()
 {
     if (m_selection.size() < 2)
@@ -2494,19 +2554,18 @@ void ProjectController::normalizeLoudness(double targetLufs)
 void ProjectController::refreshDenoise()
 {
     bool changed = false;
-    for (const auto &t : m_project.tracks)
-        for (const auto &c : t.clips) {
-            const MediaAsset *a = c.hasMedia() && c.denoise > 0 ? m_project.asset(c.assetId) : nullptr;
-            if (!a || !a->hasAudio || !QFileInfo::exists(a->path))
-                continue;
-            if (!engine::registeredDenoised(a->path, c.denoise).isEmpty() || engine::discoverDenoised(a->path, c.denoise))
-                continue;
-            const QString job = a->path + QLatin1Char('|') + QString::number(engine::quantizedDenoise(c.denoise));
-            if (job != m_denoiseBuilding && !m_denoiseQueue.contains(job)) {
-                m_denoiseQueue << job;
-                changed = true;
-            }
+    m_project.forEachClip([&](const Clip &c) {
+        const MediaAsset *a = c.hasMedia() && c.denoise > 0 ? m_project.asset(c.assetId) : nullptr;
+        if (!a || !a->hasAudio || !QFileInfo::exists(a->path))
+            return;
+        if (!engine::registeredDenoised(a->path, c.denoise).isEmpty() || engine::discoverDenoised(a->path, c.denoise))
+            return;
+        const QString job = a->path + QLatin1Char('|') + QString::number(engine::quantizedDenoise(c.denoise));
+        if (job != m_denoiseBuilding && !m_denoiseQueue.contains(job)) {
+            m_denoiseQueue << job;
+            changed = true;
         }
+    });
     if (changed) {
         emit audioJobsChanged();
         startNextDenoise();
@@ -3309,20 +3368,19 @@ QString ProjectController::audioSourceFor(const Clip &c, const MediaAsset &a) co
 void ProjectController::refreshEffects()
 {
     bool changed = false;
-    for (const auto &t : m_project.tracks)
-        for (const auto &c : t.clips) {
-            const MediaAsset *a = c.hasMedia() && !c.voiceEffect.isEmpty() ? m_project.asset(c.assetId) : nullptr;
-            if (!a || !a->hasAudio || !QFileInfo::exists(a->path))
-                continue;
-            const QString source = audioSourceFor(c, *a);
-            if (!engine::registeredEffect(source, c.voiceEffect).isEmpty() || engine::discoverEffect(source, c.voiceEffect))
-                continue;
-            const QString job = source + QLatin1Char('|') + c.voiceEffect;
-            if (job != m_effectBuilding && !m_effectQueue.contains(job)) {
-                m_effectQueue << job;
-                changed = true;
-            }
+    m_project.forEachClip([&](const Clip &c) {
+        const MediaAsset *a = c.hasMedia() && !c.voiceEffect.isEmpty() ? m_project.asset(c.assetId) : nullptr;
+        if (!a || !a->hasAudio || !QFileInfo::exists(a->path))
+            return;
+        const QString source = audioSourceFor(c, *a);
+        if (!engine::registeredEffect(source, c.voiceEffect).isEmpty() || engine::discoverEffect(source, c.voiceEffect))
+            return;
+        const QString job = source + QLatin1Char('|') + c.voiceEffect;
+        if (job != m_effectBuilding && !m_effectQueue.contains(job)) {
+            m_effectQueue << job;
+            changed = true;
         }
+    });
     if (changed) {
         emit selectedClipChanged();
         startNextEffect();
@@ -3382,19 +3440,18 @@ void ProjectController::refreshVoice()
     if (!engine::voiceIsolationAvailable() || !engine::aiModelInstalled(engine::kVoiceModel))
         return;
     bool changed = false;
-    for (const auto &t : m_project.tracks)
-        for (const auto &c : t.clips) {
-            const MediaAsset *a = c.hasMedia() && c.voiceIsolation > 0 ? m_project.asset(c.assetId) : nullptr;
-            if (!a || !a->hasAudio || !QFileInfo::exists(a->path))
-                continue;
-            if (!engine::registeredVoice(a->path, c.voiceIsolation).isEmpty() || engine::discoverVoice(a->path, c.voiceIsolation))
-                continue;
-            const QString job = a->path + QLatin1Char('|') + QString::number(engine::quantizedVoice(c.voiceIsolation));
-            if (job != m_voiceBuilding && !m_voiceQueue.contains(job)) {
-                m_voiceQueue << job;
-                changed = true;
-            }
+    m_project.forEachClip([&](const Clip &c) {
+        const MediaAsset *a = c.hasMedia() && c.voiceIsolation > 0 ? m_project.asset(c.assetId) : nullptr;
+        if (!a || !a->hasAudio || !QFileInfo::exists(a->path))
+            return;
+        if (!engine::registeredVoice(a->path, c.voiceIsolation).isEmpty() || engine::discoverVoice(a->path, c.voiceIsolation))
+            return;
+        const QString job = a->path + QLatin1Char('|') + QString::number(engine::quantizedVoice(c.voiceIsolation));
+        if (job != m_voiceBuilding && !m_voiceQueue.contains(job)) {
+            m_voiceQueue << job;
+            changed = true;
         }
+    });
     if (changed) {
         emit selectedClipChanged();
         startNextVoice();
@@ -3458,18 +3515,17 @@ void ProjectController::refreshMattes()
     if (!engine::mattingAvailable() || !engine::aiModelInstalled(engine::kMattingModel))
         return;
     bool changed = false;
-    for (const auto &t : m_project.tracks)
-        for (const auto &c : t.clips) {
-            const MediaAsset *a = c.hasMedia() && c.removeBackground ? m_project.asset(c.assetId) : nullptr;
-            if (!a || a->kind != MediaKind::Video || !QFileInfo::exists(a->path))
-                continue;
-            if (!engine::registeredMatte(a->path).isEmpty() || engine::discoverMatte(a->path))
-                continue;
-            if (a->path != m_matteBuilding && !m_matteQueue.contains(a->path)) {
-                m_matteQueue << a->path;
-                changed = true;
-            }
+    m_project.forEachClip([&](const Clip &c) {
+        const MediaAsset *a = c.hasMedia() && c.removeBackground ? m_project.asset(c.assetId) : nullptr;
+        if (!a || a->kind != MediaKind::Video || !QFileInfo::exists(a->path))
+            return;
+        if (!engine::registeredMatte(a->path).isEmpty() || engine::discoverMatte(a->path))
+            return;
+        if (a->path != m_matteBuilding && !m_matteQueue.contains(a->path)) {
+            m_matteQueue << a->path;
+            changed = true;
         }
+    });
     if (changed) {
         emit selectedClipChanged();
         startNextMatte();

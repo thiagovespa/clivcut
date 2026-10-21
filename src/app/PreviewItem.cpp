@@ -138,9 +138,7 @@ public:
         const clv::FrameDesc frame = clv::evaluate(*m_project, m_time);
         if (++m_pruneCounter % 120 == 0) {
             QSet<QString> live;
-            for (const auto &t : m_project->tracks)
-                for (const auto &c : t.clips)
-                    live.insert(c.id);
+            m_project->forEachClip([&](const clv::Clip &c) { live.insert(c.id); });
             m_frames.prune(live);
         }
         m_compositor->composite(cb, *m_project, frame, m_frames);
