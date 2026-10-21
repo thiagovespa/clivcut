@@ -1575,6 +1575,14 @@ Atalhos: Espaço reproduz · Ctrl+B divide · Q/W exclui à esquerda/direita · 
         <translation>Desfazer clipe composto</translation>
     </message>
     <message>
+        <source>Edit compound clip</source>
+        <translation>Editar clipe composto</translation>
+    </message>
+    <message>
+        <source>Back from the compound clip</source>
+        <translation>Voltar do clipe composto</translation>
+    </message>
+    <message>
         <source>Detach audio from video</source>
         <translation>Separar áudio do vídeo</translation>
     </message>
@@ -2723,6 +2731,18 @@ Atalhos: Espaço reproduz · Ctrl+B divide · Q/W exclui à esquerda/direita · 
         <translation>Desfazer clipe composto</translation>
     </message>
     <message>
+        <source>Editing %1: changes apply to all %2 copies of it</source>
+        <translation>Editando %1: as mudanças valem para as %2 cópias dele</translation>
+    </message>
+    <message>
+        <source>Editing %1</source>
+        <translation>Editando %1</translation>
+    </message>
+    <message>
+        <source>Edit compound clip</source>
+        <translation>Editar clipe composto</translation>
+    </message>
+    <message>
         <source>Group</source>
         <translation>Agrupar</translation>
     </message>
@@ -3177,6 +3197,18 @@ Atalhos: Espaço reproduz · Ctrl+B divide · Q/W exclui à esquerda/direita · 
         <translation>Ajustar à janela</translation>
     </message>
     <message>
+        <source>Back</source>
+        <translation>Voltar</translation>
+    </message>
+    <message>
+        <source>Timeline</source>
+        <translation>Timeline</translation>
+    </message>
+    <message>
+        <source>Editing the contents of a compound clip</source>
+        <translation>Editando o conteúdo de um clipe composto</translation>
+    </message>
+    <message>
         <source>Main</source>
         <translation>Principal</translation>
     </message>
@@ -3243,6 +3275,10 @@ Atalhos: Espaço reproduz · Ctrl+B divide · Q/W exclui à esquerda/direita · 
     <message>
         <source>Break compound clip</source>
         <translation>Desfazer clipe composto</translation>
+    </message>
+    <message>
+        <source>Edit compound clip</source>
+        <translation>Editar clipe composto</translation>
     </message>
     <message>
         <source>Detach audio</source>

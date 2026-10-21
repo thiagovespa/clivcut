@@ -46,6 +46,8 @@ QtObject {
         { id: "ungroup", group: qsTr("Editing"), name: qsTr("Ungroup"), keys: ["Ctrl+Shift+G"], edit: true },
         { id: "createCompound", group: qsTr("Editing"), name: qsTr("Create compound clip"), keys: ["Alt+G"], edit: true },
         { id: "breakCompound", group: qsTr("Editing"), name: qsTr("Break compound clip"), keys: ["Alt+Shift+G"], edit: true },
+        { id: "openCompound", group: qsTr("Editing"), name: qsTr("Edit compound clip"), keys: ["Alt+E"], edit: true },
+        { id: "closeCompound", group: qsTr("Editing"), name: qsTr("Back from the compound clip"), keys: ["Alt+Up"], edit: true },
         { id: "detachAudio", group: qsTr("Editing"), name: qsTr("Detach audio from video"), keys: ["Ctrl+Shift+D"], edit: true },
         { id: "freeze", group: qsTr("Editing"), name: qsTr("Freeze frame"), keys: ["Alt+F"], edit: true },
         { id: "addText", group: qsTr("Editing"), name: qsTr("Add text"), keys: ["Ctrl+T"], edit: true },

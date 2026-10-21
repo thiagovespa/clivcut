@@ -80,7 +80,8 @@ int main(int argc, char **argv)
     // CLIVCUT_SCREENSHOT_PALETTE=1 (abre a paleta de comandos), CLIVCUT_SCREENSHOT_EXPORT=aba do diálogo de exportação,
     // CLIVCUT_SCREENSHOT_SHORTCUTS=1 (abre o editor de atalhos), CLIVCUT_SCREENSHOT_RENDER=1 (renderiza a pré-visualização),
     // CLIVCUT_SCREENSHOT_OPEN=objectName de um diálogo para abrir, CLIVCUT_SCREENSHOT_TRANSCRIBE=modelo (transcreve em inglês),
-    // CLIVCUT_SCREENSHOT_SCROLL=px (rola o inspetor), CLIVCUT_SCREENSHOT_SCOPES=modo (mostra os escopos).
+    // CLIVCUT_SCREENSHOT_SCROLL=px (rola o inspetor), CLIVCUT_SCREENSHOT_SCOPES=modo (mostra os escopos),
+    // CLIVCUT_SCREENSHOT_COMPOUND=1 (abre o primeiro clipe composto para edição).
     const QString shot = qEnvironmentVariable("CLIVCUT_SCREENSHOT");
     if (!shot.isEmpty() && !engine.rootObjects().isEmpty()) {
         auto *window = qobject_cast<QQuickWindow *>(engine.rootObjects().constFirst());
@@ -96,6 +97,14 @@ int main(int argc, char **argv)
             });
         if (qEnvironmentVariableIsSet("CLIVCUT_SCREENSHOT_RENDER"))
             QTimer::singleShot(500, &controller, [&controller] { controller.renderPreview(); });
+        if (qEnvironmentVariableIsSet("CLIVCUT_SCREENSHOT_COMPOUND")) {
+            for (const auto &t : controller.tracks())
+                for (const auto &c : t.toMap().value(QStringLiteral("clips")).toList())
+                    if (c.toMap().value(QStringLiteral("mediaKind")).toString() == QLatin1String("compound")) {
+                        controller.openCompound(c.toMap().value(QStringLiteral("id")).toString());
+                        break;
+                    }
+        }
         if (qEnvironmentVariableIsSet("CLIVCUT_SCREENSHOT_SELECT")) {
             const auto tracks = controller.tracks();
             for (const auto &t : tracks) {

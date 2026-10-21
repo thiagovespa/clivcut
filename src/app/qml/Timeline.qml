@@ -152,6 +152,39 @@ Rectangle {
             }
         }
 
+        // ---------------- dentro de um clipe composto ----------------
+        Rectangle {
+            visible: Project.compoundPath.length > 0
+            Layout.fillWidth: true
+            Layout.preferredHeight: 30
+            color: Theme.accentSoft
+            Rectangle { anchors.bottom: parent.bottom; width: parent.width; height: 1; color: Theme.accent }
+            RowLayout {
+                anchors.fill: parent
+                anchors.leftMargin: 8
+                anchors.rightMargin: 12
+                spacing: 6
+                IconButton {
+                    iconName: "chevron-left"
+                    tip: qsTr("Back")
+                    shortcut: Keymap.label("closeCompound")
+                    onClicked: Project.closeCompound()
+                }
+                Text {
+                    Layout.fillWidth: true
+                    elide: Text.ElideMiddle
+                    color: Theme.text
+                    font.pixelSize: Theme.fontSmall
+                    text: [qsTr("Timeline")].concat(Project.compoundPath.map(c => c.name)).join("  ›  ")
+                }
+                Text {
+                    color: Theme.textDim
+                    font.pixelSize: Theme.fontSmall
+                    text: qsTr("Editing the contents of a compound clip")
+                }
+            }
+        }
+
         // ---------------- corpo ----------------
         Item {
             Layout.fillWidth: true
@@ -580,6 +613,7 @@ Rectangle {
         MenuItem { text: qsTr("Ungroup") + "\t" + Keymap.label("ungroup"); enabled: Project.selection.length > 0; onTriggered: Project.ungroupSelection() }
         MenuItem { text: qsTr("Create compound clip") + "\t" + Keymap.label("createCompound"); enabled: Project.selection.length > 0; onTriggered: Project.createCompound() }
         MenuItem { text: qsTr("Break compound clip") + "\t" + Keymap.label("breakCompound"); enabled: Project.selectedClip.mediaKind === "compound"; onTriggered: Project.breakCompound() }
+        MenuItem { text: qsTr("Edit compound clip") + "\t" + Keymap.label("openCompound"); enabled: Project.selectedClip.mediaKind === "compound"; onTriggered: Project.openCompound(Project.selectedClip.id) }
         MenuSeparator {}
         MenuItem { text: qsTr("Split at playhead") + "\t" + Keymap.label("split"); onTriggered: Project.splitAtPlayhead() }
         MenuItem { text: qsTr("Freeze frame") + "\t" + Keymap.label("freeze"); enabled: clipMenu.clipId !== ""; onTriggered: Project.freezeFrame() }

@@ -1575,6 +1575,14 @@ Atajos: Espacio reproduce · Ctrl+B divide · Q/W eliminan a la izquierda/derech
         <translation>Deshacer clip compuesto</translation>
     </message>
     <message>
+        <source>Edit compound clip</source>
+        <translation>Editar clip compuesto</translation>
+    </message>
+    <message>
+        <source>Back from the compound clip</source>
+        <translation>Volver del clip compuesto</translation>
+    </message>
+    <message>
         <source>Detach audio from video</source>
         <translation>Separar el audio del vídeo</translation>
     </message>
@@ -2723,6 +2731,18 @@ Atajos: Espacio reproduce · Ctrl+B divide · Q/W eliminan a la izquierda/derech
         <translation>Deshacer clip compuesto</translation>
     </message>
     <message>
+        <source>Editing %1: changes apply to all %2 copies of it</source>
+        <translation>Editando %1: los cambios se aplican a sus %2 copias</translation>
+    </message>
+    <message>
+        <source>Editing %1</source>
+        <translation>Editando %1</translation>
+    </message>
+    <message>
+        <source>Edit compound clip</source>
+        <translation>Editar clip compuesto</translation>
+    </message>
+    <message>
         <source>Group</source>
         <translation>Agrupar</translation>
     </message>
@@ -3177,6 +3197,18 @@ Atajos: Espacio reproduce · Ctrl+B divide · Q/W eliminan a la izquierda/derech
         <translation>Ajustar a la ventana</translation>
     </message>
     <message>
+        <source>Back</source>
+        <translation>Volver</translation>
+    </message>
+    <message>
+        <source>Timeline</source>
+        <translation>Línea de tiempo</translation>
+    </message>
+    <message>
+        <source>Editing the contents of a compound clip</source>
+        <translation>Editando el contenido de un clip compuesto</translation>
+    </message>
+    <message>
         <source>Main</source>
         <translation>Principal</translation>
     </message>
@@ -3243,6 +3275,10 @@ Atajos: Espacio reproduce · Ctrl+B divide · Q/W eliminan a la izquierda/derech
     <message>
         <source>Break compound clip</source>
         <translation>Deshacer clip compuesto</translation>
+    </message>
+    <message>
+        <source>Edit compound clip</source>
+        <translation>Editar clip compuesto</translation>
     </message>
     <message>
         <source>Detach audio</source>

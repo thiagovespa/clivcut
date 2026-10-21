@@ -45,6 +45,8 @@ class ProjectController : public QObject {
     Q_PROPERTY(QString projectName READ projectName WRITE setProjectName NOTIFY projectChanged)
     Q_PROPERTY(QString filePath READ filePath NOTIFY fileChanged)
     Q_PROPERTY(bool modified READ modified NOTIFY modifiedChanged)
+    /// Clipes compostos abertos para edição, de fora para dentro: [{name}]. Vazio = timeline principal.
+    Q_PROPERTY(QVariantList compoundPath READ compoundPath NOTIFY compoundPathChanged)
     Q_PROPERTY(int canvasWidth READ canvasWidth NOTIFY projectChanged)
     Q_PROPERTY(int canvasHeight READ canvasHeight NOTIFY projectChanged)
     Q_PROPERTY(double fps READ fps NOTIFY projectChanged)
@@ -274,6 +276,10 @@ public:
     /// Junta os clipes selecionados num clipe composto / devolve o conteúdo do composto à timeline.
     Q_INVOKABLE void createCompound();
     Q_INVOKABLE void breakCompound();
+    /// Abre o conteúdo do composto na timeline / volta um nível (as mudanças viram um passo de desfazer).
+    Q_INVOKABLE void openCompound(const QString &clipId);
+    Q_INVOKABLE void closeCompound();
+    QVariantList compoundPath() const;
     /// Marca entrada/saída no cursor (I/O); limpar com clearInOut (Alt+X).
     Q_INVOKABLE void markIn();
     Q_INVOKABLE void markOut();
@@ -404,6 +410,7 @@ signals:
     void assetsChanged();
     void fileChanged();
     void modifiedChanged();
+    void compoundPathChanged();
     void playheadChanged();
     void playingChanged();
     void selectionChanged();
@@ -461,6 +468,20 @@ private:
 
     clv::Project m_project;
     clv::History m_history;
+    /// Níveis de fora enquanto um clipe composto está aberto (o de cima é o mais interno).
+    struct CompoundFrame {
+        clv::Project outer;
+        clv::History history;
+        int savedRevision = 0; ///< -2: salvo de dentro (vale se o conteúdo não mudou depois)
+        QString clipId;
+        QString seqId;
+        QString name;
+        clv::Micros playhead = 0;
+        QStringList selection;
+    };
+    std::vector<CompoundFrame> m_compoundStack;
+    /// O projeto inteiro, com os compostos abertos já mesclados (para salvar e exportar).
+    clv::Project rootProject() const;
     QString m_filePath;
     int m_savedRevision = 0;
     int m_revisionCounter = 0;

@@ -38,7 +38,7 @@
 | # | Feature | Status | Notes |
 |---|---|---|---|
 | 1 | Zero-copy hardware decoding and frame prefetching | 🟡 | VA-API decoding done (MVP #24); zero-copy (VA-API → dmabuf → Vulkan/GL texture) and prefetching on a thread missing |
-| 2 | Compound clips | 🟡 | create, break apart, trim/split and render, mix and copy as one clip; editing the contents in place missing |
+| 2 | Compound clips | ✅ | create, break apart, edit the contents in place (nested), trim/split, render, mix and copy as one clip |
 | 3 | Speed curves and smooth slow motion | 🟡 | speed curves done (MVP #12); frame interpolation (RIFE) missing |
 | 4 | Advanced color: curves, HSL, color wheels, adjustment layers | ✅ | grading baked into a per-clip 3D LUT (also on adjustment layers); keyframing grading values missing |
 | 5 | Scopes (histogram, waveform, vectorscope) | ✅ | read back from the composited frame (what gets exported), up to 10 times per second; RGB parade missing |

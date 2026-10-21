@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 #include "ProjectController.h"
+#include "core/Serialize.h"
 #include "Scopes.h"
 #include "engine/AudioMixer.h"
 #include "media/Loudness.h"
@@ -735,6 +736,70 @@ private slots:
         m_ctrl->breakCompound();
         QCOMPARE(total(), 2);
         QCOMPARE(m_ctrl->selection().size(), 2);
+    }
+
+    void editCompoundContents()
+    {
+        m_ctrl->newProject(640, 360, 30);
+        m_ctrl->importMedia({QUrl::fromLocalFile(m_video)});
+        m_ctrl->addAssetToTimeline(m_ctrl->assets().first().toMap().value("id").toString());
+        m_ctrl->seek(500'000);
+        m_ctrl->addText(QStringLiteral("Hi"));
+        m_ctrl->selectAll();
+        m_ctrl->createCompound();
+        const QString cmp = m_ctrl->selectedClip().value("id").toString();
+        const QString file = m_dir.filePath(QStringLiteral("compound.clivcut"));
+        QVERIFY(m_ctrl->saveProjectAs(QUrl::fromLocalFile(file)));
+        QVERIFY(!m_ctrl->modified());
+        auto texts = [this] {
+            int n = 0;
+            for (const auto &t : m_ctrl->tracks())
+                for (const auto &c : t.toMap().value("clips").toList())
+                    n += c.toMap().value("type").toString() == QLatin1String("text");
+            return n;
+        };
+
+        // Dentro: a timeline mostra o vídeo e o texto; o cursor vira tempo do conteúdo.
+        m_ctrl->seek(1'000'000);
+        m_ctrl->openCompound(cmp);
+        QCOMPARE(m_ctrl->compoundPath().size(), 1);
+        QCOMPARE(texts(), 1);
+        QCOMPARE(m_ctrl->playhead(), 1'000'000.0);
+        QVERIFY(!m_ctrl->modified());
+        QVERIFY(!m_ctrl->canUndo()); // histórico próprio
+        for (const auto &t : m_ctrl->tracks())
+            for (const auto &c : t.toMap().value("clips").toList())
+                if (c.toMap().value("type").toString() == QLatin1String("text"))
+                    m_ctrl->select(c.toMap().value("id").toString());
+        m_ctrl->deleteSelection(false);
+        QCOMPARE(texts(), 0);
+        QVERIFY(m_ctrl->modified());
+        m_ctrl->undo();
+        QCOMPARE(texts(), 1);
+        m_ctrl->redo();
+
+        // Salvar de dentro grava o projeto inteiro, já com a mudança.
+        QVERIFY(m_ctrl->saveProject());
+        clv::Project saved;
+        QVERIFY(clv::loadProjectFile(file, saved));
+        QCOMPARE(saved.tracks.size(), size_t(1));
+        QCOMPARE(saved.compounds.size(), size_t(1));
+        int savedTexts = 0;
+        saved.forEachClip([&](const clv::Clip &c) { savedTexts += c.isText(); });
+        QCOMPARE(savedTexts, 0);
+
+        // Voltar: um passo de desfazer lá fora, e o projeto continua salvo.
+        m_ctrl->closeCompound();
+        QVERIFY(m_ctrl->compoundPath().isEmpty());
+        QCOMPARE(m_ctrl->selectedClip().value("id").toString(), cmp);
+        QCOMPARE(m_ctrl->playhead(), 1'000'000.0);
+        QVERIFY(!m_ctrl->modified());
+        QCOMPARE(m_ctrl->undoText(), QStringLiteral("Edit compound clip"));
+        m_ctrl->undo();
+        m_ctrl->openCompound(cmp);
+        QCOMPARE(texts(), 1); // o texto voltou
+        m_ctrl->closeCompound();
+        QCOMPARE(m_ctrl->undoText(), QStringLiteral("Create compound clip")); // fechar sem mudar não cria passo
     }
 
     void beatMarkers()

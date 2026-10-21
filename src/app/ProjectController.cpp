@@ -222,6 +222,10 @@ void ProjectController::commitChange()
 void ProjectController::setProject(Project p, const QString &path)
 {
     pause();
+    if (!m_compoundStack.empty()) {
+        m_compoundStack.clear();
+        emit compoundPathChanged();
+    }
     removeRecovery(); // o projeto anterior foi salvo ou descartado pelo usuário
     m_autosavedRevision = 0;
     m_project = std::move(p);
@@ -651,11 +655,13 @@ bool ProjectController::saveProject()
     if (m_filePath.isEmpty())
         return false;
     QString err;
-    if (!saveProjectFile(m_project, m_filePath, &err)) {
+    if (!saveProjectFile(rootProject(), m_filePath, &err)) {
         emit errorOccurred(tr("Save failed: %1").arg(err));
         return false;
     }
     m_savedRevision = m_history.revision();
+    for (auto &f : m_compoundStack)
+        f.savedRevision = -2;
     removeRecovery();
     rememberRecent(m_filePath);
     emit modifiedChanged();
@@ -1556,7 +1562,8 @@ void ProjectController::startExport(const engine::ExportOptions &opts)
 
     // A superfície GL (fallback) precisa nascer na thread da GUI.
     auto *surface = render::OffscreenRhi::createFallbackSurface();
-    auto snap = snapshot();
+    // Com um composto aberto, exporta o projeto inteiro (não só o conteúdo dele).
+    auto snap = m_compoundStack.empty() ? snapshot() : std::make_shared<const Project>(rootProject());
     std::thread([this, snap, opts, surface]() {
         QString err;
         engine::Exporter exporter;
@@ -2212,6 +2219,89 @@ void ProjectController::breakCompound()
     }
 }
 
+Project ProjectController::rootProject() const
+{
+    Project cur = m_project;
+    for (auto it = m_compoundStack.rbegin(); it != m_compoundStack.rend(); ++it) {
+        Project outer = it->outer;
+        edit::mergeCompoundWorkspace(outer, it->seqId, cur);
+        cur = std::move(outer);
+    }
+    return cur;
+}
+
+QVariantList ProjectController::compoundPath() const
+{
+    QVariantList out;
+    for (const auto &f : m_compoundStack)
+        out << QVariantMap{{"name", f.name}};
+    return out;
+}
+
+void ProjectController::openCompound(const QString &clipId)
+{
+    const Clip *c = edit::clipById(m_project, clipId);
+    const Sequence *seq = c && c->isCompound() ? m_project.compound(c->compoundId) : nullptr;
+    auto work = seq ? edit::compoundWorkspace(m_project, seq->id) : std::nullopt;
+    if (!work)
+        return;
+    pause();
+    int uses = 0;
+    m_project.forEachClip([&](const Clip &x) { uses += x.isCompound() && x.compoundId == seq->id; });
+    CompoundFrame f;
+    f.clipId = clipId;
+    f.seqId = seq->id;
+    f.name = seq->name;
+    f.playhead = m_playhead;
+    f.selection = m_selection;
+    f.savedRevision = m_savedRevision;
+    const bool outerModified = modified();
+    const Micros inner = std::clamp<Micros>(c->sourceIn + (m_playhead - c->start), 0, work->duration());
+    f.outer = std::move(m_project);
+    f.history = std::move(m_history);
+    m_compoundStack.push_back(std::move(f));
+    m_project = std::move(*work);
+    m_history = History();
+    m_savedRevision = outerModified ? -1 : 0;
+    m_lastCoalesceKey.clear();
+    m_selection.clear();
+    m_playhead = m_project.snapToFrame(inner);
+    commitChange();
+    emit selectionChanged();
+    emit playheadChanged();
+    emit compoundPathChanged();
+    setStatus(uses > 1 ? tr("Editing %1: changes apply to all %2 copies of it").arg(m_compoundStack.back().name).arg(uses)
+                       : tr("Editing %1").arg(m_compoundStack.back().name));
+}
+
+void ProjectController::closeCompound()
+{
+    if (m_compoundStack.empty())
+        return;
+    pause();
+    CompoundFrame f = std::move(m_compoundStack.back());
+    m_compoundStack.pop_back();
+    const bool innerClean = m_history.revision() == m_savedRevision;
+    Project merged = f.outer;
+    edit::mergeCompoundWorkspace(merged, f.seqId, m_project);
+    const bool changed = serializeProject(merged) != serializeProject(f.outer);
+    m_history = std::move(f.history);
+    if (changed)
+        m_history.push(f.outer, tr("Edit compound clip"));
+    // Salvo lá dentro: continua "salvo" se nada mudou depois do save.
+    m_savedRevision = f.savedRevision == -2 ? (innerClean ? m_history.revision() : -1) : f.savedRevision;
+    m_project = std::move(merged);
+    m_lastCoalesceKey.clear();
+    m_selection = edit::clipById(m_project, f.clipId) ? QStringList{f.clipId} : QStringList{};
+    m_primary = f.clipId;
+    m_playhead = std::min(f.playhead, m_project.duration());
+    commitChange();
+    emit selectionChanged();
+    emit playheadChanged();
+    emit compoundPathChanged();
+    emit modifiedChanged();
+}
+
 void ProjectController::groupSelection()
 {
     if (m_selection.size() < 2)
@@ -2286,7 +2376,7 @@ void ProjectController::removeRecovery()
 
 void ProjectController::autosaveNow()
 {
-    if (!modified() || m_history.revision() == m_autosavedRevision || m_project.id.isEmpty())
+    if (!modified() || m_revisionCounter == m_autosavedRevision || m_project.id.isEmpty())
         return;
     QDir().mkpath(recoveryDir());
     const QString file = recoveryFileFor(m_project.id);
@@ -2296,7 +2386,7 @@ void ProjectController::autosaveNow()
         m_recoveryLock->tryLock(0);
     }
     QString err;
-    if (!saveProjectFile(m_project, file, &err)) {
+    if (!saveProjectFile(rootProject(), file, &err)) {
         qWarning("clivcut: recovery copy failed: %s", qPrintable(err));
         return;
     }
@@ -2310,7 +2400,7 @@ void ProjectController::autosaveNow()
                        .toJson());
         meta.commit();
     }
-    m_autosavedRevision = m_history.revision();
+    m_autosavedRevision = m_revisionCounter;
 }
 
 QVariantList ProjectController::recoverableProjects() const

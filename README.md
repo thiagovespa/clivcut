@@ -30,7 +30,7 @@ Written in **C++20 + Qt 6 (Qt Quick / RHI) + FFmpeg**. Video compositing runs on
   - Snapping, zoom, markers, duplicate and freeze frame.
   - **Copy, cut and paste** clips, including across projects via the system clipboard, carrying the media along.
   - **Copy and paste attributes**, **group** clips, **rubber-band selection** and moving several clips at once.
-  - **Compound clips** (Alt+G): combine clips from several tracks into one clip, then move, trim, split, transform, color-grade, mask or add effects and transitions to the whole group; Alt+Shift+G breaks it apart again at the same timing.
+  - **Compound clips** (Alt+G): combine clips from several tracks into one clip, then move, trim, split, transform, color-grade, mask or add effects and transitions to the whole group. Double-click (or Alt+E) opens its contents in the timeline for editing, with its own undo history; Back (Alt+↑) returns, and the whole edit becomes one undo step. Alt+Shift+G breaks it apart again at the same timing.
   - Right-click context menu on clips.
 - **Transform:** position, scale, rotation, opacity, flip and crop. Drag to move in the player; Ctrl+wheel resizes.
 - **Keyframes:**
@@ -211,6 +211,7 @@ Every shortcut can be changed in **Keyboard shortcuts** (keyboard button at the 
 | Copy / paste attributes | Ctrl+Alt+C / Ctrl+Alt+V |
 | Group / ungroup | Ctrl+G / Ctrl+Shift+G |
 | Create / break compound clip | Alt+G / Alt+Shift+G |
+| Edit compound clip / back | double-click or Alt+E / Alt+↑ |
 | Select all | Ctrl+A |
 | Rubber-band selection | drag on empty timeline space (Ctrl/Shift adds) |
 | Previous/next frame (1 s with Shift) | ← / → |

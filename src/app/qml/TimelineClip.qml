@@ -217,7 +217,8 @@ Item {
             dragTarget.x = 0;
             dragTarget.y = 0;
         }
-        onDoubleClicked: Project.seek(root.clipData.start)
+        // Composto: abre o conteúdo para edição; os demais levam o cursor ao início.
+        onDoubleClicked: root.isCompound ? Project.openCompound(root.clipData.id) : Project.seek(root.clipData.start)
         Item { id: dragTarget }
     }
 
