@@ -35,14 +35,16 @@ void applyAnimation(VisualLayer &l, AnimationKind kind, double p)
     }
 }
 
-VisualLayer resolveLayer(const Project &p, int ti, const Clip &c, Micros rel)
+FrameDesc evaluateTracks(const Project &p, const std::vector<Track> &tracks, Micros t, int depth);
+
+VisualLayer resolveLayer(const Project &p, int ti, const Clip &c, Micros rel, int depth)
 {
     VisualLayer l;
     l.trackIndex = ti;
     l.clip = &c;
     l.asset = c.hasMedia() ? p.asset(c.assetId) : nullptr;
     l.rel = rel;
-    l.sourceTime = c.hasMedia() ? sourceTimeAt(p, c, rel) : 0;
+    l.sourceTime = c.hasMedia() || c.isCompound() ? sourceTimeAt(p, c, rel) : 0;
     const Micros k = std::clamp<Micros>(rel, 0, c.duration);
     l.x = propAt(c, Prop::X, k);
     l.y = propAt(c, Prop::Y, k);
@@ -66,6 +68,9 @@ VisualLayer resolveLayer(const Project &p, int ti, const Clip &c, Micros rel)
     l.effect = effectShaderIndex(c.effect.id);
     l.effectIntensity = c.effect.intensity;
     l.effectTime = static_cast<double>(rel) / kSecond;
+    // Compostos dentro de compostos têm um limite, contra referências circulares.
+    if (const Sequence *seq = c.isCompound() && depth < 8 ? p.compound(c.compoundId) : nullptr)
+        l.nested = std::make_shared<const FrameDesc>(evaluateTracks(p, seq->tracks, l.sourceTime, depth + 1));
     return l;
 }
 
@@ -173,6 +178,11 @@ void applyTransition(TransitionKind kind, double p, VisualLayer &out, VisualLaye
 
 Micros sourceTimeAt(const Project &p, const Clip &c, Micros rel)
 {
+    if (c.isCompound()) {
+        const Sequence *seq = p.compound(c.compoundId);
+        const Micros len = seq ? seq->duration() : 0;
+        return std::clamp<Micros>(c.sourceIn + static_cast<Micros>(rel * c.speed), 0, std::max<Micros>(0, len - 1));
+    }
     const MediaAsset *a = p.asset(c.assetId);
     if (!a || a->kind == MediaKind::Image)
         return 0;
@@ -200,9 +210,16 @@ double audioGainAt(const Clip &c, Micros rel)
 
 FrameDesc evaluate(const Project &p, Micros t)
 {
+    return evaluateTracks(p, p.tracks, t, 0);
+}
+
+namespace {
+
+FrameDesc evaluateTracks(const Project &p, const std::vector<Track> &tracks, Micros t, int depth)
+{
     FrameDesc f;
-    for (int ti = 0; ti < static_cast<int>(p.tracks.size()); ++ti) {
-        const Track &track = p.tracks[ti];
+    for (int ti = 0; ti < static_cast<int>(tracks.size()); ++ti) {
+        const Track &track = tracks[ti];
         const auto &clips = track.clips;
         for (int ci = 0; ci < static_cast<int>(clips.size()); ++ci) {
             const Clip &c = clips[ci];
@@ -219,16 +236,16 @@ FrameDesc evaluate(const Project &p, Micros t)
             // Uma transição ocupa [corte - d/2, corte + d/2). Cada metade é emitida pelo
             // clipe que contém t; o outro clipe é estendido além da borda (origem extrapolada).
             if (inside && track.isVisual() && !track.hidden && !c.audioOnly) {
-                VisualLayer cur = resolveLayer(p, ti, c, t - c.start);
+                VisualLayer cur = resolveLayer(p, ti, c, t - c.start, depth);
                 if (hasTransition && t < c.start + half) {
                     const Clip &prev = clips[ci - 1];
-                    VisualLayer out = resolveLayer(p, ti, prev, t - prev.start);
+                    VisualLayer out = resolveLayer(p, ti, prev, t - prev.start, depth);
                     const double prog = static_cast<double>(t - (c.start - half)) / c.transitionIn->duration;
                     applyTransition(c.transitionIn->kind, prog, out, cur);
                     f.layers.push_back(out);
                     f.layers.push_back(cur);
                 } else if (nextHasTransition && t >= c.end() - nextHalf) {
-                    VisualLayer in = resolveLayer(p, ti, *next, t - next->start);
+                    VisualLayer in = resolveLayer(p, ti, *next, t - next->start, depth);
                     const double prog = static_cast<double>(t - (next->start - nextHalf)) / next->transitionIn->duration;
                     applyTransition(next->transitionIn->kind, prog, cur, in);
                     f.layers.push_back(cur);
@@ -247,5 +264,7 @@ FrameDesc evaluate(const Project &p, Micros t)
     }
     return f;
 }
+
+} // namespace
 
 } // namespace clv

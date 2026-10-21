@@ -4,10 +4,13 @@
 #include "Keyframes.h"
 #include "SpeedCurve.h"
 
+#include <QSet>
+
 #include <algorithm>
 #include <cmath>
 #include <cstdlib>
 #include <limits>
+#include <map>
 
 namespace clv::edit {
 
@@ -76,6 +79,17 @@ TrackKind trackKindFor(const Project &p, const Clip &c)
         return TrackKind::Adjust;
     if (c.audioOnly)
         return TrackKind::Audio;
+    if (c.isCompound()) {
+        // Composto só de áudio vai para faixa de áudio; com qualquer imagem, para faixa de vídeo.
+        const Sequence *seq = p.compound(c.compoundId);
+        if (!seq)
+            return TrackKind::Video;
+        for (const auto &t : seq->tracks)
+            for (const auto &inner : t.clips)
+                if (trackKindFor(p, inner) != TrackKind::Audio)
+                    return TrackKind::Video;
+        return TrackKind::Audio;
+    }
     const MediaAsset *a = p.asset(c.assetId);
     if (a && a->kind == MediaKind::Audio)
         return TrackKind::Audio;
@@ -151,6 +165,10 @@ int ensureTrackFor(Project &p, TrackKind kind, Micros start, Micros duration, in
 
 Micros maxDuration(const Project &p, const Clip &c)
 {
+    if (c.isCompound()) {
+        const Sequence *seq = p.compound(c.compoundId);
+        return seq && c.speed > 0 ? static_cast<Micros>((seq->duration() - c.sourceIn) / c.speed) : -1;
+    }
     if (!c.hasMedia())
         return -1;
     const MediaAsset *a = p.asset(c.assetId);
@@ -214,7 +232,7 @@ std::optional<QString> splitClip(Project &p, const QString &clipId, Micros t)
     const Micros origDuration = c.duration;
     const Micros origSrc = c.sourceDuration();
     Clip right = c;
-    right.id = newId(c.isText() ? "txt" : c.isAdjust() ? "adj" : "clp");
+    right.id = newId(c.isText() ? "txt" : c.isAdjust() ? "adj" : c.isCompound() ? "cmp" : "clp");
     right.start = t;
     right.duration = c.duration - rel;
     Clip &left = c;
@@ -237,7 +255,7 @@ std::optional<QString> splitClip(Project &p, const QString &clipId, Micros t)
         } else {
             right.sourceIn = origIn + leftSrc;
         }
-    } else if (left.hasMedia()) {
+    } else if (left.hasMedia() || left.isCompound()) {
         const Micros leftSrc = static_cast<Micros>(rel * c.speed);
         if (c.reverse) {
             // Em reverso, o início da timeline mostra o fim do trecho de origem.
@@ -373,7 +391,8 @@ bool trimClip(Project &p, const QString &clipId, Edge edge, Micros newTime)
     const Micros minLen = p.frameDuration();
     const bool magnet = isMainMagnet(p, ref->track);
     const MediaAsset *a = c.hasMedia() ? p.asset(c.assetId) : nullptr;
-    const bool limited = a && a->kind != MediaKind::Image && a->duration > 0 && c.speed > 0;
+    const bool limited = (a && a->kind != MediaKind::Image && a->duration > 0 && c.speed > 0)
+                         || (c.isCompound() && c.speed > 0 && p.compound(c.compoundId));
 
     if (edge == Edge::End) {
         Micros newEnd = std::max(newTime, c.start + minLen);
@@ -409,7 +428,7 @@ bool trimClip(Project &p, const QString &clipId, Edge edge, Micros newTime)
         const Micros delta = newStart - c.start;
         if (c.duration - delta < minLen)
             return false;
-        if (c.hasMedia() && !c.reverse)
+        if ((c.hasMedia() || c.isCompound()) && !c.reverse)
             c.sourceIn += static_cast<Micros>(delta * c.speed);
         c.start = newStart;
         c.duration -= delta;
@@ -721,6 +740,193 @@ Micros snap(const Project &p, Micros t, Micros threshold, const QStringList &ign
             consider(c.end());
         }
     return bestDist <= threshold ? best : t;
+}
+
+
+QString createCompound(Project &p, const QStringList &ids, const QString &name, CompoundError *error)
+{
+    auto fail = [&](CompoundError e) {
+        if (error)
+            *error = e;
+        return QString();
+    };
+    if (error)
+        *error = CompoundError::None;
+    // Faixas envolvidas, de baixo para cima, e o trecho total.
+    std::map<int, QStringList> byTrack;
+    Micros t0 = std::numeric_limits<Micros>::max(), t1 = 0;
+    for (const QString &id : ids) {
+        const auto ref = findClip(p, id);
+        if (!ref)
+            continue;
+        if (p.tracks[ref->track].locked)
+            return fail(CompoundError::Locked);
+        const Clip &c = p.tracks[ref->track].clips[ref->index];
+        byTrack[ref->track].push_back(id);
+        t0 = std::min(t0, c.start);
+        t1 = std::max(t1, c.end());
+    }
+    if (byTrack.empty() || t1 <= t0)
+        return fail(CompoundError::NoClips);
+    const int lowest = byTrack.begin()->first;
+    const bool onMain = isMainMagnet(p, lowest);
+    int firstMainIndex = -1;
+    if (onMain) {
+        // Os clipes da principal precisam ser vizinhos e começar/terminar o trecho todo.
+        const auto &main = p.tracks[lowest].clips;
+        const auto &sel = byTrack[lowest];
+        std::vector<int> idx;
+        for (int i = 0; i < static_cast<int>(main.size()); ++i)
+            if (sel.contains(main[i].id))
+                idx.push_back(i);
+        for (size_t k = 1; k < idx.size(); ++k)
+            if (idx[k] != idx[k - 1] + 1)
+                return fail(CompoundError::MainTrackGap);
+        if (main[idx.front()].start != t0 || main[idx.back()].end() != t1)
+            return fail(CompoundError::MainTrackGap);
+        firstMainIndex = idx.front();
+    }
+
+    Sequence seq;
+    seq.id = newId("seq");
+    seq.name = name;
+    for (const auto &[ti, list] : byTrack) {
+        Track &src = p.tracks[ti];
+        Track inner = src;
+        inner.id = newId("trk");
+        inner.clips.clear();
+        inner.captions = false;
+        for (auto it = src.clips.begin(); it != src.clips.end();) {
+            if (list.contains(it->id)) {
+                Clip c = std::move(*it);
+                c.start -= t0;
+                inner.clips.push_back(std::move(c));
+                it = src.clips.erase(it);
+            } else {
+                ++it;
+            }
+        }
+        seq.tracks.push_back(std::move(inner));
+    }
+
+    Clip cc;
+    cc.id = newId("cmp");
+    cc.type = ClipType::Compound;
+    cc.compoundId = seq.id;
+    cc.start = t0;
+    cc.duration = t1 - t0;
+    p.compounds.push_back(std::move(seq));
+
+    const TrackKind kind = trackKindFor(p, cc);
+    int target = lowest;
+    if (onMain) {
+        auto &main = p.tracks[lowest].clips;
+        main.insert(main.begin() + firstMainIndex, cc);
+    } else {
+        if (p.tracks[target].kind != kind || !fitsInTrack(p.tracks[target], cc.start, cc.duration))
+            target = ensureTrackFor(p, kind, cc.start, cc.duration, std::max(lowest, 1));
+        p.tracks[target].clips.push_back(cc);
+        sortTrack(p.tracks[target]);
+    }
+    removeEmptyTracks(p);
+    return cc.id;
+}
+
+QStringList breakCompound(Project &p, const QString &clipId)
+{
+    const auto ref = findClip(p, clipId);
+    if (!ref || p.tracks[ref->track].locked)
+        return {};
+    const Clip cc = p.tracks[ref->track].clips[ref->index];
+    const Sequence *seqPtr = cc.isCompound() ? p.compound(cc.compoundId) : nullptr;
+    if (!seqPtr)
+        return {};
+    const Sequence seq = *seqPtr;
+    const int baseTrack = ref->track;
+    const bool onMain = isMainMagnet(p, baseTrack);
+    auto &baseClips = p.tracks[baseTrack].clips;
+    baseClips.erase(baseClips.begin() + ref->index);
+
+    // Só o trecho visível do composto, recortado como faria um corte nas bordas.
+    const Micros winStart = cc.sourceIn, winEnd = cc.sourceIn + cc.duration;
+    const Micros offset = cc.start - cc.sourceIn;
+    QStringList out;
+    int below = baseTrack; // cada faixa interna fica acima da anterior
+    for (size_t k = 0; k < seq.tracks.size(); ++k) {
+        std::vector<Clip> clips;
+        for (Clip c : seq.tracks[k].clips) {
+            if (c.end() <= winStart || c.start >= winEnd)
+                continue;
+            if (c.start < winStart) {
+                const Micros delta = winStart - c.start;
+                if ((c.hasMedia() || c.isCompound()) && !c.reverse)
+                    c.sourceIn += static_cast<Micros>(delta * c.speed);
+                c.start = winStart;
+                c.duration -= delta;
+                c.transitionIn.reset();
+            }
+            if (c.end() > winEnd)
+                c.duration = winEnd - c.start;
+            c.start += offset;
+            clips.push_back(std::move(c));
+        }
+        if (clips.empty())
+            continue;
+        const TrackKind kind = seq.tracks[k].kind;
+        auto fitsAll = [&](int ti) {
+            if (p.tracks[ti].kind != kind || p.tracks[ti].locked)
+                return false;
+            for (const Clip &c : clips)
+                if (!fitsInTrack(p.tracks[ti], c.start, c.duration))
+                    return false;
+            return true;
+        };
+        int ti = -1;
+        if (k == 0 && (onMain ? kind == TrackKind::Video : fitsAll(baseTrack)))
+            ti = baseTrack;
+        else if (below + 1 < static_cast<int>(p.tracks.size()) && fitsAll(below + 1))
+            ti = below + 1;
+        else {
+            // Faixa nova logo acima, para manter a ordem de empilhamento.
+            Track t = createTrack(kind, seq.tracks[k].name);
+            ti = std::max(below + 1, 1);
+            p.tracks.insert(p.tracks.begin() + std::min<size_t>(ti, p.tracks.size()), std::move(t));
+        }
+        for (Clip &c : clips) {
+            out << c.id;
+            if (onMain && ti == baseTrack) {
+                // Na principal magnética, entra no lugar do composto, em ordem.
+                auto &main = p.tracks[ti].clips;
+                const auto pos = std::find_if(main.begin(), main.end(), [&](const Clip &m) { return m.start >= c.start; });
+                main.insert(pos, std::move(c));
+            } else {
+                p.tracks[ti].clips.push_back(std::move(c));
+            }
+        }
+        sortTrack(p.tracks[ti]);
+        below = ti;
+    }
+    if (onMain)
+        packMainTrack(p);
+    pruneCompounds(p);
+    removeEmptyTracks(p);
+    return out;
+}
+
+void pruneCompounds(Project &p)
+{
+    // Repete até estabilizar: uma sequência pode ser usada só por outra que também sumiu.
+    for (bool changed = true; changed;) {
+        changed = false;
+        QSet<QString> used;
+        p.forEachClip([&](const Clip &c) {
+            if (c.isCompound())
+                used.insert(c.compoundId);
+        });
+        const auto before = p.compounds.size();
+        std::erase_if(p.compounds, [&](const Sequence &s) { return !used.contains(s.id); });
+        changed = p.compounds.size() != before;
+    }
 }
 
 } // namespace clv::edit

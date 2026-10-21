@@ -114,4 +114,24 @@ bool moveClips(Project &p, const QStringList &ids, Micros delta);
  */
 Micros snap(const Project &p, Micros t, Micros threshold, const QStringList &ignoreClips, Micros playhead);
 
+/** Motivo de falha de createCompound (para a mensagem ao usuário). */
+enum class CompoundError { None, NoClips, Locked, MainTrackGap };
+
+/**
+ * Junta os clipes num clipe composto: eles vão para uma sequência própria (mesmas faixas
+ * relativas e tempos a partir de 0) e um clipe só os substitui, na faixa mais baixa entre eles.
+ * Na faixa principal magnética, os clipes escolhidos nela precisam ser vizinhos e cobrir todo o
+ * trecho dos demais (o resto da timeline não se mexe). Retorna o id do novo clipe ou vazio.
+ */
+QString createCompound(Project &p, const QStringList &ids, const QString &name, CompoundError *error = nullptr);
+
+/**
+ * Desfaz o clipe composto: o trecho visível dos clipes internos volta para a timeline, na
+ * mesma posição, com a primeira faixa interna no lugar do composto. Retorna os ids novos.
+ */
+QStringList breakCompound(Project &p, const QString &clipId);
+
+/** Remove as sequências que nenhum clipe composto usa mais. */
+void pruneCompounds(Project &p);
+
 } // namespace clv::edit

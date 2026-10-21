@@ -200,7 +200,8 @@ struct TextStyle {
 };
 
 /// Adjust: clipe de filtro/ajuste que altera tudo o que está abaixo dele na composição.
-enum class ClipType { Media, Text, Adjust };
+/// Compound: clipe composto, um trecho de outra timeline (Project::compounds) tratado como um clipe só.
+enum class ClipType { Media, Text, Adjust, Compound };
 
 struct Clip {
     QString id;
@@ -215,6 +216,7 @@ struct Clip {
 
     // --- mídia ---
     QString assetId;
+    QString compoundId; ///< clipe composto: id da sequência em Project::compounds
     Micros sourceIn = 0; ///< ponto de entrada na mídia
     double speed = 1;    ///< duração de origem = duration * speed (média, se houver curva); 0 = quadro congelado
     /// Curva de velocidade (vazia = constante). Linear por partes, u crescente de 0 a 1.
@@ -250,6 +252,7 @@ struct Clip {
     bool isText() const { return type == ClipType::Text; }
     bool isAdjust() const { return type == ClipType::Adjust; }
     bool hasMedia() const { return type == ClipType::Media; }
+    bool isCompound() const { return type == ClipType::Compound; }
 };
 
 enum class TrackKind { Video, Audio, Text, Adjust };
@@ -265,6 +268,15 @@ struct Track {
     std::vector<Clip> clips; ///< sempre ordenados por start, sem sobreposição
 
     bool isVisual() const { return kind != TrackKind::Audio; }
+};
+
+/// Conteúdo de um clipe composto: faixas próprias, com tempos a partir de 0.
+struct Sequence {
+    QString id;
+    QString name;
+    std::vector<Track> tracks;
+
+    Micros duration() const;
 };
 
 struct Marker {
@@ -290,6 +302,8 @@ struct Project {
     std::vector<Track> tracks;
     std::map<QString, MediaAsset> assets;
     std::vector<Marker> markers;
+    /// Sequências dos clipes compostos (um clipe Compound aponta para uma delas pelo id).
+    std::vector<Sequence> compounds;
     /// Pontos de entrada/saída (I/O) para exportar ou revisar um trecho; -1 = não definido.
     Micros inPoint = -1;
     Micros outPoint = -1;
@@ -300,6 +314,19 @@ struct Project {
     Micros rangeStart() const { return inPoint >= 0 ? inPoint : 0; }
     Micros rangeEnd() const { return outPoint > 0 ? outPoint : duration(); }
     const MediaAsset *asset(const QString &id) const;
+    const Sequence *compound(const QString &id) const;
+    /// Visita todos os clipes, inclusive os de dentro de clipes compostos.
+    template <class F>
+    void forEachClip(F &&f) const
+    {
+        for (const auto &t : tracks)
+            for (const auto &c : t.clips)
+                f(c);
+        for (const auto &s : compounds)
+            for (const auto &t : s.tracks)
+                for (const auto &c : t.clips)
+                    f(c);
+    }
     Micros frameDuration() const { return static_cast<Micros>(kSecond / fps + 0.5); }
     Micros snapToFrame(Micros t) const;
 };

@@ -373,6 +373,86 @@ private slots:
         QVERIFY(q.markers[1].beat);
     }
 
+    void compoundClips()
+    {
+        Project p = createProject();
+        p.mainTrackMagnet = true;
+        auto a = videoAsset(p, 10 * kSecond);
+        auto c1 = createMediaClip(a, 0);
+        c1.duration = 4 * kSecond;
+        auto c2 = createMediaClip(a, 4 * kSecond);
+        c2.duration = 3 * kSecond;
+        c2.sourceIn = 5 * kSecond;
+        auto c3 = createMediaClip(a, 7 * kSecond);
+        c3.duration = 2 * kSecond;
+        const QString id1 = edit::insertClip(p, c1, 0);
+        const QString id2 = edit::insertClip(p, c2, 0);
+        const QString id3 = edit::insertClip(p, c3, 0);
+        const QString title = edit::insertClip(p, createTextClip(QStringLiteral("T"), 5 * kSecond, 2 * kSecond), -1);
+        QCOMPARE(p.tracks.size(), size_t(2));
+
+        // Clipes da principal que não são vizinhos: recusa.
+        edit::CompoundError err;
+        QVERIFY(edit::createCompound(p, {id1, id3}, QStringLiteral("x"), &err).isEmpty());
+        QCOMPARE(err, edit::CompoundError::MainTrackGap);
+
+        const QString cmp = edit::createCompound(p, {id2, title, id1}, QStringLiteral("Compound 1"), &err);
+        QVERIFY(!cmp.isEmpty());
+        QCOMPARE(p.tracks.size(), size_t(1)); // a faixa de texto ficou vazia e saiu
+        QCOMPARE(p.tracks[0].clips.size(), size_t(2));
+        const Clip &cc = p.tracks[0].clips[0];
+        QVERIFY(cc.isCompound());
+        QCOMPARE(cc.duration, 7 * kSecond);
+        QCOMPARE(p.tracks[0].clips[1].start, 7 * kSecond); // c3 continua onde estava
+        const Sequence *seq = p.compound(cc.compoundId);
+        QVERIFY(seq);
+        QCOMPARE(seq->tracks.size(), size_t(2));
+        QCOMPARE(seq->duration(), 7 * kSecond);
+
+        // Avaliação: a camada do composto traz o quadro interno (vídeo + texto aos 5,5 s).
+        const FrameDesc f = evaluate(p, 5'500'000);
+        QCOMPARE(f.layers.size(), size_t(1));
+        QVERIFY(f.layers[0].nested);
+        QCOMPARE(f.layers[0].nested->layers.size(), size_t(2));
+        QCOMPARE(f.layers[0].nested->layers[0].sourceTime, 6'500'000); // c2 começa em 4 s com origem 5 s
+        QVERIFY(f.layers[0].nested->layers[1].clip->isText());
+
+        // Salvar e reabrir preserva a sequência.
+        Project q;
+        QVERIFY(parseProject(serializeProject(p), q));
+        QCOMPARE(serializeProject(q), serializeProject(p));
+        QCOMPARE(q.compounds.size(), size_t(1));
+
+        // O fim não passa do conteúdo; dividir gera dois compostos com a mesma sequência.
+        QVERIFY(edit::trimClip(p, cmp, edit::Edge::End, 20 * kSecond) == false || p.tracks[0].clips[0].duration <= 7 * kSecond);
+        const auto right = edit::splitClip(p, cmp, 2 * kSecond);
+        QVERIFY(right);
+        const Clip *r = edit::clipById(p, *right);
+        QVERIFY(r && r->isCompound());
+        QCOMPARE(r->sourceIn, 2 * kSecond);
+        QCOMPARE(r->compoundId, p.tracks[0].clips[0].compoundId);
+
+        // Desfazer o da direita: volta o trecho de 2 s a 7 s, nos mesmos lugares.
+        const QStringList back = edit::breakCompound(p, *right);
+        QCOMPARE(back.size(), 3); // fim de c1, c2 e o título
+        QCOMPARE(p.compounds.size(), size_t(1)); // a metade esquerda ainda usa a sequência
+        const Clip *b1 = edit::clipById(p, back[0]);
+        QVERIFY(b1 && b1->hasMedia());
+        QCOMPARE(b1->start, 2 * kSecond);
+        QCOMPARE(b1->sourceIn, 2 * kSecond);
+        QCOMPARE(b1->duration, 2 * kSecond);
+        const Clip *t = edit::clipById(p, back[2]);
+        QVERIFY(t && t->isText());
+        QCOMPARE(t->start, 5 * kSecond);
+        QCOMPARE(p.tracks.size(), size_t(2));
+        QVERIFY(p.tracks[1].kind == TrackKind::Text);
+        QCOMPARE(edit::clipById(p, id3)->start, 7 * kSecond);
+        // Desfazer o outro: a sequência some.
+        edit::breakCompound(p, p.tracks[0].clips[0].id);
+        QVERIFY(p.compounds.empty());
+        QCOMPARE(p.tracks[0].clips.size(), size_t(4));
+    }
+
     void historyUndoRedo()
     {
         Project p = createProject();

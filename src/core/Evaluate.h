@@ -3,6 +3,7 @@
 
 #include "Model.h"
 
+#include <memory>
 #include <vector>
 
 /**
@@ -14,6 +15,8 @@
 namespace clv {
 
 enum class MaskKind { None, WipeLeft, WipeRight, Circle, WipeUp, WipeDown };
+
+struct FrameDesc;
 
 struct VisualLayer {
     int trackIndex = 0;
@@ -36,6 +39,8 @@ struct VisualLayer {
     int effect = 0;
     double effectIntensity = 0;
     double effectTime = 0;
+    /// Clipe composto: o quadro interno, composto à parte e usado como a imagem desta camada.
+    std::shared_ptr<const FrameDesc> nested;
 };
 
 struct AudioSource {

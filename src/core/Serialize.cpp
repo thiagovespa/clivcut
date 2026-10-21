@@ -99,10 +99,11 @@ constexpr std::array<std::pair<TrackKind, const char *>, 4> kTrackKinds{{
     {TrackKind::Adjust, "adjust"},
 }};
 
-constexpr std::array<std::pair<ClipType, const char *>, 3> kClipTypes{{
+constexpr std::array<std::pair<ClipType, const char *>, 4> kClipTypes{{
     {ClipType::Media, "media"},
     {ClipType::Text, "text"},
     {ClipType::Adjust, "adjust"},
+    {ClipType::Compound, "compound"},
 }};
 
 constexpr std::array<std::pair<MaskShape, const char *>, 5> kMaskShapes{{
@@ -342,6 +343,8 @@ QJsonObject clipToJson(const Clip &c)
     }
 
     o.insert("assetId", c.assetId);
+    if (c.isCompound())
+        o.insert("compoundId", c.compoundId);
     o.insert("sourceIn", us(c.sourceIn));
     o.insert("speed", c.speed);
     if (c.speedCurve.size() >= 2) {
@@ -449,6 +452,7 @@ Clip clipFromJson(const QJsonObject &o)
     }
 
     c.assetId = o.value("assetId").toString();
+    c.compoundId = o.value("compoundId").toString();
     c.sourceIn = toUs(o.value("sourceIn"));
     c.speed = o.value("speed").toDouble(1);
     for (const auto &v : o.value("speedCurve").toArray()) {
@@ -530,13 +534,12 @@ QString maskShapeName(MaskShape s) { return enumToName(kMaskShapes, s); }
 MaskShape maskShapeFromName(const QString &s) { return enumFromName(kMaskShapes, s); }
 AnimationKind animationFromName(const QString &s) { return enumFromName(kAnimations, s); }
 
-QJsonObject toJson(const Project &p)
+namespace {
+
+QJsonArray tracksToJson(const std::vector<Track> &list)
 {
-    QJsonArray assets;
-    for (const auto &[id, a] : p.assets)
-        assets.append(assetToJson(a));
     QJsonArray tracks;
-    for (const auto &t : p.tracks) {
+    for (const auto &t : list) {
         QJsonArray clips;
         for (const auto &c : t.clips)
             clips.append(clipToJson(c));
@@ -550,6 +553,45 @@ QJsonObject toJson(const Project &p)
             {"captions", t.captions},
             {"clips", clips},
         });
+    }
+    return tracks;
+}
+
+std::vector<Track> tracksFromJson(const QJsonArray &arr)
+{
+    std::vector<Track> out;
+    for (const auto &v : arr) {
+        const auto t = v.toObject();
+        Track tr;
+        tr.id = t.value("id").toString();
+        tr.kind = enumFromName(kTrackKinds, t.value("kind").toString());
+        tr.name = t.value("name").toString();
+        tr.muted = t.value("muted").toBool();
+        tr.hidden = t.value("hidden").toBool();
+        tr.locked = t.value("locked").toBool();
+        tr.captions = t.value("captions").toBool();
+        for (const auto &cv : t.value("clips").toArray())
+            tr.clips.push_back(clipFromJson(cv.toObject()));
+        out.push_back(std::move(tr));
+    }
+    return out;
+}
+
+} // namespace
+
+QJsonObject toJson(const Project &p)
+{
+    QJsonArray assets;
+    for (const auto &[id, a] : p.assets)
+        assets.append(assetToJson(a));
+    const QJsonArray tracks = tracksToJson(p.tracks);
+    // Só as sequências usadas por algum clipe composto (as órfãs somem ao salvar).
+    QJsonArray compounds;
+    for (const auto &s : p.compounds) {
+        bool used = false;
+        p.forEachClip([&](const Clip &c) { used = used || (c.isCompound() && c.compoundId == s.id); });
+        if (used)
+            compounds.append(QJsonObject{{"id", s.id}, {"name", s.name}, {"tracks", tracksToJson(s.tracks)}});
     }
     QJsonArray markers;
     for (const auto &m : p.markers) {
@@ -572,6 +614,8 @@ QJsonObject toJson(const Project &p)
         {"tracks", tracks},
         {"markers", markers},
     };
+    if (!compounds.isEmpty())
+        out.insert("compounds", compounds);
     if (p.backgroundBlur > 0)
         out.insert("backgroundBlur", p.backgroundBlur);
     if (p.inPoint >= 0)
@@ -621,19 +665,10 @@ bool parseProject(const QByteArray &data, Project &out, QString *error)
         const MediaAsset m = assetFromJson(v.toObject());
         p.assets.emplace(m.id, m);
     }
-    for (const auto &v : o.value("tracks").toArray()) {
-        const auto t = v.toObject();
-        Track tr;
-        tr.id = t.value("id").toString();
-        tr.kind = enumFromName(kTrackKinds, t.value("kind").toString());
-        tr.name = t.value("name").toString();
-        tr.muted = t.value("muted").toBool();
-        tr.hidden = t.value("hidden").toBool();
-        tr.locked = t.value("locked").toBool();
-        tr.captions = t.value("captions").toBool();
-        for (const auto &cv : t.value("clips").toArray())
-            tr.clips.push_back(clipFromJson(cv.toObject()));
-        p.tracks.push_back(std::move(tr));
+    p.tracks = tracksFromJson(o.value("tracks").toArray());
+    for (const auto &v : o.value("compounds").toArray()) {
+        const auto s = v.toObject();
+        p.compounds.push_back({s.value("id").toString(), s.value("name").toString(), tracksFromJson(s.value("tracks").toArray())});
     }
     if (p.tracks.empty())
         p.tracks.push_back(createTrack(TrackKind::Video, QCoreApplication::translate("Track", "Main")));

@@ -23,6 +23,23 @@ Micros Project::duration() const
     return end;
 }
 
+Micros Sequence::duration() const
+{
+    Micros end = 0;
+    for (const auto &t : tracks)
+        for (const auto &c : t.clips)
+            end = std::max(end, c.end());
+    return end;
+}
+
+const Sequence *Project::compound(const QString &id) const
+{
+    if (id.isEmpty())
+        return nullptr;
+    auto it = std::find_if(compounds.begin(), compounds.end(), [&](const Sequence &s) { return s.id == id; });
+    return it == compounds.end() ? nullptr : &*it;
+}
+
 const MediaAsset *Project::asset(const QString &id) const
 {
     auto it = assets.find(id);
