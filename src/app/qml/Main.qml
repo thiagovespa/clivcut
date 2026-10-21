@@ -77,6 +77,7 @@ ApplicationWindow {
     })
 
     header: TopBar {
+        id: topBar
         onNewRequested: window.guarded("new")
         onOpenRequested: window.guarded("open")
         onSaveRequested: window.save()
@@ -85,10 +86,74 @@ ApplicationWindow {
         onExportRequested: exportDialog.open()
         onCommandsRequested: commandPalette.open()
         onHomeRequested: window.showWelcome = true
+        onTourRequested: window.startTour()
+        onWhatsNewRequested: window.openWhatsNew("")
     }
 
     // Tela inicial enquanto o projeto está vazio (some ao importar/abrir).
     property bool showWelcome: true
+    onShowWelcomeChanged: if (!showWelcome) Qt.callLater(window.onboard)
+
+    // --- primeiros passos: tour guiado (instalação nova) e novidades (depois de atualizar) ---
+    Settings {
+        id: onboarding
+        category: "onboarding"
+        property string lastSeenVersion: ""
+        property bool tourDone: false
+    }
+    property bool onboarded: false
+    function onboard() {
+        if (onboarded || showWelcome || Project.onboardingSuppressed)
+            return;
+        onboarded = true;
+        const current = Qt.application.version;
+        const last = onboarding.lastSeenVersion;
+        onboarding.lastSeenVersion = current;
+        if (last === "") {
+            // Quem já usava uma versão sem esta tela tem preferências salvas: mostra as novidades
+            // da versão atual; instalação nova ganha o tour.
+            if (settings.value("width") !== undefined) {
+                const released = whatsNew.releases.filter(r => whatsNew.compareVersions(r.version, current) <= 0);
+                if (released.length > 0) {
+                    whatsNew.since = released.length > 1 ? released[1].version : "";
+                    whatsNew.offerTour = !onboarding.tourDone;
+                    whatsNew.open();
+                }
+            } else {
+                startTour();
+            }
+        } else if (whatsNew.compareVersions(last, current) < 0 && whatsNew.hasNews(last)) {
+            whatsNew.since = last;
+            whatsNew.offerTour = !onboarding.tourDone;
+            whatsNew.open();
+        }
+    }
+    function startTour() {
+        window.showWelcome = false;
+        rail.collapsed = false;
+        tour.start(0);
+    }
+    function openWhatsNew(since) {
+        whatsNew.since = since;
+        whatsNew.offerTour = !onboarding.tourDone;
+        whatsNew.open();
+    }
+    /// "Mostrar" das novidades: abre o painel do recurso e destaca a área com a explicação.
+    function showFeature(feature) {
+        const s = feature.show || {};
+        window.showWelcome = false;
+        if (s.panel !== undefined) {
+            rail.current = s.panel;
+            rail.collapsed = false;
+        }
+        const areas = { rail: rail, media: mediaPanel, preview: previewPanel, inspector: inspector, timeline: timeline,
+                        search: topBar.searchItem, export: topBar.exportItem };
+        featureSpot.target = areas[s.area] || null;
+        featureSpot.title = feature.title;
+        featureSpot.body = feature.text;
+        featureSpot.visible = true;
+        featureSpot.forceActiveFocus();
+    }
     Connections {
         target: Project
         function onAssetsChanged() { if (Project.assets.length > 0) window.showWelcome = false }
@@ -141,6 +206,7 @@ ApplicationWindow {
             }
 
             MediaPanel {
+                id: mediaPanel
                 visible: !rail.collapsed
                 section: rail.current
                 SplitView.preferredWidth: Math.max(240, window.width * 0.22)
@@ -158,6 +224,7 @@ ApplicationWindow {
                 SplitView.minimumWidth: 260
             }
             Inspector {
+                id: inspector
                 objectName: "inspector"
                 SplitView.preferredWidth: Math.max(250, window.width * 0.23)
                 SplitView.minimumWidth: 230
@@ -262,6 +329,9 @@ ApplicationWindow {
         palette: () => commandPalette.open(),
         scopes: () => Project.scopesEnabled = !Project.scopesEnabled,
         shortcuts: () => shortcutsDialog.open(),
+        tour: () => window.startTour(),
+        whatsNew: () => window.openWhatsNew(""),
+        userGuide: () => Qt.openUrlExternally(Keymap.userGuideUrl),
         panel0: () => rail.activate(0),
         panel1: () => rail.activate(1),
         panel2: () => rail.activate(2),
@@ -284,7 +354,7 @@ ApplicationWindow {
         paste: "copy", group: "link", ungroup: "link", createCompound: "layers", breakCompound: "layers", openCompound: "layers", closeCompound: "chevron-left", detachAudio: "audio-lines", freeze: "snowflake", addText: "type",
         selectAll: "layers", marker: "bookmark", markIn: "arrow-right-to-line", markOut: "arrow-left-to-line",
         clearInOut: "x", goIn: "skip-back", goOut: "skip-forward", snapping: "crosshair", magnet: "magnet",
-        zoomIn: "zoom-in", zoomOut: "zoom-out", zoomFit: "maximize-2", renderPreview: "zap", removeSilences: "scissors-line-dashed", detectBeats: "music", clearBeats: "music", recordVoiceover: "mic", clearRenderCache: "trash-2", shortcuts: "keyboard", scopes: "activity", panel0: "image-play",
+        zoomIn: "zoom-in", zoomOut: "zoom-out", zoomFit: "maximize-2", renderPreview: "zap", removeSilences: "scissors-line-dashed", detectBeats: "music", clearBeats: "music", recordVoiceover: "mic", clearRenderCache: "trash-2", shortcuts: "keyboard", tour: "play", whatsNew: "sparkles", userGuide: "file-text", scopes: "activity", panel0: "image-play",
         panel1: "type", panel2: "captions", panel3: "palette", panel4: "arrow-right-left", panel5: "sparkles", panel6: "file-text", panel7: "wand-sparkles",
         newProject: "file-plus-2", open: "folder-open", save: "download", saveAs: "download", import: "plus", export: "upload"
     })
@@ -366,6 +436,34 @@ ApplicationWindow {
         onAccepted: Project.relinkAsset(assetId, selectedFile)
     }
     ExportDialog { id: exportDialog; objectName: "exportDialog" }
+    WhatsNewDialog {
+        id: whatsNew
+        objectName: "whatsNew"
+        parent: Overlay.overlay
+        onShowRequested: (feature) => window.showFeature(feature)
+        onTourRequested: window.startTour()
+    }
+    GuidedTour {
+        id: tour
+        objectName: "guidedTour"
+        parent: Overlay.overlay
+        railItem: rail
+        mediaItem: mediaPanel
+        previewItem: previewPanel
+        inspectorItem: inspector
+        timelineItem: timeline
+        searchItem: topBar.searchItem
+        exportItem: topBar.exportItem
+        onFinished: onboarding.tourDone = true
+    }
+    Spotlight {
+        id: featureSpot
+        parent: Overlay.overlay
+        showSkip: false
+        nextText: qsTr("Got it")
+        onNextClicked: visible = false
+        onSkipClicked: visible = false
+    }
 
     CommandPalette {
         id: commandPalette

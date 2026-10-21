@@ -36,6 +36,8 @@ qt_add_qml_module(clivcut
         qml/Theme.qml
         qml/Keymap.qml
         qml/ShortcutsDialog.qml
+        qml/WhatsNewDialog.qml
+        qml/GuidedTour.qml
         qml/SilenceDialog.qml
         qml/TranscriptPanel.qml
         qml/EffectsPanel.qml
@@ -58,6 +60,7 @@ qt_add_qml_module(clivcut
         qml/components/IconButton.qml
         qml/components/Icon.qml
         qml/components/PillButton.qml
+        qml/components/Spotlight.qml
         qml/components/PropSlider.qml
         qml/components/SectionLabel.qml
         qml/components/ColorField.qml

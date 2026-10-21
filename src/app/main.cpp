@@ -81,7 +81,8 @@ int main(int argc, char **argv)
     // CLIVCUT_SCREENSHOT_SHORTCUTS=1 (abre o editor de atalhos), CLIVCUT_SCREENSHOT_RENDER=1 (renderiza a pré-visualização),
     // CLIVCUT_SCREENSHOT_OPEN=objectName de um diálogo para abrir, CLIVCUT_SCREENSHOT_TRANSCRIBE=modelo (transcreve em inglês),
     // CLIVCUT_SCREENSHOT_SCROLL=px (rola o inspetor), CLIVCUT_SCREENSHOT_SCOPES=modo (mostra os escopos),
-    // CLIVCUT_SCREENSHOT_COMPOUND=1 (abre o primeiro clipe composto para edição).
+    // CLIVCUT_SCREENSHOT_COMPOUND=1 (abre o primeiro clipe composto para edição),
+    // CLIVCUT_SCREENSHOT_TOUR=passo (abre o tour guiado), CLIVCUT_SCREENSHOT_WHATSNEW=1 (abre as novidades).
     const QString shot = qEnvironmentVariable("CLIVCUT_SCREENSHOT");
     if (!shot.isEmpty() && !engine.rootObjects().isEmpty()) {
         auto *window = qobject_cast<QQuickWindow *>(engine.rootObjects().constFirst());
@@ -143,6 +144,13 @@ int main(int argc, char **argv)
             const QString openName = qEnvironmentVariable("CLIVCUT_SCREENSHOT_OPEN");
             if (!openName.isEmpty())
                 if (auto *dialog = window->findChild<QObject *>(openName))
+                    QMetaObject::invokeMethod(dialog, "open");
+            const int tourStep = qEnvironmentVariableIntValue("CLIVCUT_SCREENSHOT_TOUR", &ok);
+            if (ok)
+                if (auto *tour = window->findChild<QObject *>(QStringLiteral("guidedTour")))
+                    QMetaObject::invokeMethod(tour, "start", Q_ARG(QVariant, tourStep));
+            if (qEnvironmentVariableIsSet("CLIVCUT_SCREENSHOT_WHATSNEW"))
+                if (auto *dialog = window->findChild<QObject *>(QStringLiteral("whatsNew")))
                     QMetaObject::invokeMethod(dialog, "open");
             if (qEnvironmentVariableIsSet("CLIVCUT_SCREENSHOT_SHORTCUTS"))
                 if (auto *dialog = window->findChild<QObject *>(QStringLiteral("shortcutsDialog")))

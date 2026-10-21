@@ -738,6 +738,85 @@
     </message>
 </context>
 <context>
+    <name>GuidedTour</name>
+    <message>
+        <source>Welcome to clivcut</source>
+        <translation>Te damos la bienvenida a clivcut</translation>
+    </message>
+    <message>
+        <source>A one-minute tour of where things are. You can skip it now and take it again later from the menu (Help → Take the tour).</source>
+        <translation>Un recorrido de un minuto para ver dónde está cada cosa. Puedes omitirlo y hacerlo más tarde desde el menú (Ayuda → Hacer el recorrido).</translation>
+    </message>
+    <message>
+        <source>Panels</source>
+        <translation>Paneles</translation>
+    </message>
+    <message>
+        <source>Media, text and stickers, captions, filters, transitions, animations, transcript and effects. &lt;b&gt;Alt+1…8&lt;/b&gt; switch between them; clicking the open one hides it.</source>
+        <translation>Medios, texto y stickers, subtítulos, filtros, transiciones, animaciones, transcripción y efectos. &lt;b&gt;Alt+1…8&lt;/b&gt; cambian entre ellos; al hacer clic en el que está abierto se oculta.</translation>
+    </message>
+    <message>
+        <source>Your media</source>
+        <translation>Tus medios</translation>
+    </message>
+    <message>
+        <source>Import videos, photos and music here (or drag files into the window), then drag them to the timeline. In the other panels, click an item to add it.</source>
+        <translation>Importa vídeos, fotos y música aquí (o arrastra archivos a la ventana) y luego arrástralos a la línea de tiempo. En los otros paneles, haz clic en un elemento para añadirlo.</translation>
+    </message>
+    <message>
+        <source>Player</source>
+        <translation>Reproductor</translation>
+    </message>
+    <message>
+        <source>Shows exactly what will be exported. Drag in it to move the selected clip; &lt;b&gt;Ctrl+wheel&lt;/b&gt; resizes it.</source>
+        <translation>Muestra exactamente lo que se exportará. Arrastra en él para mover el clip seleccionado; &lt;b&gt;Ctrl+rueda&lt;/b&gt; cambia el tamaño.</translation>
+    </message>
+    <message>
+        <source>Inspector</source>
+        <translation>Inspector</translation>
+    </message>
+    <message>
+        <source>Select a clip to edit it here: position, color, mask, keyframes, audio and speed. The advanced tools are here too: &lt;b&gt;stabilization&lt;/b&gt; and &lt;b&gt;tracking&lt;/b&gt; on the Video tab, &lt;b&gt;music separation&lt;/b&gt; and &lt;b&gt;beat markers&lt;/b&gt; on the Audio tab.</source>
+        <translation>Selecciona un clip para editarlo aquí: posición, color, máscara, fotogramas clave, audio y velocidad. Las herramientas avanzadas también están aquí: &lt;b&gt;estabilización&lt;/b&gt; y &lt;b&gt;seguimiento&lt;/b&gt; en la pestaña Vídeo, &lt;b&gt;separación de música&lt;/b&gt; y &lt;b&gt;marcadores de ritmo&lt;/b&gt; en la pestaña Audio.</translation>
+    </message>
+    <message>
+        <source>Timeline</source>
+        <translation>Línea de tiempo</translation>
+    </message>
+    <message>
+        <source>The main track sits at the bottom and closes gaps by itself. &lt;b&gt;Ctrl+B&lt;/b&gt; splits, &lt;b&gt;Q/W&lt;/b&gt; delete left/right of the playhead, &lt;b&gt;Alt+G&lt;/b&gt; combines clips into a compound clip (double-click opens it).</source>
+        <translation>La pista principal está abajo y cierra los huecos sola. &lt;b&gt;Ctrl+B&lt;/b&gt; divide, &lt;b&gt;Q/W&lt;/b&gt; borran a la izquierda/derecha del cursor, &lt;b&gt;Alt+G&lt;/b&gt; combina clips en un clip compuesto (doble clic lo abre).</translation>
+    </message>
+    <message>
+        <source>Find any action</source>
+        <translation>Encuentra cualquier acción</translation>
+    </message>
+    <message>
+        <source>&lt;b&gt;Ctrl+K&lt;/b&gt; searches every command by name, with its shortcut — the quickest way to discover what clivcut can do.</source>
+        <translation>&lt;b&gt;Ctrl+K&lt;/b&gt; busca cualquier comando por su nombre, con su atajo: la forma más rápida de descubrir lo que clivcut puede hacer.</translation>
+    </message>
+    <message>
+        <source>Export</source>
+        <translation>Exportar</translation>
+    </message>
+    <message>
+        <source>Export the video (on the GPU when possible), only the audio, a transparent video or the current frame. That&apos;s it — enjoy!</source>
+        <translation>Exporta el vídeo (en la GPU cuando sea posible), solo el audio, un vídeo transparente o el fotograma actual. ¡Eso es todo, disfrútalo!</translation>
+    </message>
+    <message>
+        <source>%1 of %2</source>
+        <translation>%1 de %2</translation>
+    </message>
+    <message>
+        <source>Done</source>
+        <translation>Listo</translation>
+    </message>
+    <message>
+        <source>Next</source>
+        <translation>Siguiente</translation>
+    </message>
+</context>
+<context>
     <name>Inspector</name>
     <message>
         <source>Project</source>
@@ -1835,6 +1914,18 @@ Atajos: Espacio reproduce · Ctrl+B divide · Q/W eliminan a la izquierda/derech
         <translation>Atajos de teclado</translation>
     </message>
     <message>
+        <source>Take the tour</source>
+        <translation>Hacer el recorrido</translation>
+    </message>
+    <message>
+        <source>What&apos;s new</source>
+        <translation>Novedades</translation>
+    </message>
+    <message>
+        <source>User guide</source>
+        <translation>Guía del usuario</translation>
+    </message>
+    <message>
         <source>Panel: Media</source>
         <translation>Panel: Medios</translation>
     </message>
@@ -1936,6 +2027,10 @@ Atajos: Espacio reproduce · Ctrl+B divide · Q/W eliminan a la izquierda/derech
     <message>
         <source>Relink media</source>
         <translation>Volver a vincular medio</translation>
+    </message>
+    <message>
+        <source>Got it</source>
+        <translation>Entendido</translation>
     </message>
     <message>
         <source>Add adjustment layer</source>
@@ -3374,6 +3469,21 @@ Atajos: Espacio reproduce · Ctrl+B divide · Q/W eliminan a la izquierda/derech
     </message>
 </context>
 <context>
+    <name>Spotlight</name>
+    <message>
+        <source>Next</source>
+        <translation>Siguiente</translation>
+    </message>
+    <message>
+        <source>Skip</source>
+        <translation>Omitir</translation>
+    </message>
+    <message>
+        <source>Back</source>
+        <translation>Volver</translation>
+    </message>
+</context>
+<context>
     <name>Timeline</name>
     <message>
         <source>Split at playhead</source>
@@ -3568,6 +3678,22 @@ Atajos: Espacio reproduce · Ctrl+B divide · Q/W eliminan a la izquierda/derech
     <message>
         <source>Export…</source>
         <translation>Exportar…</translation>
+    </message>
+    <message>
+        <source>Help</source>
+        <translation>Ayuda</translation>
+    </message>
+    <message>
+        <source>Take the tour</source>
+        <translation>Hacer el recorrido</translation>
+    </message>
+    <message>
+        <source>What&apos;s new</source>
+        <translation>Novedades</translation>
+    </message>
+    <message>
+        <source>User guide</source>
+        <translation>Guía del usuario</translation>
     </message>
     <message>
         <source>Language</source>
@@ -3853,6 +3979,133 @@ Atajos: Espacio reproduce · Ctrl+B divide · Q/W eliminan a la izquierda/derech
     <message>
         <source>Interface language</source>
         <translation>Idioma de la interfaz</translation>
+    </message>
+</context>
+<context>
+    <name>WhatsNewDialog</name>
+    <message>
+        <source>Guided tour and this window</source>
+        <translation>Recorrido guiado y esta ventana</translation>
+    </message>
+    <message>
+        <source>A short tour of the editor for first-time users, and this summary after each update. Both live in the menu, under Help.</source>
+        <translation>Un recorrido corto del editor para quien empieza y este resumen tras cada actualización. Ambos están en el menú, en Ayuda.</translation>
+    </message>
+    <message>
+        <source>Compound clips</source>
+        <translation>Clips compuestos</translation>
+    </message>
+    <message>
+        <source>Alt+G combines clips from several tracks into one clip that you can move, cut and style as a whole; double-click it to edit what is inside.</source>
+        <translation>Alt+G combina clips de varias pistas en un solo clip que puedes mover, cortar y estilizar como un todo; haz doble clic para editar su contenido.</translation>
+    </message>
+    <message>
+        <source>Motion tracking</source>
+        <translation>Seguimiento de movimiento</translation>
+    </message>
+    <message>
+        <source>Make a text or sticker follow something that moves: select it and use “Follow the video below” on the Video tab.</source>
+        <translation>Haz que un texto o sticker siga algo que se mueve: selecciónalo y usa “Seguir el vídeo de abajo” en la pestaña Vídeo.</translation>
+    </message>
+    <message>
+        <source>Stabilization</source>
+        <translation>Estabilización</translation>
+    </message>
+    <message>
+        <source>Smooth out shaky footage with one slider on the Video tab; the analysis runs once in the background.</source>
+        <translation>Suaviza las grabaciones temblorosas con un control en la pestaña Vídeo; el análisis se ejecuta una vez en segundo plano.</translation>
+    </message>
+    <message>
+        <source>Music separation</source>
+        <translation>Separación de música</translation>
+    </message>
+    <message>
+        <source>Split a song into vocals, drums, bass and other instruments (or just the vocals or the instrumental), locally with AI, from the Audio tab.</source>
+        <translation>Divide una canción en voz, batería, bajo y otros instrumentos (o solo la voz o el instrumental), con IA local, desde la pestaña Audio.</translation>
+    </message>
+    <message>
+        <source>Beat markers</source>
+        <translation>Marcadores de ritmo</translation>
+    </message>
+    <message>
+        <source>Mark the beats of a song (every beat, 2 beats or bar) from the Audio tab; clips snap to them so cuts land on the beat.</source>
+        <translation>Marca el ritmo de una canción (cada tiempo, cada 2 o por compás) desde la pestaña Audio; los clips se ajustan a ellos para cortar a tiempo.</translation>
+    </message>
+    <message>
+        <source>Edit by transcript</source>
+        <translation>Edición por transcripción</translation>
+    </message>
+    <message>
+        <source>Transcribe a video and delete words (or all filler words) to cut them from the timeline.</source>
+        <translation>Transcribe un vídeo y borra palabras (o todas las muletillas) para cortarlas de la línea de tiempo.</translation>
+    </message>
+    <message>
+        <source>Color grading and scopes</source>
+        <translation>Corrección de color y medidores</translation>
+    </message>
+    <message>
+        <source>Tone curves, HSL and color wheels on the Adjust tab, with histogram, waveform and vectorscope over the player.</source>
+        <translation>Curvas, HSL y ruedas de color en la pestaña Ajustar, con histograma, forma de onda y vectorscopio sobre el reproductor.</translation>
+    </message>
+    <message>
+        <source>Video effects and transitions</source>
+        <translation>Efectos de vídeo y transiciones</translation>
+    </message>
+    <message>
+        <source>12 effects you can apply to clips or as effect layers, and 9 new transitions.</source>
+        <translation>12 efectos para aplicar a clips o como capas de efecto, y 9 transiciones nuevas.</translation>
+    </message>
+    <message>
+        <source>Shapes, curved text and stickers</source>
+        <translation>Formas, texto curvo y stickers</translation>
+    </message>
+    <message>
+        <source>Speech bubbles and shapes, curved text, highlighted *words* and a sticker library in the Text panel.</source>
+        <translation>Bocadillos y formas, texto curvo, *palabras* resaltadas y una biblioteca de stickers en el panel Texto.</translation>
+    </message>
+    <message>
+        <source>Voice tools</source>
+        <translation>Herramientas de voz</translation>
+    </message>
+    <message>
+        <source>AI voice isolation, voice effects, music ducking under speech and voiceover recording from the microphone.</source>
+        <translation>Aislamiento de voz con IA, efectos de voz, música que baja bajo la voz y grabación de narración con el micrófono.</translation>
+    </message>
+    <message>
+        <source>Faster export</source>
+        <translation>Exportación más rápida</translation>
+    </message>
+    <message>
+        <source>GPU encoding, transparent video, audio-only and current-frame export, plus a render cache for smooth playback.</source>
+        <translation>Codificación en la GPU, vídeo transparente, exportación solo de audio y del fotograma actual, además de una caché de render para una reproducción fluida.</translation>
+    </message>
+    <message>
+        <source>What&apos;s new</source>
+        <translation>Novedades</translation>
+    </message>
+    <message>
+        <source>Close</source>
+        <translation>Cerrar</translation>
+    </message>
+    <message>
+        <source>New in %1</source>
+        <translation>Nuevo en la %1</translation>
+    </message>
+    <message>
+        <source>Show me</source>
+        <translation>Mostrar</translation>
+    </message>
+    <message>
+        <source>There is more from older versions in the full history.</source>
+        <translation>Hay más de versiones anteriores en el historial completo.</translation>
+    </message>
+    <message>
+        <source>Full history</source>
+        <translation>Historial completo</translation>
+    </message>
+    <message>
+        <source>Take the tour</source>
+        <translation>Hacer el recorrido</translation>
     </message>
 </context>
 </TS>

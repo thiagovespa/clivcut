@@ -20,6 +20,7 @@ QtObject {
     }
 
     // edit: desativado enquanto se digita num campo de texto.
+    readonly property string userGuideUrl: "https://github.com/thiagovespa/clivcut/blob/main/docs/guide/README.md"
     readonly property var actions: [
         { id: "play", group: qsTr("Playback"), name: qsTr("Play / pause"), keys: ["Space"], edit: true },
         { id: "prevFrame", group: qsTr("Playback"), name: qsTr("Previous frame"), keys: ["Left"], edit: true },
@@ -75,6 +76,9 @@ QtObject {
         { id: "scopes", group: qsTr("Interface"), name: qsTr("Show scopes"), keys: ["Ctrl+Shift+V"], edit: false },
         { id: "palette", group: qsTr("Interface"), name: qsTr("Command palette"), keys: ["Ctrl+K", "Ctrl+Shift+P"], edit: false },
         { id: "shortcuts", group: qsTr("Interface"), name: qsTr("Keyboard shortcuts"), keys: [], edit: false },
+        { id: "tour", group: qsTr("Interface"), name: qsTr("Take the tour"), keys: [], edit: false },
+        { id: "whatsNew", group: qsTr("Interface"), name: qsTr("What's new"), keys: [], edit: false },
+        { id: "userGuide", group: qsTr("Interface"), name: qsTr("User guide"), keys: ["F1"], edit: false },
         { id: "panel0", group: qsTr("Interface"), name: qsTr("Panel: Media"), keys: ["Alt+1"], edit: false },
         { id: "panel1", group: qsTr("Interface"), name: qsTr("Panel: Text"), keys: ["Alt+2"], edit: false },
         { id: "panel2", group: qsTr("Interface"), name: qsTr("Panel: Captions"), keys: ["Alt+3"], edit: false },

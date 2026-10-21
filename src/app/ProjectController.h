@@ -98,6 +98,8 @@ class ProjectController : public QObject {
     Q_PROPERTY(bool transcriptStale READ transcriptStale NOTIFY transcriptChanged)
     /// Escopos visíveis: o player passa a enviar quadros reduzidos (scopeFrame).
     Q_PROPERTY(bool scopesEnabled READ scopesEnabled WRITE setScopesEnabled NOTIFY scopesChanged)
+    /// Sem tour/novidades automáticos (capturas de tela e execuções automatizadas).
+    Q_PROPERTY(bool onboardingSuppressed READ onboardingSuppressed CONSTANT)
     /// Efeitos de voz disponíveis: [{id, name}].
     Q_PROPERTY(QVariantList voiceEffects READ voiceEffects NOTIFY languageChanged)
     /// Efeitos de vídeo disponíveis: [{id, name}].
@@ -305,6 +307,11 @@ public:
     Q_INVOKABLE void cancelTracking();
     Q_INVOKABLE void clearTracking();
     bool trackingPick() const { return m_trackingPick; }
+    static bool onboardingSuppressed()
+    {
+        return (qEnvironmentVariableIsSet("CLIVCUT_SCREENSHOT") && !qEnvironmentVariableIsSet("CLIVCUT_SCREENSHOT_ONBOARDING"))
+               || qEnvironmentVariableIsSet("CLIVCUT_NO_ONBOARDING");
+    }
     double trackingProgress() const { return m_trackingProgress; }
 
     // --- seleção e propriedades ---

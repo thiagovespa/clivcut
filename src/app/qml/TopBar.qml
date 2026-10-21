@@ -13,6 +13,10 @@ ToolBar {
     signal exportRequested()
     signal commandsRequested()
     signal homeRequested()
+    signal tourRequested()
+    signal whatsNewRequested()
+    readonly property Item searchItem: search
+    readonly property Item exportItem: exportButton
 
     height: 48
     background: Rectangle {
@@ -64,6 +68,12 @@ ToolBar {
                 MenuItem { text: qsTr("Import draft JSON…"); onTriggered: root.importDraftRequested() }
                 MenuItem { text: qsTr("Export…") + "\t" + Keymap.label("export"); onTriggered: root.exportRequested() }
                 MenuSeparator {}
+                Menu {
+                    title: qsTr("Help")
+                    MenuItem { text: qsTr("Take the tour"); onTriggered: root.tourRequested() }
+                    MenuItem { text: qsTr("What's new"); onTriggered: root.whatsNewRequested() }
+                    MenuItem { text: qsTr("User guide"); onTriggered: Qt.openUrlExternally(Keymap.userGuideUrl) }
+                }
                 Menu {
                     title: qsTr("Language")
                     MenuItem {
