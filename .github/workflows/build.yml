@@ -218,6 +218,8 @@ jobs:
       - uses: actions/download-artifact@v5
         with:
           path: dist
+          # Só os pacotes: o build do macOS também deixa registros *.dockerbuild.
+          pattern: clivcut-*
           merge-multiple: true
 
       - name: Publicar release
