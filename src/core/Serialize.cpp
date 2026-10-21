@@ -361,6 +361,8 @@ QJsonObject clipToJson(const Clip &c)
         o.insert("gainDb", c.gainDb);
     if (c.denoise > 0)
         o.insert("denoise", c.denoise);
+    if (c.stabilize > 0)
+        o.insert("stabilize", c.stabilize);
     if (c.removeBackground)
         o.insert("removeBackground", true);
     if (!c.keepPitch)
@@ -464,6 +466,7 @@ Clip clipFromJson(const QJsonObject &o)
     c.audioMuted = o.value("audioMuted").toBool();
     c.gainDb = o.value("gainDb").toDouble();
     c.denoise = o.value("denoise").toDouble();
+    c.stabilize = std::clamp(o.value("stabilize").toDouble(), 0.0, 1.0);
     c.removeBackground = o.value("removeBackground").toBool();
     c.keepPitch = o.value("keepPitch").toBool(true);
     c.voiceIsolation = std::clamp(o.value("voiceIsolation").toDouble(), 0.0, 1.0);

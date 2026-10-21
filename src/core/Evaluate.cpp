@@ -68,6 +68,11 @@ VisualLayer resolveLayer(const Project &p, int ti, const Clip &c, Micros rel, in
     l.effect = effectShaderIndex(c.effect.id);
     l.effectIntensity = c.effect.intensity;
     l.effectTime = static_cast<double>(rel) / kSecond;
+    if (c.stabilize > 0 && l.asset && l.asset->kind == MediaKind::Video)
+        if (const auto track = registeredMotion(l.asset->path)) {
+            l.stab = stabilizationAt(*track, l.sourceTime, c.stabilize);
+            l.stabAspect = track->aspect;
+        }
     // Compostos dentro de compostos têm um limite, contra referências circulares.
     if (const Sequence *seq = c.isCompound() && depth < 8 ? p.compound(c.compoundId) : nullptr)
         l.nested = std::make_shared<const FrameDesc>(evaluateTracks(p, seq->tracks, l.sourceTime, depth + 1));

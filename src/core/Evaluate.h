@@ -2,6 +2,7 @@
 #pragma once
 
 #include "Model.h"
+#include "Stabilize.h"
 
 #include <memory>
 #include <vector>
@@ -39,6 +40,9 @@ struct VisualLayer {
     int effect = 0;
     double effectIntensity = 0;
     double effectTime = 0;
+    /// Estabilização deste quadro (correção sobre a imagem de origem) e o formato analisado.
+    StabCorrection stab;
+    double stabAspect = 16.0 / 9;
     /// Clipe composto: o quadro interno, composto à parte e usado como a imagem desta camada.
     std::shared_ptr<const FrameDesc> nested;
 };

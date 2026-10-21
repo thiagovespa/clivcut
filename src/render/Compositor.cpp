@@ -524,8 +524,11 @@ void Compositor::composite(QRhiCommandBuffer *cb, const Project &p, const FrameD
             const double ly = (c[1] - 0.5) * h;
             const double px = (cx + lx * cs - ly * sn) * k;
             const double py = (cy + lx * sn + ly * cs) * k;
-            const double tu = l.flipH ? 1 - c[0] : c[0];
-            double tv = l.flipV ? 1 - c[1] : c[1];
+            double su = c[0], sv = c[1];
+            if (l.stab.active())
+                stabilizedUv(l.stab, l.stabAspect, su, sv);
+            const double tu = l.flipH ? 1 - su : su;
+            double tv = l.flipV ? 1 - sv : sv;
             // Textura de render (composto) fica de cabeça para baixo onde o framebuffer tem Y para cima.
             if (external && m_rhi->isYUpInFramebuffer())
                 tv = 1 - tv;

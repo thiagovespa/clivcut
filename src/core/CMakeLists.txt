@@ -11,6 +11,7 @@ add_library(clivcut_core STATIC
     Clipboard.h Clipboard.cpp
     SpeedCurve.h SpeedCurve.cpp
     Effects.h Effects.cpp
+    Stabilize.h Stabilize.cpp
 )
 target_include_directories(clivcut_core PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/..)
 target_link_libraries(clivcut_core PUBLIC Qt6::Core Qt6::Gui) # Gui: QImage (LUT na CPU)

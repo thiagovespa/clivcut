@@ -4,10 +4,14 @@
 #include "engine/DecoderFrameSource.h"
 #include "engine/Matting.h"
 #include "engine/RenderCache.h"
+#include "engine/Stabilization.h"
 #include "engine/Proxy.h"
 #include "media/MediaProbe.h"
 
 #include <QFileInfo>
+#include <QPainter>
+#include <QtMath>
+#include <QTransform>
 #include <QProcess>
 #include <QStandardPaths>
 #include <QTemporaryDir>
@@ -146,6 +150,103 @@ private slots:
         QVERIFY(engine::renderChunkKeys(proj)[0] != after[0]); // canvas afeta tudo
         QVERIFY(engine::renderCacheFile(after[0], 960) != engine::renderCacheFile(after[0], 1280));
         QCOMPARE(engine::renderCacheSize(proj, 640), QSize(640, 360));
+    }
+
+    /** Textura com detalhes em todas as escalas (ruído suavizado + formas), em cinza. */
+    static QImage texture(QSize size)
+    {
+        QImage img(size, QImage::Format_Grayscale8);
+        unsigned seed = 3;
+        for (int y = 0; y < size.height(); ++y)
+            for (int x = 0; x < size.width(); ++x) {
+                seed = seed * 1103515245u + 12345u;
+                img.scanLine(y)[x] = static_cast<uchar>(128 + ((seed >> 16) & 63) - 32);
+            }
+        QPainter p(&img);
+        p.setRenderHint(QPainter::Antialiasing);
+        for (int i = 0; i < 60; ++i) {
+            seed = seed * 1103515245u + 12345u;
+            const int x = (seed >> 8) % size.width(), y = (seed >> 3) % size.height();
+            p.setBrush(QColor::fromHsv(0, 0, (seed >> 12) % 255));
+            p.setPen(Qt::NoPen);
+            p.drawEllipse(QPoint(x, y), 4 + (seed % 14), 3 + ((seed >> 5) % 12));
+        }
+        p.end();
+        return img.scaled(size, Qt::IgnoreAspectRatio, Qt::SmoothTransformation);
+    }
+
+    void motionEstimation()
+    {
+        // Quadro grande e recortes deslocados/girados dele: o movimento medido bate com o aplicado.
+        const QImage big = texture({640, 400});
+        auto view = [&](double dx, double dy, double deg) {
+            // O conteúdo anda (dx, dy) e gira deg graus em torno do centro da janela 320×180
+            // (amostragem bilinear, para deslocamentos de subpixel de verdade).
+            QImage out(320, 180, QImage::Format_Grayscale8);
+            const double r = qDegreesToRadians(deg), cs = std::cos(r), sn = std::sin(r);
+            for (int y = 0; y < 180; ++y)
+                for (int x = 0; x < 320; ++x) {
+                    const double qx = x - 160 - dx, qy = y - 90 - dy;
+                    const double sx = cs * qx + sn * qy + 320, sy = -sn * qx + cs * qy + 200;
+                    const int x0 = static_cast<int>(std::floor(sx)), y0 = static_cast<int>(std::floor(sy));
+                    const double fx = sx - x0, fy = sy - y0;
+                    auto g = [&](int xx, int yy) { return static_cast<double>(big.constScanLine(yy)[xx]); };
+                    const double v = (g(x0, y0) * (1 - fx) + g(x0 + 1, y0) * fx) * (1 - fy)
+                                     + (g(x0, y0 + 1) * (1 - fx) + g(x0 + 1, y0 + 1) * fx) * fy;
+                    out.scanLine(y)[x] = static_cast<uchar>(std::lround(v));
+                }
+            return out;
+        };
+        const QImage a = view(0, 0, 0);
+        engine::FrameMotion m = engine::estimateMotion(a, view(3.4, -2.2, 0));
+        QVERIFY2(std::abs(m.dx - 3.4) < 0.25 && std::abs(m.dy + 2.2) < 0.25, qPrintable(QStringLiteral("%1 %2").arg(m.dx).arg(m.dy)));
+        QVERIFY(m.inliers >= 8);
+        m = engine::estimateMotion(a, view(-1.5, 1.0, 1.2));
+        QVERIFY2(std::abs(m.angle - qDegreesToRadians(1.2)) < 0.004, qPrintable(QString::number(qRadiansToDegrees(m.angle))));
+        QVERIFY2(std::abs(m.dx + 1.5) < 0.4 && std::abs(m.dy - 1.0) < 0.4, qPrintable(QStringLiteral("%1 %2").arg(m.dx).arg(m.dy)));
+        // Panorâmica rápida (maior que um bloco): o deslocamento global resolve.
+        m = engine::estimateMotion(a, view(24, 0, 0));
+        QVERIFY2(std::abs(m.dx - 24) < 0.5, qPrintable(QString::number(m.dx)));
+    }
+
+    void stabilizationAnalysis()
+    {
+        // Vídeo "tremido": uma janela que oscila rápido sobre uma imagem parada.
+        const QString shaky = m_dir.filePath(QStringLiteral("tremido.mp4"));
+        QProcess p;
+        p.start(QStringLiteral("ffmpeg"), {"-hide_banner", "-loglevel", "error", "-y", "-f", "lavfi", "-i",
+                                           "mandelbrot=size=800x450:rate=30:end_pts=0.01,loop=loop=-1:size=1,trim=duration=3",
+                                           "-vf", "crop=640:360:'80+12*sin(2*PI*3*t)':'45+8*cos(2*PI*4*t)'",
+                                           "-c:v", "libx264", "-preset", "ultrafast", "-crf", "12", "-pix_fmt", "yuv420p", shaky});
+        QVERIFY(p.waitForFinished(120000) && p.exitCode() == 0);
+        const QString out = engine::motionPathFor(shaky);
+        QString err;
+        QVERIFY2(engine::analyzeMotion(shaky, out, {}, &err), qPrintable(err));
+        QVERIFY(QFileInfo::exists(out));
+        const auto track = registeredMotion(shaky);
+        QVERIFY(track && track->frames() >= 80);
+        // A janela anda +x → o conteúdo anda -x. O caminho medido segue o aplicado (320 px de largura analisada).
+        double worst = 0;
+        for (int i = 0; i < track->frames(); ++i) {
+            const double t = i / 30.0;
+            const double expect = -(12 * std::sin(2 * M_PI * 3 * t) - 0) / 640.0;
+            worst = std::max(worst, std::abs(track->x[i] - expect));
+        }
+        QVERIFY2(worst < 0.006, qPrintable(QString::number(worst))); // < 2 px no tamanho analisado
+        // Corrigido, o tremor quase some: o caminho + correção varia pouco quadro a quadro.
+        double jitter = 0, corrected = 0;
+        for (int i = 1; i < track->frames(); ++i) {
+            const StabCorrection c0 = stabilizationAt(*track, static_cast<Micros>((i - 1) * kSecond / 30.0), 1.0);
+            const StabCorrection c1 = stabilizationAt(*track, static_cast<Micros>(i * kSecond / 30.0), 1.0);
+            jitter += std::abs(track->x[i] - track->x[i - 1]);
+            corrected += std::abs((track->x[i] + c1.dx) - (track->x[i - 1] + c0.dx));
+        }
+        QVERIFY2(corrected < jitter * 0.2, qPrintable(QStringLiteral("%1 vs %2").arg(corrected).arg(jitter)));
+        QVERIFY(track->zoomFor(1.0) > 1.0 && track->zoomFor(1.0) < 1.15);
+        // O cache é reaproveitado por quem abrir a mídia depois.
+        registerMotion(shaky, nullptr);
+        QVERIFY(engine::discoverMotion(shaky));
+        QCOMPARE(registeredMotion(shaky)->frames(), track->frames());
     }
 
     void cancel()

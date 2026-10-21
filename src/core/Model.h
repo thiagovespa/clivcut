@@ -226,6 +226,7 @@ struct Clip {
     bool audioMuted = false; ///< silencia o áudio deste clipe (ex.: depois de separar o áudio)
     double gainDb = 0;       ///< ganho extra em dB (normalização de volume ou ajuste manual)
     double denoise = 0;      ///< redução de ruído 0..1 (0 = desligada)
+    double stabilize = 0;    ///< estabilização 0..1 (0 = desligada); usa a análise de movimento da mídia
     ClipEffect effect;         ///< efeito de vídeo (shader)
     QString voiceEffect;       ///< efeito de voz (engine/VoiceEffects.h), vazio = nenhum
     double ducking = 0;        ///< abaixa sob a voz (0..1): para música de fundo

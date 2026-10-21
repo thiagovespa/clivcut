@@ -9,6 +9,7 @@
 #include "core/Lut.h"
 #include "core/Serialize.h"
 #include "core/SpeedCurve.h"
+#include "core/Stabilize.h"
 
 #include <QFile>
 #include <QTest>
@@ -504,6 +505,42 @@ private slots:
         QVERIFY(!edit::clipById(p, cmpA));
         QVERIFY(!p.compound(seqA));
         QVERIFY(edit::clipById(p, cmpB));
+    }
+
+    void stabilizationMath()
+    {
+        // Correção de +1% da largura para a direita: o ponto mostrado vem de 1% à esquerda na origem.
+        StabCorrection c;
+        c.dx = 0.01;
+        double u = 0.5, v = 0.5;
+        stabilizedUv(c, 16.0 / 9, u, v);
+        QVERIFY(std::abs(u - 0.49) < 1e-9 && std::abs(v - 0.5) < 1e-9);
+        // Zoom 2×: a borda mostrada vem de um quarto para dentro.
+        c = {};
+        c.zoom = 2;
+        u = 1;
+        v = 0;
+        stabilizedUv(c, 16.0 / 9, u, v);
+        QVERIFY(std::abs(u - 0.75) < 1e-9 && std::abs(v - 0.25) < 1e-9);
+
+        // Caminho com tremor rápido sobre uma panorâmica lenta: a correção desfaz o tremor e mantém a panorâmica.
+        auto track = std::make_shared<MotionTrack>();
+        track->fps = 30;
+        for (int i = 0; i < 300; ++i) {
+            track->x.push_back(0.0005 * i + 0.01 * ((i % 2) ? 1 : -1));
+            track->y.push_back(0);
+            track->angle.push_back(0);
+            track->logScale.push_back(0);
+        }
+        const StabCorrection mid = stabilizationAt(*track, 150 * kSecond / 30, 1.0);
+        QVERIFY2(std::abs(mid.dx - 0.01) < 0.002, qPrintable(QString::number(mid.dx))); // quadro par: tremor de -1%, correção de +1%
+        QVERIFY(mid.zoom > 1.0 && mid.zoom < 1.1);
+        QVERIFY(!stabilizationAt(*track, 0, 0).active());
+
+        const auto back = motionFromJson(motionToJson(*track));
+        QVERIFY(back && back->frames() == 300);
+        QVERIFY(std::abs(back->x[7] - track->x[7]) < 1e-6);
+        QVERIFY(!motionFromJson("{}"));
     }
 
     void historyUndoRedo()
