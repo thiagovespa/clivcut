@@ -10,6 +10,7 @@
 #include "core/Serialize.h"
 #include "core/SpeedCurve.h"
 #include "core/Stabilize.h"
+#include "core/Tracking.h"
 
 #include <QFile>
 #include <QTest>
@@ -541,6 +542,48 @@ private slots:
         QVERIFY(back && back->frames() == 300);
         QVERIFY(std::abs(back->x[7] - track->x[7]) < 1e-6);
         QVERIFY(!motionFromJson("{}"));
+    }
+
+    void trackedPathToKeyframes()
+    {
+        Project p = createProject(QStringLiteral("t"), 1920, 1080, 30);
+        auto a = videoAsset(p, 10 * kSecond); // 1920×1080
+        p.assets[a.id].width = 1280;
+        p.assets[a.id].height = 720;
+        a = p.assets[a.id];
+        auto vc = createMediaClip(a, 0);
+        vc.duration = 2 * kSecond;
+        vc.transform.scale = 0.5;
+        vc.transform.x = 0.5; // metade direita
+        const QString vid = edit::insertClip(p, vc, 0);
+        auto t = createTextClip(QStringLiteral("Hi"), 0, 2 * kSecond);
+        t.transform.x = 0.1;
+        const QString txt = edit::insertClip(p, t, -1);
+
+        // Ida e volta imagem ↔ canvas, com rotação e espelho.
+        Clip *v = edit::clipById(p, vid);
+        v->transform.rotation = 30;
+        v->transform.flipH = true;
+        const QPointF c = clipImageToCanvas(p, *v, 0, 0.3, 0.7);
+        double u = 0, w = 0;
+        QVERIFY(canvasToClipImage(p, *v, 0, c, u, w));
+        QVERIFY(std::abs(u - 0.3) < 1e-9 && std::abs(w - 0.7) < 1e-9);
+        v->transform.rotation = 0;
+        v->transform.flipH = false;
+
+        // O ponto anda de u = 0,2 a 0,8 em 2 s: na tela isso são 0,6 × 960 px = 0,6 em X normalizado.
+        std::vector<TrackedPoint> path;
+        for (int i = 0; i <= 60; ++i)
+            path.push_back({i * kSecond / 30, 0.2 + 0.6 * i / 60.0, 0.5});
+        QVERIFY(applyTrackedPath(p, txt, vid, 0, path));
+        const Clip *f = edit::clipById(p, txt);
+        const auto &kx = f->keyframes[static_cast<int>(Prop::X)];
+        QVERIFY2(kx.size() <= 3, qPrintable(QString::number(kx.size()))); // reta: poucos keyframes
+        QVERIFY(std::abs(propAt(*f, Prop::X, 0) - 0.1) < 1e-6);
+        QVERIFY(std::abs(propAt(*f, Prop::X, kSecond) - 0.4) < 0.002);
+        QVERIFY(std::abs(propAt(*f, Prop::Y, kSecond) - t.transform.y) < 1e-6); // y não muda
+        // Sem trecho em comum: nada muda.
+        QVERIFY(!applyTrackedPath(p, txt, QStringLiteral("nada"), 0, path));
     }
 
     void historyUndoRedo()

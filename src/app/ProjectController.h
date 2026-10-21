@@ -88,6 +88,9 @@ class ProjectController : public QObject {
     Q_PROPERTY(double silenceProgress READ silenceProgress NOTIFY silencesChanged)
     /// Detecção de batidas da música em andamento; existem marcadores de batida.
     Q_PROPERTY(bool detectingBeats READ detectingBeats NOTIFY beatsChanged)
+    /// Escolhendo a região a rastrear no player; progresso do rastreamento (-1 = parado).
+    Q_PROPERTY(bool trackingPick READ trackingPick NOTIFY trackingChanged)
+    Q_PROPERTY(double trackingProgress READ trackingProgress NOTIFY trackingChanged)
     Q_PROPERTY(bool hasBeatMarkers READ hasBeatMarkers NOTIFY projectChanged)
     /// Transcrição palavra a palavra da timeline: [{start, end, text}] em µs.
     Q_PROPERTY(QVariantList transcript READ transcript NOTIFY transcriptChanged)
@@ -294,6 +297,15 @@ public:
     Q_INVOKABLE void normalizeLoudness(double targetLufs);
     /// Separa a música do clipe selecionado (IA): 0 = quatro faixas, 1 = só a voz, 2 = só o instrumental.
     Q_INVOKABLE void separateStems(int mode);
+    /// Rastreamento: o clipe selecionado passa a seguir uma região do vídeo que está por baixo.
+    /// Primeiro o usuário desenha a região no player (trackingPick); coordenadas do canvas 0..1.
+    Q_INVOKABLE void startTrackingPick();
+    Q_INVOKABLE void cancelTrackingPick();
+    Q_INVOKABLE void trackRegion(double x0, double y0, double x1, double y1);
+    Q_INVOKABLE void cancelTracking();
+    Q_INVOKABLE void clearTracking();
+    bool trackingPick() const { return m_trackingPick; }
+    double trackingProgress() const { return m_trackingProgress; }
 
     // --- seleção e propriedades ---
     Q_INVOKABLE void select(const QString &clipId, bool additive = false);
@@ -434,6 +446,7 @@ signals:
     void renderCacheChanged();
     void silencesChanged();
     void beatsChanged();
+    void trackingChanged();
     void transcriptChanged();
     void scopesChanged();
     void recordingChanged();
@@ -555,6 +568,11 @@ private:
     QString m_voiceBuilding;
     double m_voiceProgress = 0;
     std::shared_ptr<std::atomic<bool>> m_voiceCancel = std::make_shared<std::atomic<bool>>(false);
+    bool m_trackingPick = false;
+    double m_trackingProgress = -1;
+    std::shared_ptr<std::atomic<bool>> m_trackCancel = std::make_shared<std::atomic<bool>>(false);
+    /// Vídeo logo abaixo do clipe, sob o cursor (o que ele pode seguir), ou vazio.
+    QString trackingSourceFor(const QString &clipId) const;
     struct StemRequest {
         QString clipId;
         int mode = 0;

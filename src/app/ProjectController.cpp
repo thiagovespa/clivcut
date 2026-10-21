@@ -24,6 +24,8 @@
 #include "engine/Silence.h"
 #include "engine/Stabilization.h"
 #include "engine/StemSeparation.h"
+#include "engine/MotionTracking.h"
+#include "core/Tracking.h"
 #include "engine/Exporter.h"
 #include "engine/Proxy.h"
 #include "engine/Transcriber.h"
@@ -147,6 +149,7 @@ ProjectController::~ProjectController()
     *m_matteCancel = true;
     *m_stabCancel = true;
     *m_stemsCancel = true;
+    *m_trackCancel = true;
     *m_voiceCancel = true;
     *m_effectCancel = true;
     *m_renderCancel = true;
@@ -444,6 +447,8 @@ QVariantMap ProjectController::selectedClip() const
         {"animInDuration", static_cast<double>(c->animIn.duration)},
         {"animOut", animationName(c->animOut.kind)},
         {"animOutDuration", static_cast<double>(c->animOut.duration)},
+        {"canTrack", !trackingSourceFor(c->id).isEmpty()},
+        {"tracked", c->keyframes[static_cast<int>(Prop::X)].size() > 2},
     };
     for (int i = 0; i < kPropCount; ++i) {
         const auto p = static_cast<Prop>(i);
@@ -3701,6 +3706,142 @@ void ProjectController::placeStems(const QString &clipId, int mode)
     emit selectionChanged();
     emit selectedClipChanged();
     setStatus(tr("Music separated into %n track(s)", nullptr, static_cast<int>(created.size())));
+}
+
+QString ProjectController::trackingSourceFor(const QString &clipId) const
+{
+    const auto ref = edit::findClip(m_project, clipId);
+    if (!ref || ref->track == 0)
+        return {};
+    for (int ti = ref->track - 1; ti >= 0; --ti) {
+        const Track &t = m_project.tracks[ti];
+        if (!t.isVisual() || t.hidden)
+            continue;
+        for (const Clip &c : t.clips) {
+            const MediaAsset *a = c.hasMedia() && !c.audioOnly ? m_project.asset(c.assetId) : nullptr;
+            if (a && a->kind == MediaKind::Video && m_playhead >= c.start && m_playhead < c.end())
+                return c.id;
+        }
+    }
+    return {};
+}
+
+void ProjectController::startTrackingPick()
+{
+    if (m_trackingProgress >= 0 || trackingSourceFor(primaryClipId()).isEmpty())
+        return;
+    pause();
+    m_trackingPick = true;
+    emit trackingChanged();
+    setStatus(tr("Draw a box around what the clip should follow"));
+}
+
+void ProjectController::cancelTrackingPick()
+{
+    if (!m_trackingPick)
+        return;
+    m_trackingPick = false;
+    emit trackingChanged();
+}
+
+void ProjectController::cancelTracking()
+{
+    *m_trackCancel = true;
+}
+
+void ProjectController::trackRegion(double x0, double y0, double x1, double y1)
+{
+    cancelTrackingPick();
+    const QString followerId = primaryClipId();
+    const QString videoId = trackingSourceFor(followerId);
+    const Clip *follower = edit::clipById(m_project, followerId);
+    const Clip *video = edit::clipById(m_project, videoId);
+    const MediaAsset *a = video ? m_project.asset(video->assetId) : nullptr;
+    if (!follower || !a || m_trackingProgress >= 0)
+        return;
+    // Caixa do canvas → região na imagem de origem do vídeo.
+    const Micros rel = m_playhead - video->start;
+    const double W = m_project.width, H = m_project.height;
+    double u0, v0, u1, v1;
+    if (!canvasToClipImage(m_project, *video, rel, {std::min(x0, x1) * W, std::min(y0, y1) * H}, u0, v0)
+        || !canvasToClipImage(m_project, *video, rel, {std::max(x0, x1) * W, std::max(y0, y1) * H}, u1, v1))
+        return;
+    const double u = (u0 + u1) / 2, v = (v0 + v1) / 2;
+    const double w = std::max(0.01, std::abs(u1 - u0)), h = std::max(0.01, std::abs(v1 - v0));
+    if (u < 0 || u > 1 || v < 0 || v > 1) {
+        setStatus(tr("The box must be over the video"));
+        return;
+    }
+    const Micros a0 = std::max(follower->start, video->start), b0 = std::min(follower->end(), video->end());
+    const Micros s0 = sourceTimeAt(m_project, *video, rel);
+    const Micros sA = sourceTimeAt(m_project, *video, a0 - video->start);
+    const Micros sB = sourceTimeAt(m_project, *video, b0 - 1 - video->start);
+    const Micros anchor = m_playhead;
+    const QString path = a->path;
+    m_trackCancel = std::make_shared<std::atomic<bool>>(false);
+    auto cancel = m_trackCancel;
+    m_trackingProgress = 0;
+    emit trackingChanged();
+    setStatus(tr("Tracking motion…"));
+    std::thread([this, path, s0, sA, sB, u, v, w, h, cancel, followerId, videoId, anchor] {
+        QString err;
+        double lastSent = 0;
+        auto report = [&](double base) {
+            return [&, base](double f) {
+                const double total = base + f / 2;
+                if (total - lastSent >= 0.01 && !*cancel) {
+                    lastSent = total;
+                    QMetaObject::invokeMethod(this, [this, total] {
+                        m_trackingProgress = total;
+                        emit trackingChanged();
+                    }, Qt::QueuedConnection);
+                }
+                return !*cancel;
+            };
+        };
+        std::vector<TrackedPoint> pts;
+        bool ok = true;
+        for (const auto &[to, base] : {std::pair{sB, 0.0}, std::pair{sA, 0.5}}) {
+            const auto part = engine::trackRegion(path, s0, to, u, v, w, h, report(base), &err);
+            if (part.empty()) {
+                ok = false;
+                break;
+            }
+            for (const auto &pt : part)
+                pts.push_back({pt.t, pt.u, pt.v});
+        }
+        QMetaObject::invokeMethod(this, [this, ok, err, pts, cancel, followerId, videoId, anchor] {
+            m_trackingProgress = -1;
+            emit trackingChanged();
+            if (*cancel) {
+                setStatus(tr("Tracking canceled"));
+                return;
+            }
+            if (!ok) {
+                emit errorOccurred(tr("Tracking failed: %1").arg(err));
+                return;
+            }
+            const bool done = edit(tr("Track motion"), [&](Project &p) { return applyTrackedPath(p, followerId, videoId, anchor, pts); });
+            setStatus(done ? tr("Tracking applied: the clip now follows the video") : tr("The clip and the video no longer overlap"));
+        }, Qt::QueuedConnection);
+    }).detach();
+}
+
+void ProjectController::clearTracking()
+{
+    const QString id = primaryClipId();
+    edit(tr("Remove tracking"), [&](Project &p) {
+        Clip *c = edit::clipById(p, id);
+        if (!c || (c->keyframes[static_cast<int>(Prop::X)].empty() && c->keyframes[static_cast<int>(Prop::Y)].empty()))
+            return false;
+        // Fica na posição do instante atual.
+        const Micros rel = std::clamp<Micros>(m_playhead - c->start, 0, c->duration);
+        c->transform.x = propAt(*c, Prop::X, rel);
+        c->transform.y = propAt(*c, Prop::Y, rel);
+        c->keyframes[static_cast<int>(Prop::X)].clear();
+        c->keyframes[static_cast<int>(Prop::Y)].clear();
+        return true;
+    });
 }
 
 void ProjectController::refreshVoice()

@@ -68,6 +68,7 @@ Written in **C++20 + Qt 6 (Qt Quick / RHI) + FFmpeg**. Video compositing runs on
   - **AI voice isolation** (DeepFilterNet3, local): keeps only the speech, removing music, noise and room sound. The model (16 MB) is downloaded once.
   - **AI music separation** (HT-Demucs v4, local): splits a song into vocals, drums, bass and other instruments, or just the vocals or the instrumental, as new audio tracks with the same timing; the original clip is muted. The model (166 MB, MIT) is downloaded once and checked by SHA-256.
   - **Detach audio from video** (Ctrl+Shift+D) and mute clip.
+- **Motion tracking:** make a text, sticker or image follow something that moves in the video below it: draw a box around it on the player and the clip gets position keyframes from the playhead in both directions (editable afterwards).
 - **Stabilization:** smooths out camera shake with an adjustable strength. Each video is analyzed once in the background (block phase correlation and a robust shift/rotation/zoom fit); the correction, with a slight zoom that hides the moving edges, is applied while rendering, so changing the strength is instant and preview matches export.
 - **Background removal:** cuts people out of videos without a green screen, using a local AI model (RobustVideoMatting on ONNX Runtime, downloaded once). Processing runs in the background and the result is used in preview and export.
 - **Canvas:** 16:9, 9:16, 1:1, 4:3, 3:4, 4:5 and 21:9, with a background color or a blurred copy of the main video.

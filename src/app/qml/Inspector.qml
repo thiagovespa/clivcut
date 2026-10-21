@@ -325,6 +325,35 @@ Rectangle {
                         }
                     }
                     SectionLabel {
+                        visible: root.hasVisual && (root.sel.canTrack || root.sel.tracked || Project.trackingProgress >= 0)
+                        text: qsTr("Tracking")
+                        actionText: root.hasSel && root.sel.tracked ? qsTr("Remove") : ""
+                        onActionClicked: Project.clearTracking()
+                    }
+                    PillButton {
+                        visible: root.hasVisual && root.sel.canTrack && Project.trackingProgress < 0
+                        text: Project.trackingPick ? qsTr("Draw the box on the player…") : qsTr("Follow the video below")
+                        iconName: "crosshair"
+                        enabled: !Project.trackingPick
+                        onClicked: Project.startTrackingPick()
+                    }
+                    RowLayout {
+                        visible: Project.trackingProgress >= 0
+                        Layout.fillWidth: true
+                        ProgressBar { Layout.fillWidth: true; value: Math.max(0, Project.trackingProgress) }
+                        Button { text: qsTr("Cancel"); focusPolicy: Qt.NoFocus; onClicked: Project.cancelTracking() }
+                    }
+                    Text {
+                        visible: root.hasVisual && (root.sel.canTrack || root.sel.tracked)
+                        Layout.fillWidth: true
+                        wrapMode: Text.Wrap
+                        color: Theme.textFaint
+                        font.pixelSize: Theme.fontSmall
+                        text: root.hasSel && root.sel.tracked
+                              ? qsTr("This clip follows the video with position keyframes; they can be edited in the Keyframes tab.")
+                              : qsTr("Makes this clip follow something that moves in the video under it, from the playhead in both directions.")
+                    }
+                    SectionLabel {
                         visible: root.isMedia && root.sel.mediaKind === "video"
                         text: qsTr("Stabilization")
                         actionText: root.isMedia && root.sel.stabilize > 0 ? qsTr("Off") : ""

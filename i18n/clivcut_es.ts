@@ -503,6 +503,10 @@
         <source>Stem separation cancelled</source>
         <translation>Separación de música cancelada</translation>
     </message>
+    <message>
+        <source>Tracking only applies to videos</source>
+        <translation>El seguimiento solo se aplica a vídeos</translation>
+    </message>
 </context>
 <context>
     <name>ExportDialog</name>
@@ -970,6 +974,30 @@ Atajos: Espacio reproduce · Ctrl+B divide · Q/W eliminan a la izquierda/derech
     <message>
         <source>Bottom</source>
         <translation>Abajo</translation>
+    </message>
+    <message>
+        <source>Tracking</source>
+        <translation>Seguimiento</translation>
+    </message>
+    <message>
+        <source>Draw the box on the player…</source>
+        <translation>Dibuja el recuadro en el reproductor…</translation>
+    </message>
+    <message>
+        <source>Follow the video below</source>
+        <translation>Seguir el vídeo de abajo</translation>
+    </message>
+    <message>
+        <source>Cancel</source>
+        <translation>Cancelar</translation>
+    </message>
+    <message>
+        <source>This clip follows the video with position keyframes; they can be edited in the Keyframes tab.</source>
+        <translation>Este clip sigue el vídeo con fotogramas clave de posición; se pueden editar en la pestaña Keyframes.</translation>
+    </message>
+    <message>
+        <source>Makes this clip follow something that moves in the video under it, from the playhead in both directions.</source>
+        <translation>Hace que este clip siga algo que se mueve en el vídeo que tiene debajo, desde el cursor y en ambos sentidos.</translation>
     </message>
     <message>
         <source>Stabilization</source>
@@ -2422,6 +2450,10 @@ Atajos: Espacio reproduce · Ctrl+B divide · Q/W eliminan a la izquierda/derech
         <translation>Cerrar</translation>
     </message>
     <message>
+        <source>Drag a box around what the clip should follow · right-click or Esc cancels</source>
+        <translation>Arrastra un recuadro alrededor de lo que debe seguir el clip · clic derecho o Esc cancela</translation>
+    </message>
+    <message>
         <source>Import media and drag it to the timeline</source>
         <translation>Importa medios y arrástralos a la línea de tiempo</translation>
     </message>
@@ -3098,6 +3130,42 @@ Atajos: Espacio reproduce · Ctrl+B divide · Q/W eliminan a la izquierda/derech
             <numerusform>Música separada en %n pista</numerusform>
             <numerusform>Música separada en %n pistas</numerusform>
         </translation>
+    </message>
+    <message>
+        <source>Draw a box around what the clip should follow</source>
+        <translation>Dibuja un recuadro alrededor de lo que debe seguir el clip</translation>
+    </message>
+    <message>
+        <source>The box must be over the video</source>
+        <translation>El recuadro debe estar sobre el vídeo</translation>
+    </message>
+    <message>
+        <source>Tracking motion…</source>
+        <translation>Siguiendo el movimiento…</translation>
+    </message>
+    <message>
+        <source>Tracking canceled</source>
+        <translation>Seguimiento cancelado</translation>
+    </message>
+    <message>
+        <source>Tracking failed: %1</source>
+        <translation>Error en el seguimiento: %1</translation>
+    </message>
+    <message>
+        <source>Track motion</source>
+        <translation>Seguir movimiento</translation>
+    </message>
+    <message>
+        <source>Tracking applied: the clip now follows the video</source>
+        <translation>Seguimiento aplicado: el clip ahora sigue el vídeo</translation>
+    </message>
+    <message>
+        <source>The clip and the video no longer overlap</source>
+        <translation>El clip y el vídeo ya no se superponen</translation>
+    </message>
+    <message>
+        <source>Remove tracking</source>
+        <translation>Quitar seguimiento</translation>
     </message>
     <message>
         <source>Isolating voice in %1…</source>

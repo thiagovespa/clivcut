@@ -871,6 +871,35 @@ private slots:
 #endif
     }
 
+    void motionTrackingWorkflow()
+    {
+        m_ctrl->newProject(640, 360, 30);
+        m_ctrl->importMedia({QUrl::fromLocalFile(m_video)});
+        m_ctrl->addAssetToTimeline(m_ctrl->assets().first().toMap().value("id").toString());
+        m_ctrl->seek(1'000'000);
+        m_ctrl->addText(QStringLiteral("Hi"));
+        const QString text = m_ctrl->selectedClip().value("id").toString();
+        QVERIFY(m_ctrl->selectedClip().value("canTrack").toBool());
+        m_ctrl->startTrackingPick();
+        QVERIFY(m_ctrl->trackingPick());
+        m_ctrl->trackRegion(0.4, 0.4, 0.6, 0.6);
+        QVERIFY(!m_ctrl->trackingPick());
+        QTRY_VERIFY_WITH_TIMEOUT(m_ctrl->trackingProgress() < 0, 60000);
+        QCOMPARE(m_ctrl->undoText(), QStringLiteral("Track motion"));
+        m_ctrl->select(text);
+        QVERIFY(m_ctrl->selectedClip().value("kf_x").toBool());
+        m_ctrl->undo();
+        m_ctrl->select(text);
+        QVERIFY(!m_ctrl->selectedClip().value("kf_x").toBool());
+        m_ctrl->redo();
+        m_ctrl->select(text);
+        m_ctrl->clearTracking();
+        QVERIFY(!m_ctrl->selectedClip().value("kf_x").toBool());
+        // O vídeo da faixa principal não tem o que seguir por baixo.
+        m_ctrl->select(clipsOf(0).first().toMap().value("id").toString());
+        QVERIFY(!m_ctrl->selectedClip().value("canTrack").toBool());
+    }
+
     void beatMarkers()
     {
         // Bumbo a 120 BPM (um golpe a cada 0,5 s) por 8 s.

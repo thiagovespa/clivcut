@@ -219,6 +219,71 @@ Rectangle {
                 }
             }
 
+            // Rastreamento: desenha a caixa em volta do que o clipe vai seguir.
+            Item {
+                id: trackPick
+                visible: Project.trackingPick
+                x: preview.canvasRect.x
+                y: preview.canvasRect.y
+                width: preview.canvasRect.width
+                height: preview.canvasRect.height
+                property point a
+                property point b
+                property bool drawing: false
+                Rectangle { anchors.fill: parent; color: "#55000000" }
+                Rectangle {
+                    visible: trackPick.drawing
+                    x: Math.min(trackPick.a.x, trackPick.b.x)
+                    y: Math.min(trackPick.a.y, trackPick.b.y)
+                    width: Math.abs(trackPick.b.x - trackPick.a.x)
+                    height: Math.abs(trackPick.b.y - trackPick.a.y)
+                    color: Theme.accentSoft
+                    border.color: Theme.accent
+                    border.width: 2
+                }
+                MouseArea {
+                    anchors.fill: parent
+                    cursorShape: Qt.CrossCursor
+                    acceptedButtons: Qt.LeftButton | Qt.RightButton
+                    onPressed: (mouse) => {
+                        if (mouse.button === Qt.RightButton) {
+                            Project.cancelTrackingPick();
+                            return;
+                        }
+                        trackPick.a = Qt.point(mouse.x, mouse.y);
+                        trackPick.b = trackPick.a;
+                        trackPick.drawing = true;
+                    }
+                    onPositionChanged: (mouse) => trackPick.b = Qt.point(Math.max(0, Math.min(width, mouse.x)), Math.max(0, Math.min(height, mouse.y)))
+                    onReleased: {
+                        if (!trackPick.drawing)
+                            return;
+                        trackPick.drawing = false;
+                        if (Math.abs(trackPick.b.x - trackPick.a.x) < 6 || Math.abs(trackPick.b.y - trackPick.a.y) < 6)
+                            return;
+                        Project.trackRegion(trackPick.a.x / width, trackPick.a.y / height, trackPick.b.x / width, trackPick.b.y / height);
+                    }
+                }
+                Rectangle {
+                    anchors.horizontalCenter: parent.horizontalCenter
+                    anchors.top: parent.top
+                    anchors.topMargin: 10
+                    width: hint.implicitWidth + 20
+                    height: 28
+                    radius: 14
+                    color: "#cc000000"
+                    Text {
+                        id: hint
+                        anchors.centerIn: parent
+                        color: "white"
+                        font.pixelSize: Theme.fontSmall
+                        text: qsTr("Drag a box around what the clip should follow · right-click or Esc cancels")
+                    }
+                }
+                Keys.onEscapePressed: Project.cancelTrackingPick()
+                onVisibleChanged: if (visible) forceActiveFocus()
+            }
+
             Text {
                 anchors.centerIn: parent
                 visible: Project.duration <= 0
