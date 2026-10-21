@@ -169,6 +169,9 @@ bool separateStems(const QString &mediaPath, const QString &modelPath, const std
         Ort::Env env(ORT_LOGGING_LEVEL_WARNING, "clivcut");
         Ort::SessionOptions opts;
         opts.SetIntraOpNumThreads(std::max(1, QThread::idealThreadCount()));
+        // Sem espera girando: com a CPU ocupada (um build, uma exportação), as threads ociosas
+        // roubam tempo das que trabalham e tudo fica bem mais lento.
+        opts.AddConfigEntry("session.intra_op.allow_spinning", "0");
         opts.SetGraphOptimizationLevel(GraphOptimizationLevel::ORT_ENABLE_ALL);
 #ifdef _WIN32
         const std::wstring model = modelPath.toStdWString();
