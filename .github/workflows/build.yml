@@ -99,6 +99,12 @@ jobs:
           $env:QT_QPA_PLATFORM = "offscreen"; $env:SDL_AUDIODRIVER = "dummy"
           ctest --test-dir build --output-on-failure -E "render|controller"
 
+      - name: Testes de render (Direct3D 11)
+        shell: pwsh
+        run: |
+          $env:QT_QPA_PLATFORM = "offscreen"
+          ctest --test-dir build --output-on-failure -R render
+
       - name: Instalador
         shell: pwsh
         run: |
@@ -127,6 +133,8 @@ jobs:
             -DCMAKE_PREFIX_PATH="$(brew --prefix qt)"
           cmake --build build
           QT_QPA_PLATFORM=offscreen SDL_AUDIODRIVER=dummy ctest --test-dir build --output-on-failure -E "render|controller"
+          # Compositor no Metal (conversão YUV, orientação das texturas).
+          QT_QPA_PLATFORM=offscreen ctest --test-dir build --output-on-failure -R render
 
   # Os .dmg saem do builder em Docker (packaging/macos/Dockerfile), o mesmo do
   # `make dmg` local: cross-compile num runner Linux. Só o SDK vem de um runner
