@@ -44,6 +44,59 @@ if [ -e "$TREE/lib/libonnxruntime.so.1" ]; then
 fi
 find "$TREE" -type d -empty -delete
 
+# Dependências do sistema: as bibliotecas que os binários e plugins pedem e o pacote não traz.
+# Calculadas a cada build, para nunca faltar uma (instalações mínimas não têm OpenGL, HarfBuzz...).
+EXTERNAL="$({ find "$TREE" -type f \( -name '*.so*' -o -path "$TREE/bin/*" \) -exec readelf -d {} + 2>/dev/null || true; } \
+    | sed -n 's/.*(NEEDED).*\[\(.*\)\]/\1/p' | sort -u \
+    | comm -23 - <(find "$TREE" -name '*.so*' -printf '%f\n' | sort -u))"
+
+# .deb: o pacote de cada biblioteca (nomes do Ubuntu 24.04 / Debian 13).
+deb_package() {
+    case "$1" in
+        ld-linux-x86-64.so.2 | libc.so.6 | libdl.so.2 | libm.so.6 | libpthread.so.0 | libresolv.so.2 | librt.so.1)
+            echo "libc6 (>= 2.39)" ;;
+        libstdc++.so.6) echo libstdc++6 ;;
+        libgcc_s.so.1) echo libgcc-s1 ;;
+        libasound.so.2) echo "libasound2t64 | libasound2" ;;
+        libcom_err.so.2) echo libcom-err2 ;;
+        libdrm.so.2) echo libdrm2 ;;
+        libEGL.so.1) echo libegl1 ;;
+        libGL.so.1) echo libgl1 ;;
+        libGLX.so.0) echo libglx0 ;;
+        libOpenGL.so.0) echo libopengl0 ;;
+        libgbm.so.1) echo libgbm1 ;;
+        libfontconfig.so.1) echo libfontconfig1 ;;
+        libfreetype.so.6) echo libfreetype6 ;;
+        libfribidi.so.0) echo libfribidi0 ;;
+        libharfbuzz.so.0) echo libharfbuzz0b ;;
+        libgmp.so.10) echo libgmp10 ;;
+        libgpg-error.so.0) echo libgpg-error0 ;;
+        libwayland-client.so.0) echo libwayland-client0 ;;
+        libwayland-cursor.so.0) echo libwayland-cursor0 ;;
+        libwayland-egl.so.1) echo libwayland-egl1 ;;
+        libX11.so.6) echo libx11-6 ;;
+        libX11-xcb.so.1) echo libx11-xcb1 ;;
+        libxcb.so.1) echo libxcb1 ;;
+        libxcb-dri3.so.0) echo libxcb-dri3-0 ;;
+        libz.so.1) echo zlib1g ;;
+        libdbus-1.so.3) echo libdbus-1-3 ;;
+        libxkbcommon.so.0) echo libxkbcommon0 ;;
+        libxkbcommon-x11.so.0) echo libxkbcommon-x11-0 ;;
+        libglib-2.0.so.0 | libgobject-2.0.so.0 | libgthread-2.0.so.0) echo "libglib2.0-0t64 | libglib2.0-0" ;;
+        *) return 1 ;;
+    esac
+}
+
+DEB_DEPENDS="" RPM_DEPENDS="      - libc.so.6(GLIBC_2.39)(64bit)"
+for lib in $EXTERNAL; do
+    pkg="$(deb_package "$lib")" || { echo "build-packages: sem pacote .deb para $lib (acrescente em deb_package)" >&2; exit 1; }
+    DEB_DEPENDS+="      - $pkg"$'\n'
+    # .rpm: pela própria biblioteca, o que vale para Fedora e openSUSE (nomes de pacote diferentes).
+    RPM_DEPENDS+=$'\n'"      - $lib()(64bit)"
+done
+DEB_DEPENDS="$(printf '%s' "$DEB_DEPENDS" | sort -u)"
+echo "==> Dependências do sistema:" $EXTERNAL
+
 # --- .tar.gz ---
 NAME="clivcut-$VERSION-linux-x86_64"
 cp -a "$TREE" "$STAGE/$NAME"
@@ -54,9 +107,11 @@ Run it from this folder:
     ./bin/clivcut
     ./bin/clivcut-render --help
 
-Everything it needs is inside this folder, except the system graphics
-libraries (OpenGL/EGL, X11 or Wayland) and glibc 2.39 or newer.
+Qt, FFmpeg and the other libraries are inside this folder. The system must
+provide glibc 2.39 or newer and the libraries listed in DEPENDENCIES.txt
+(OpenGL/EGL, X11/Wayland, fonts, ALSA), present on any desktop install.
 EOF
+printf '%s\n' $EXTERNAL > "$STAGE/$NAME/DEPENDENCIES.txt"
 tar -C "$STAGE" -czf "$OUT/$NAME.tar.gz" "$NAME"
 echo "==> $OUT/$NAME.tar.gz"
 
@@ -77,6 +132,7 @@ for exe in clivcut clivcut-render; do
     printf '#!/bin/sh\nexec /opt/clivcut/bin/%s "$@"\n' "$exe" > "$STAGE/$exe.sh"
     chmod 755 "$STAGE/$exe.sh"
 done
+
 
 cat > "$STAGE/nfpm.yaml" <<EOF
 name: clivcut
@@ -113,33 +169,16 @@ contents:
 overrides:
   deb:
     depends:
-      - libc6 (>= 2.39)
-      - libstdc++6
-      - libgl1
-      - libegl1
-      - libfontconfig1
-      - libfreetype6
-      - libx11-6
-      - libx11-xcb1
-      - libxcb1
-      - libxkbcommon0
-      - libxkbcommon-x11-0
-      - libdbus-1-3
+$DEB_DEPENDS
+    # Driver de vídeo (OpenGL/Vulkan por software ou da GPU) e decodificação por hardware.
+    recommends:
+      - libgl1-mesa-dri
+      - mesa-va-drivers
   rpm:
-    # Pelo nome da biblioteca: vale para Fedora e openSUSE, que nomeiam os pacotes diferente.
     depends:
-      - libc.so.6(GLIBC_2.39)(64bit)
-      - libstdc++.so.6()(64bit)
-      - libGL.so.1()(64bit)
-      - libEGL.so.1()(64bit)
-      - libfontconfig.so.1()(64bit)
-      - libfreetype.so.6()(64bit)
-      - libX11.so.6()(64bit)
-      - libX11-xcb.so.1()(64bit)
-      - libxcb.so.1()(64bit)
-      - libxkbcommon.so.0()(64bit)
-      - libxkbcommon-x11.so.0()(64bit)
-      - libdbus-1.so.3()(64bit)
+$RPM_DEPENDS
+    recommends:
+      - mesa-dri-drivers
 EOF
 
 "$NFPM" package --config "$STAGE/nfpm.yaml" --packager deb --target "$OUT/"

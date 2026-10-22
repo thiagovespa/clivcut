@@ -54,12 +54,13 @@ export QML_MODULES_PATHS="$BUILD/src/app"
 # O strip do linuxdeploy é antigo para binários com .relr.dyn (distros recentes).
 export NO_STRIP=1
 export QMAKE="${QMAKE:-$(command -v qmake6 || command -v qmake)}"
-# Wayland além de X11 (o nome do plugin mudou no Qt 6.10+).
+# Wayland além de X11 (o nome do plugin mudou no Qt 6.10+) e offscreen, que o clivcut-render
+# usa sem tela (servidor, SSH).
 QT_PLUGINS="$("$QMAKE" -query QT_INSTALL_PLUGINS)"
 if [ -e "$QT_PLUGINS/platforms/libqwayland.so" ]; then
-    export EXTRA_PLATFORM_PLUGINS="libqwayland.so"
+    export EXTRA_PLATFORM_PLUGINS="libqwayland.so;libqoffscreen.so"
 else
-    export EXTRA_PLATFORM_PLUGINS="libqwayland-generic.so;libqwayland-egl.so"
+    export EXTRA_PLATFORM_PLUGINS="libqwayland-generic.so;libqwayland-egl.so;libqoffscreen.so"
 fi
 export EXTRA_QT_MODULES="waylandclient"
 mkdir -p "$OUT"
