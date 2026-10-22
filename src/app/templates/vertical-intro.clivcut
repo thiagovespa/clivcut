@@ -1,0 +1,250 @@
+{
+ "format": "clivcut",
+ "version": 1,
+ "id": "vertical-intro",
+ "name": "Vertical intro",
+ "width": 1080,
+ "height": 1920,
+ "fps": 30,
+ "background": "#000000",
+ "mainTrackMagnet": true,
+ "assets": [],
+ "tracks": [
+  {
+   "id": "trk_t0004",
+   "kind": "video",
+   "name": "Main",
+   "muted": false,
+   "hidden": false,
+   "locked": false,
+   "captions": false,
+   "clips": [
+    {
+     "id": "clp_t0001",
+     "type": "media",
+     "slot": "Video 1",
+     "assetId": "",
+     "start": 0,
+     "duration": 2500000,
+     "sourceIn": 0,
+     "speed": 1,
+     "volume": 1,
+     "transform": {
+      "x": 0,
+      "y": 0,
+      "scale": 1,
+      "rotation": 0,
+      "opacity": 1,
+      "flipH": false,
+      "flipV": false
+     }
+    },
+    {
+     "id": "clp_t0002",
+     "type": "media",
+     "slot": "Video 2",
+     "assetId": "",
+     "start": 2500000,
+     "duration": 2500000,
+     "sourceIn": 0,
+     "speed": 1,
+     "volume": 1,
+     "transform": {
+      "x": 0,
+      "y": 0,
+      "scale": 1,
+      "rotation": 0,
+      "opacity": 1,
+      "flipH": false,
+      "flipV": false
+     },
+     "transitionIn": {
+      "kind": "zoomIn",
+      "duration": 600000
+     }
+    },
+    {
+     "id": "clp_t0003",
+     "type": "media",
+     "slot": "Video 3",
+     "assetId": "",
+     "start": 5000000,
+     "duration": 2500000,
+     "sourceIn": 0,
+     "speed": 1,
+     "volume": 1,
+     "transform": {
+      "x": 0,
+      "y": 0,
+      "scale": 1,
+      "rotation": 0,
+      "opacity": 1,
+      "flipH": false,
+      "flipV": false
+     },
+     "transitionIn": {
+      "kind": "slideUp",
+      "duration": 600000
+     }
+    }
+   ]
+  },
+  {
+   "id": "trk_t0008",
+   "kind": "text",
+   "name": "Text",
+   "muted": false,
+   "hidden": false,
+   "locked": false,
+   "captions": false,
+   "clips": [
+    {
+     "id": "txt_t0005",
+     "type": "text",
+     "text": "Your title",
+     "start": 300000,
+     "duration": 2200000,
+     "style": {
+      "fontFamily": "Sans Serif",
+      "fontSize": 120,
+      "bold": true,
+      "italic": false,
+      "color": "#ffffff",
+      "strokeColor": "#000000",
+      "strokeWidth": 0,
+      "background": "",
+      "align": 1,
+      "shadow": true,
+      "curve": 0.25
+     },
+     "transform": {
+      "x": 0,
+      "y": -0.15,
+      "scale": 1,
+      "rotation": 0,
+      "opacity": 1,
+      "flipH": false,
+      "flipV": false
+     },
+     "animIn": {
+      "kind": "slideUp",
+      "duration": 500000
+     },
+     "animOut": {
+      "kind": "fade",
+      "duration": 400000
+     }
+    },
+    {
+     "id": "txt_t0006",
+     "type": "text",
+     "text": "@yourname",
+     "start": 600000,
+     "duration": 1900000,
+     "style": {
+      "fontFamily": "Sans Serif",
+      "fontSize": 54,
+      "bold": false,
+      "italic": false,
+      "color": "#ffffff",
+      "strokeColor": "#000000",
+      "strokeWidth": 0,
+      "background": "#cc000000",
+      "align": 1,
+      "shadow": false
+     },
+     "transform": {
+      "x": 0,
+      "y": 0.12,
+      "scale": 1,
+      "rotation": 0,
+      "opacity": 1,
+      "flipH": false,
+      "flipV": false
+     },
+     "animIn": {
+      "kind": "slideUp",
+      "duration": 500000
+     },
+     "animOut": {
+      "kind": "fade",
+      "duration": 400000
+     }
+    },
+    {
+     "id": "txt_t0007",
+     "type": "text",
+     "text": "Follow for more",
+     "start": 5400000,
+     "duration": 2000000,
+     "style": {
+      "fontFamily": "Sans Serif",
+      "fontSize": 64,
+      "bold": true,
+      "italic": false,
+      "color": "#111111",
+      "strokeColor": "#000000",
+      "strokeWidth": 0,
+      "background": "",
+      "align": 1,
+      "shadow": false,
+      "shape": "bubble",
+      "shapeColor": "#ffffff",
+      "shapeWidth": 760,
+      "shapeHeight": 220
+     },
+     "transform": {
+      "x": 0,
+      "y": 0.55,
+      "scale": 1,
+      "rotation": 0,
+      "opacity": 1,
+      "flipH": false,
+      "flipV": false
+     },
+     "animIn": {
+      "kind": "zoom",
+      "duration": 500000
+     },
+     "animOut": {
+      "kind": "fade",
+      "duration": 400000
+     }
+    }
+   ]
+  },
+  {
+   "id": "trk_t0010",
+   "kind": "audio",
+   "name": "Music",
+   "muted": false,
+   "hidden": false,
+   "locked": false,
+   "captions": false,
+   "clips": [
+    {
+     "id": "clp_t0009",
+     "type": "media",
+     "slot": "Music",
+     "assetId": "",
+     "start": 0,
+     "duration": 7500000,
+     "sourceIn": 0,
+     "speed": 1,
+     "volume": 1,
+     "transform": {
+      "x": 0,
+      "y": 0,
+      "scale": 1,
+      "rotation": 0,
+      "opacity": 1,
+      "flipH": false,
+      "flipV": false
+     },
+     "fadeOut": 1500000
+    }
+   ]
+  }
+ ],
+ "markers": []
+}

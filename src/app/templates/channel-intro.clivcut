@@ -1,0 +1,170 @@
+{
+ "format": "clivcut",
+ "version": 1,
+ "id": "channel-intro",
+ "name": "Channel intro",
+ "width": 1920,
+ "height": 1080,
+ "fps": 30,
+ "background": "#000000",
+ "mainTrackMagnet": true,
+ "assets": [],
+ "tracks": [
+  {
+   "id": "trk_t0047",
+   "kind": "video",
+   "name": "Main",
+   "muted": false,
+   "hidden": false,
+   "locked": false,
+   "captions": false,
+   "clips": [
+    {
+     "id": "clp_t0046",
+     "type": "media",
+     "slot": "Video 1",
+     "assetId": "",
+     "start": 0,
+     "duration": 5000000,
+     "sourceIn": 0,
+     "speed": 1,
+     "volume": 1,
+     "transform": {
+      "x": 0,
+      "y": 0,
+      "scale": 1,
+      "rotation": 0,
+      "opacity": 1,
+      "flipH": false,
+      "flipV": false
+     },
+     "effect": {
+      "id": "glitch",
+      "intensity": 0.5
+     }
+    }
+   ]
+  },
+  {
+   "id": "trk_t0050",
+   "kind": "text",
+   "name": "Text",
+   "muted": false,
+   "hidden": false,
+   "locked": false,
+   "captions": false,
+   "clips": [
+    {
+     "id": "txt_t0048",
+     "type": "text",
+     "text": "CHANNEL NAME",
+     "start": 300000,
+     "duration": 3200000,
+     "style": {
+      "fontFamily": "Sans Serif",
+      "fontSize": 150,
+      "bold": true,
+      "italic": false,
+      "color": "#ffffff",
+      "strokeColor": "#000000",
+      "strokeWidth": 4,
+      "background": "",
+      "align": 1,
+      "shadow": true,
+      "curve": 0.2
+     },
+     "transform": {
+      "x": 0,
+      "y": -0.1,
+      "scale": 1,
+      "rotation": 0,
+      "opacity": 1,
+      "flipH": false,
+      "flipV": false
+     },
+     "animIn": {
+      "kind": "zoom",
+      "duration": 500000
+     },
+     "animOut": {
+      "kind": "fade",
+      "duration": 400000
+     }
+    },
+    {
+     "id": "txt_t0049",
+     "type": "text",
+     "text": "Subscribe!",
+     "start": 3400000,
+     "duration": 1600000,
+     "style": {
+      "fontFamily": "Sans Serif",
+      "fontSize": 72,
+      "bold": true,
+      "italic": false,
+      "color": "#ffffff",
+      "strokeColor": "#000000",
+      "strokeWidth": 0,
+      "background": "",
+      "align": 1,
+      "shadow": false,
+      "shape": "bubble",
+      "shapeColor": "#e53935",
+      "shapeWidth": 620,
+      "shapeHeight": 200
+     },
+     "transform": {
+      "x": 0,
+      "y": 0.5,
+      "scale": 1,
+      "rotation": 0,
+      "opacity": 1,
+      "flipH": false,
+      "flipV": false
+     },
+     "animIn": {
+      "kind": "zoom",
+      "duration": 500000
+     },
+     "animOut": {
+      "kind": "fade",
+      "duration": 400000
+     }
+    }
+   ]
+  },
+  {
+   "id": "trk_t0052",
+   "kind": "audio",
+   "name": "Music",
+   "muted": false,
+   "hidden": false,
+   "locked": false,
+   "captions": false,
+   "clips": [
+    {
+     "id": "clp_t0051",
+     "type": "media",
+     "slot": "Music",
+     "assetId": "",
+     "start": 0,
+     "duration": 5000000,
+     "sourceIn": 0,
+     "speed": 1,
+     "volume": 1,
+     "transform": {
+      "x": 0,
+      "y": 0,
+      "scale": 1,
+      "rotation": 0,
+      "opacity": 1,
+      "flipH": false,
+      "flipV": false
+     },
+     "fadeOut": 1000000
+    }
+   ]
+  }
+ ],
+ "markers": []
+}

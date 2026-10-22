@@ -1,0 +1,87 @@
+{
+ "format": "clivcut-clips",
+ "assets": [],
+ "compounds": [],
+ "items": [
+  {
+   "track": 1,
+   "kind": "text",
+   "clip": {
+    "id": "txt_tt0004",
+    "type": "text",
+    "text": "“Your quote goes here.”",
+    "start": 0,
+    "duration": 5000000,
+    "style": {
+     "fontFamily": "Sans Serif",
+     "fontSize": 72,
+     "bold": false,
+     "italic": true,
+     "color": "#ffffff",
+     "strokeColor": "#000000",
+     "strokeWidth": 0,
+     "background": "",
+     "align": 1,
+     "shadow": true
+    },
+    "transform": {
+     "x": 0,
+     "y": -0.05,
+     "scale": 1,
+     "rotation": 0,
+     "opacity": 1,
+     "flipH": false,
+     "flipV": false
+    },
+    "animIn": {
+     "kind": "fade",
+     "duration": 400000
+    },
+    "animOut": {
+     "kind": "fade",
+     "duration": 300000
+    }
+   }
+  },
+  {
+   "track": 2,
+   "kind": "text",
+   "clip": {
+    "id": "txt_tt0005",
+    "type": "text",
+    "text": "— Author",
+    "start": 400000,
+    "duration": 4600000,
+    "style": {
+     "fontFamily": "Sans Serif",
+     "fontSize": 44,
+     "bold": false,
+     "italic": false,
+     "color": "#f5a524",
+     "strokeColor": "#000000",
+     "strokeWidth": 0,
+     "background": "",
+     "align": 1,
+     "shadow": false
+    },
+    "transform": {
+     "x": 0,
+     "y": 0.18,
+     "scale": 1,
+     "rotation": 0,
+     "opacity": 1,
+     "flipH": false,
+     "flipV": false
+    },
+    "animIn": {
+     "kind": "fade",
+     "duration": 400000
+    },
+    "animOut": {
+     "kind": "fade",
+     "duration": 300000
+    }
+   }
+  }
+ ]
+}

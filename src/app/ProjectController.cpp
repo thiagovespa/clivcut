@@ -62,6 +62,7 @@
 #include <QSet>
 #include <QSettings>
 #include <QStandardPaths>
+#include <QUuid>
 
 #include <algorithm>
 #include <cmath>
@@ -327,7 +328,7 @@ QVariantList ProjectController::tracks() const
                                                             : tr("Adjustment");
             }
             if (c.hasMedia())
-                label = a ? a->name : tr("Missing media");
+                label = a ? a->name : c.isEmptySlot() ? c.slot : tr("Missing media");
             const Sequence *seq = c.isCompound() ? m_project.compound(c.compoundId) : nullptr;
             if (c.isCompound())
                 label = seq ? seq->name : tr("Compound clip");
@@ -348,7 +349,8 @@ QVariantList ProjectController::tracks() const
                 {"audioMuted", c.audioMuted},
                 {"groupId", c.groupId},
                 {"assetId", c.assetId},
-                {"mediaKind", a ? mediaKindName(a->kind) : c.isCompound() ? "compound" : (c.isAdjust() ? "adjust" : "text")},
+                {"mediaKind", a ? mediaKindName(a->kind) : c.isCompound() ? "compound" : c.isEmptySlot() ? "slot"
+                                                                                : (c.isAdjust() ? "adjust" : "text")},
                 {"label", label},
                 {"sourceIn", static_cast<double>(c.sourceIn)},
                 {"speed", c.speed},
@@ -535,7 +537,8 @@ QVariantMap ProjectController::selectedClip() const
     const MediaAsset *a = m_project.asset(c->assetId);
     const Sequence *seq = c->isCompound() ? m_project.compound(c->compoundId) : nullptr;
     m.insert({{"assetName", a ? a->name : seq ? seq->name : QString()},
-              {"mediaKind", a ? mediaKindName(a->kind) : seq ? "compound" : "video"},
+              {"mediaKind", a ? mediaKindName(a->kind) : seq ? "compound" : c->isEmptySlot() ? "slot" : "video"},
+              {"slot", c->slot},
               {"hasAudio", (a && a->hasAudio) || (seq && compoundHasAudio(*seq))},
               {"audioOnly", c->audioOnly},
               {"audioMuted", c->audioMuted},
@@ -676,6 +679,255 @@ QStringList ProjectController::audioFormats() const
 
 // ---------------------------------------------------------------------------
 // Arquivos
+
+// ---------------------------------------------------------------------------
+// Templates
+
+namespace {
+
+struct BuiltinTemplate {
+    const char *id;
+    const char *name;
+    const char *description;
+};
+// Nomes e descrições traduzíveis; os projetos ficam em templates/<id>.clivcut no recurso.
+constexpr BuiltinTemplate kBuiltinTemplates[] = {
+    {"vertical-intro", QT_TRANSLATE_NOOP("Templates", "Vertical intro"),
+     QT_TRANSLATE_NOOP("Templates", "Three quick shots, a title and music, for stories and shorts")},
+    {"photo-slideshow", QT_TRANSLATE_NOOP("Templates", "Photo slideshow"),
+     QT_TRANSLATE_NOOP("Templates", "Six photos with a slow zoom, crossfades and music")},
+    {"podcast-clip", QT_TRANSLATE_NOOP("Templates", "Podcast clip"),
+     QT_TRANSLATE_NOOP("Templates", "A vertical cut of an episode with its title and the guest's name")},
+    {"before-after", QT_TRANSLATE_NOOP("Templates", "Before / after"),
+     QT_TRANSLATE_NOOP("Templates", "Two videos side by side, labeled")},
+    {"product-showcase", QT_TRANSLATE_NOOP("Templates", "Product showcase"),
+     QT_TRANSLATE_NOOP("Templates", "Square, punchy cuts with a call to action")},
+    {"channel-intro", QT_TRANSLATE_NOOP("Templates", "Channel intro"),
+     QT_TRANSLATE_NOOP("Templates", "A glitchy opening with your channel name and a subscribe bubble")},
+};
+// Textos de dentro dos templates (rótulos de espaços e textos de exemplo), para a tradução.
+[[maybe_unused]] constexpr const char *kTemplateTexts[] = {
+    QT_TRANSLATE_NOOP("Templates", "Video 1"), QT_TRANSLATE_NOOP("Templates", "Video 2"),
+    QT_TRANSLATE_NOOP("Templates", "Video 3"), QT_TRANSLATE_NOOP("Templates", "Photo 1"),
+    QT_TRANSLATE_NOOP("Templates", "Photo 2"), QT_TRANSLATE_NOOP("Templates", "Photo 3"),
+    QT_TRANSLATE_NOOP("Templates", "Photo 4"), QT_TRANSLATE_NOOP("Templates", "Photo 5"),
+    QT_TRANSLATE_NOOP("Templates", "Photo 6"), QT_TRANSLATE_NOOP("Templates", "Music"),
+    QT_TRANSLATE_NOOP("Templates", "Before"), QT_TRANSLATE_NOOP("Templates", "After"),
+    QT_TRANSLATE_NOOP("Templates", "Your title"), QT_TRANSLATE_NOOP("Templates", "@yourname"),
+    QT_TRANSLATE_NOOP("Templates", "Follow for more"), QT_TRANSLATE_NOOP("Templates", "Our trip"),
+    QT_TRANSLATE_NOOP("Templates", "Thanks for watching"), QT_TRANSLATE_NOOP("Templates", "Episode title goes here"),
+    QT_TRANSLATE_NOOP("Templates", "Guest Name"), QT_TRANSLATE_NOOP("Templates", "Role or company"),
+    QT_TRANSLATE_NOOP("Templates", "BEFORE"), QT_TRANSLATE_NOOP("Templates", "AFTER"),
+    QT_TRANSLATE_NOOP("Templates", "New *arrival*"), QT_TRANSLATE_NOOP("Templates", "Shop now"),
+    QT_TRANSLATE_NOOP("Templates", "CHANNEL NAME"), QT_TRANSLATE_NOOP("Templates", "Subscribe!"),
+    QT_TRANSLATE_NOOP("Templates", "Name Surname"), QT_TRANSLATE_NOOP("Templates", "Subscribe"),
+    QT_TRANSLATE_NOOP("Templates", "“Your quote goes here.”"), QT_TRANSLATE_NOOP("Templates", "— Author"),
+    QT_TRANSLATE_NOOP("Templates", "CHAPTER 1"), QT_TRANSLATE_NOOP("Templates", "Chapter *title*"),
+    QT_TRANSLATE_NOOP("Templates", "BREAKING NEWS · Headline goes here"), QT_TRANSLATE_NOOP("Templates", "Link in bio ↓"),
+};
+
+struct TextTemplate {
+    const char *id;
+    const char *name;
+};
+constexpr TextTemplate kTextTemplates[] = {
+    {"lower-third", QT_TRANSLATE_NOOP("Templates", "Lower third")},
+    {"subscribe", QT_TRANSLATE_NOOP("Templates", "Subscribe")},
+    {"quote", QT_TRANSLATE_NOOP("Templates", "Quote")},
+    {"chapter", QT_TRANSLATE_NOOP("Templates", "Chapter title")},
+    {"breaking-news", QT_TRANSLATE_NOOP("Templates", "News banner")},
+    {"link-in-bio", QT_TRANSLATE_NOOP("Templates", "Link in bio")},
+};
+
+QString userTemplatesDir()
+{
+    return QDir(QStandardPaths::writableLocation(QStandardPaths::AppDataLocation)).filePath(QStringLiteral("templates"));
+}
+
+QString templatePath(const QString &id)
+{
+    for (const auto &t : kBuiltinTemplates)
+        if (id == QLatin1String(t.id))
+            return QStringLiteral(":/qt/qml/Clivcut/templates/%1.clivcut").arg(id);
+    return QDir(userTemplatesDir()).filePath(id + QStringLiteral(".clivcut"));
+}
+
+/** Textos e rótulos de espaços na língua da interface (os templates guardam em inglês). */
+void translateTemplate(std::vector<Track> &tracks)
+{
+    for (Track &t : tracks) {
+        t.name = QCoreApplication::translate("Track", t.name.toUtf8());
+        for (Clip &c : t.clips) {
+            if (!c.slot.isEmpty())
+                c.slot = QCoreApplication::translate("Templates", c.slot.toUtf8());
+            if (c.isText() && !c.text.isEmpty())
+                c.text = QCoreApplication::translate("Templates", c.text.toUtf8());
+        }
+    }
+}
+
+} // namespace
+
+QVariantList ProjectController::templates() const
+{
+    QVariantList out;
+    auto describe = [](const QString &path, QVariantMap m) {
+        Project p;
+        if (!loadProjectFile(path, p))
+            return QVariantMap();
+        m.insert({{"width", p.width}, {"height", p.height}, {"slots", static_cast<int>(edit::emptySlots(p).size())},
+                  {"duration", static_cast<double>(p.duration())}});
+        return m;
+    };
+    for (const auto &t : kBuiltinTemplates) {
+        const QVariantMap m = describe(templatePath(QString::fromLatin1(t.id)),
+                                       {{"id", QString::fromLatin1(t.id)}, {"name", QCoreApplication::translate("Templates", t.name)},
+                                        {"description", QCoreApplication::translate("Templates", t.description)}, {"builtin", true}});
+        if (!m.isEmpty())
+            out << m;
+    }
+    const QDir dir(userTemplatesDir());
+    for (const QFileInfo &fi : dir.entryInfoList({QStringLiteral("*.clivcut")}, QDir::Files, QDir::Time)) {
+        Project p;
+        if (!loadProjectFile(fi.absoluteFilePath(), p))
+            continue;
+        const QVariantMap m = describe(fi.absoluteFilePath(), {{"id", fi.completeBaseName()}, {"name", p.name},
+                                                               {"description", tr("Your template")}, {"builtin", false}});
+        if (!m.isEmpty())
+            out << m;
+    }
+    return out;
+}
+
+bool ProjectController::newFromTemplate(const QString &id)
+{
+    Project p;
+    QString err;
+    if (!loadProjectFile(templatePath(id), p, &err)) {
+        emit errorOccurred(tr("Could not open the template: %1").arg(err));
+        return false;
+    }
+    p.id = QUuid::createUuid().toString(QUuid::WithoutBraces);
+    if (std::any_of(std::begin(kBuiltinTemplates), std::end(kBuiltinTemplates), [&](const auto &t) { return id == QLatin1String(t.id); })) {
+        for (const auto &t : kBuiltinTemplates)
+            if (id == QLatin1String(t.id))
+                p.name = QCoreApplication::translate("Templates", t.name);
+        translateTemplate(p.tracks);
+    }
+    setProject(std::move(p), {});
+    const int empty = emptySlotCount();
+    setStatus(empty > 0 ? tr("Template ready: fill its %n slot(s) with your media", nullptr, empty)
+                        : tr("Template ready"));
+    return true;
+}
+
+bool ProjectController::saveAsTemplate(const QString &name)
+{
+    Project p = rootProject();
+    edit::makeTemplate(p, [](MediaKind k, int n) {
+        return k == MediaKind::Image ? tr("Photo %1").arg(n) : k == MediaKind::Audio ? tr("Audio %1").arg(n) : tr("Video %1").arg(n);
+    });
+    p.name = name.trimmed().isEmpty() ? m_project.name : name.trimmed();
+    p.id = QUuid::createUuid().toString(QUuid::WithoutBraces);
+    QDir().mkpath(userTemplatesDir());
+    QString err;
+    if (!saveProjectFile(p, QDir(userTemplatesDir()).filePath(p.id + QStringLiteral(".clivcut")), &err)) {
+        emit errorOccurred(tr("Could not save the template: %1").arg(err));
+        return false;
+    }
+    emit templatesChanged();
+    setStatus(tr("Template saved: %1").arg(p.name));
+    return true;
+}
+
+void ProjectController::deleteTemplate(const QString &id)
+{
+    if (QFile::remove(QDir(userTemplatesDir()).filePath(id + QStringLiteral(".clivcut"))))
+        emit templatesChanged();
+}
+
+int ProjectController::emptySlotCount() const
+{
+    return static_cast<int>(edit::emptySlots(m_project).size());
+}
+
+bool ProjectController::replaceClipMedia(const QString &clipId, const QString &assetId)
+{
+    const MediaAsset *a = m_project.asset(assetId);
+    if (!a)
+        return false;
+    const MediaAsset asset = *a;
+    const bool wasSlot = edit::clipById(m_project, clipId) && edit::clipById(m_project, clipId)->isEmptySlot();
+    const bool ok = edit(wasSlot ? tr("Fill template slot") : tr("Replace media"),
+                         [&](Project &p) { return edit::setClipMedia(p, clipId, asset); });
+    if (!ok)
+        setStatus(tr("This media does not fit this clip"));
+    return ok;
+}
+
+void ProjectController::fillSlots(const QList<QUrl> &urls)
+{
+    // Importa (as que já estão no projeto são reaproveitadas) e preenche na ordem dos espaços.
+    importMedia(urls);
+    std::vector<MediaAsset> assets;
+    for (const QUrl &u : urls) {
+        const QString path = localPath(u);
+        for (const auto &[id, a] : m_project.assets)
+            if (a.path == path) {
+                assets.push_back(a);
+                break;
+            }
+    }
+    int filled = 0;
+    edit(tr("Fill template slots"), [&](Project &p) {
+        const QStringList empty = edit::emptySlots(p);
+        size_t next = 0;
+        for (const QString &slot : empty) {
+            // Cada espaço pega o próximo arquivo que serve nele (áudio só em espaço de áudio).
+            for (size_t i = next; i < assets.size(); ++i)
+                if (edit::setClipMedia(p, slot, assets[i])) {
+                    std::swap(assets[i], assets[next]);
+                    ++next;
+                    ++filled;
+                    break;
+                }
+        }
+        return filled > 0;
+    });
+    const int left = emptySlotCount();
+    setStatus(left > 0 ? tr("%n slot(s) filled, %1 still empty", nullptr, filled).arg(left)
+                       : tr("%n slot(s) filled", nullptr, filled));
+}
+
+QVariantList ProjectController::textTemplates() const
+{
+    QVariantList out;
+    for (const auto &t : kTextTemplates)
+        out << QVariantMap{{"id", QString::fromLatin1(t.id)}, {"name", QCoreApplication::translate("Templates", t.name)}};
+    return out;
+}
+
+void ProjectController::insertTextTemplate(const QString &id)
+{
+    QFile f(QStringLiteral(":/qt/qml/Clivcut/templates/text/%1.json").arg(id));
+    Clipboard cb;
+    if (!f.open(QIODevice::ReadOnly) || !clipboardFromJson(f.readAll(), cb))
+        return;
+    for (auto &item : cb.items)
+        if (item.clip.isText() && !item.clip.text.isEmpty())
+            item.clip.text = QCoreApplication::translate("Templates", item.clip.text.toUtf8());
+    QStringList created;
+    edit(tr("Add text template"), [&](Project &p) {
+        created = pasteClips(p, cb, p.snapToFrame(m_playhead));
+        return !created.isEmpty();
+    });
+    if (!created.isEmpty()) {
+        m_selection = created;
+        m_primary = created.last();
+        emit selectionChanged();
+        emit selectedClipChanged();
+    }
+}
 
 void ProjectController::newProject(int width, int height, double fps)
 {
@@ -849,6 +1101,12 @@ void ProjectController::addAssetToTimeline(const QString &assetId, int trackInde
     const MediaAsset *a = m_project.asset(assetId);
     if (!a)
         return;
+    // Com um espaço de template selecionado, o "+" e o duplo clique preenchem o espaço.
+    if (trackIndex < 0 && start < 0) {
+        const Clip *sel = edit::clipById(m_project, primaryClipId());
+        if (sel && sel->isEmptySlot() && replaceClipMedia(sel->id, assetId))
+            return;
+    }
     QString newClip;
     edit(tr("Add to timeline"), [&](Project &p) {
         Micros at = start >= 0 ? static_cast<Micros>(start) : m_playhead;

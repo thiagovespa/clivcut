@@ -1,0 +1,367 @@
+{
+ "format": "clivcut",
+ "version": 1,
+ "id": "photo-slideshow",
+ "name": "Photo slideshow",
+ "width": 1920,
+ "height": 1080,
+ "fps": 30,
+ "background": "#000000",
+ "mainTrackMagnet": true,
+ "assets": [],
+ "tracks": [
+  {
+   "id": "trk_t0017",
+   "kind": "video",
+   "name": "Main",
+   "muted": false,
+   "hidden": false,
+   "locked": false,
+   "captions": false,
+   "clips": [
+    {
+     "id": "clp_t0011",
+     "type": "media",
+     "slot": "Photo 1",
+     "assetId": "",
+     "start": 0,
+     "duration": 3000000,
+     "sourceIn": 0,
+     "speed": 1,
+     "volume": 1,
+     "transform": {
+      "x": 0,
+      "y": 0,
+      "scale": 1,
+      "rotation": 0,
+      "opacity": 1,
+      "flipH": false,
+      "flipV": false
+     },
+     "keyframes": {
+      "scale": [
+       {
+        "t": 0,
+        "v": 1.0,
+        "ease": "linear"
+       },
+       {
+        "t": 2999999,
+        "v": 1.12,
+        "ease": "linear"
+       }
+      ]
+     }
+    },
+    {
+     "id": "clp_t0012",
+     "type": "media",
+     "slot": "Photo 2",
+     "assetId": "",
+     "start": 3000000,
+     "duration": 3000000,
+     "sourceIn": 0,
+     "speed": 1,
+     "volume": 1,
+     "transform": {
+      "x": 0,
+      "y": 0,
+      "scale": 1,
+      "rotation": 0,
+      "opacity": 1,
+      "flipH": false,
+      "flipV": false
+     },
+     "keyframes": {
+      "scale": [
+       {
+        "t": 0,
+        "v": 1.12,
+        "ease": "linear"
+       },
+       {
+        "t": 2999999,
+        "v": 1.0,
+        "ease": "linear"
+       }
+      ]
+     },
+     "transitionIn": {
+      "kind": "dissolve",
+      "duration": 800000
+     }
+    },
+    {
+     "id": "clp_t0013",
+     "type": "media",
+     "slot": "Photo 3",
+     "assetId": "",
+     "start": 6000000,
+     "duration": 3000000,
+     "sourceIn": 0,
+     "speed": 1,
+     "volume": 1,
+     "transform": {
+      "x": 0,
+      "y": 0,
+      "scale": 1,
+      "rotation": 0,
+      "opacity": 1,
+      "flipH": false,
+      "flipV": false
+     },
+     "keyframes": {
+      "scale": [
+       {
+        "t": 0,
+        "v": 1.0,
+        "ease": "linear"
+       },
+       {
+        "t": 2999999,
+        "v": 1.12,
+        "ease": "linear"
+       }
+      ]
+     },
+     "transitionIn": {
+      "kind": "dissolve",
+      "duration": 800000
+     }
+    },
+    {
+     "id": "clp_t0014",
+     "type": "media",
+     "slot": "Photo 4",
+     "assetId": "",
+     "start": 9000000,
+     "duration": 3000000,
+     "sourceIn": 0,
+     "speed": 1,
+     "volume": 1,
+     "transform": {
+      "x": 0,
+      "y": 0,
+      "scale": 1,
+      "rotation": 0,
+      "opacity": 1,
+      "flipH": false,
+      "flipV": false
+     },
+     "keyframes": {
+      "scale": [
+       {
+        "t": 0,
+        "v": 1.12,
+        "ease": "linear"
+       },
+       {
+        "t": 2999999,
+        "v": 1.0,
+        "ease": "linear"
+       }
+      ]
+     },
+     "transitionIn": {
+      "kind": "dissolve",
+      "duration": 800000
+     }
+    },
+    {
+     "id": "clp_t0015",
+     "type": "media",
+     "slot": "Photo 5",
+     "assetId": "",
+     "start": 12000000,
+     "duration": 3000000,
+     "sourceIn": 0,
+     "speed": 1,
+     "volume": 1,
+     "transform": {
+      "x": 0,
+      "y": 0,
+      "scale": 1,
+      "rotation": 0,
+      "opacity": 1,
+      "flipH": false,
+      "flipV": false
+     },
+     "keyframes": {
+      "scale": [
+       {
+        "t": 0,
+        "v": 1.0,
+        "ease": "linear"
+       },
+       {
+        "t": 2999999,
+        "v": 1.12,
+        "ease": "linear"
+       }
+      ]
+     },
+     "transitionIn": {
+      "kind": "dissolve",
+      "duration": 800000
+     }
+    },
+    {
+     "id": "clp_t0016",
+     "type": "media",
+     "slot": "Photo 6",
+     "assetId": "",
+     "start": 15000000,
+     "duration": 3000000,
+     "sourceIn": 0,
+     "speed": 1,
+     "volume": 1,
+     "transform": {
+      "x": 0,
+      "y": 0,
+      "scale": 1,
+      "rotation": 0,
+      "opacity": 1,
+      "flipH": false,
+      "flipV": false
+     },
+     "keyframes": {
+      "scale": [
+       {
+        "t": 0,
+        "v": 1.12,
+        "ease": "linear"
+       },
+       {
+        "t": 2999999,
+        "v": 1.0,
+        "ease": "linear"
+       }
+      ]
+     },
+     "transitionIn": {
+      "kind": "dissolve",
+      "duration": 800000
+     }
+    }
+   ]
+  },
+  {
+   "id": "trk_t0020",
+   "kind": "text",
+   "name": "Text",
+   "muted": false,
+   "hidden": false,
+   "locked": false,
+   "captions": false,
+   "clips": [
+    {
+     "id": "txt_t0018",
+     "type": "text",
+     "text": "Our trip",
+     "start": 400000,
+     "duration": 2400000,
+     "style": {
+      "fontFamily": "Sans Serif",
+      "fontSize": 110,
+      "bold": true,
+      "italic": false,
+      "color": "#ffffff",
+      "strokeColor": "#000000",
+      "strokeWidth": 0,
+      "background": "",
+      "align": 1,
+      "shadow": true,
+      "highlightColor": "#f5a524"
+     },
+     "transform": {
+      "x": 0,
+      "y": 0.55,
+      "scale": 1,
+      "rotation": 0,
+      "opacity": 1,
+      "flipH": false,
+      "flipV": false
+     },
+     "animIn": {
+      "kind": "slideUp",
+      "duration": 500000
+     },
+     "animOut": {
+      "kind": "fade",
+      "duration": 400000
+     }
+    },
+    {
+     "id": "txt_t0019",
+     "type": "text",
+     "text": "Thanks for watching",
+     "start": 15200000,
+     "duration": 2600000,
+     "style": {
+      "fontFamily": "Sans Serif",
+      "fontSize": 90,
+      "bold": true,
+      "italic": false,
+      "color": "#ffffff",
+      "strokeColor": "#000000",
+      "strokeWidth": 0,
+      "background": "",
+      "align": 1,
+      "shadow": true
+     },
+     "transform": {
+      "x": 0,
+      "y": 0,
+      "scale": 1,
+      "rotation": 0,
+      "opacity": 1,
+      "flipH": false,
+      "flipV": false
+     },
+     "animIn": {
+      "kind": "zoom",
+      "duration": 500000
+     },
+     "animOut": {
+      "kind": "fade",
+      "duration": 400000
+     }
+    }
+   ]
+  },
+  {
+   "id": "trk_t0022",
+   "kind": "audio",
+   "name": "Music",
+   "muted": false,
+   "hidden": false,
+   "locked": false,
+   "captions": false,
+   "clips": [
+    {
+     "id": "clp_t0021",
+     "type": "media",
+     "slot": "Music",
+     "assetId": "",
+     "start": 0,
+     "duration": 18000000,
+     "sourceIn": 0,
+     "speed": 1,
+     "volume": 1,
+     "transform": {
+      "x": 0,
+      "y": 0,
+      "scale": 1,
+      "rotation": 0,
+      "opacity": 1,
+      "flipH": false,
+      "flipV": false
+     },
+     "fadeIn": 1000000,
+     "fadeOut": 2000000
+    }
+   ]
+  }
+ ],
+ "markers": []
+}

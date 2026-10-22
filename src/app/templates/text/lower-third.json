@@ -1,0 +1,87 @@
+{
+ "format": "clivcut-clips",
+ "assets": [],
+ "compounds": [],
+ "items": [
+  {
+   "track": 1,
+   "kind": "text",
+   "clip": {
+    "id": "txt_tt0001",
+    "type": "text",
+    "text": "Name Surname",
+    "start": 0,
+    "duration": 5000000,
+    "style": {
+     "fontFamily": "Sans Serif",
+     "fontSize": 58,
+     "bold": true,
+     "italic": false,
+     "color": "#111111",
+     "strokeColor": "#000000",
+     "strokeWidth": 0,
+     "background": "#f5a524",
+     "align": 0,
+     "shadow": false
+    },
+    "transform": {
+     "x": -0.45,
+     "y": 0.62,
+     "scale": 1,
+     "rotation": 0,
+     "opacity": 1,
+     "flipH": false,
+     "flipV": false
+    },
+    "animIn": {
+     "kind": "slideRight",
+     "duration": 400000
+    },
+    "animOut": {
+     "kind": "fade",
+     "duration": 300000
+    }
+   }
+  },
+  {
+   "track": 2,
+   "kind": "text",
+   "clip": {
+    "id": "txt_tt0002",
+    "type": "text",
+    "text": "Role or company",
+    "start": 200000,
+    "duration": 4800000,
+    "style": {
+     "fontFamily": "Sans Serif",
+     "fontSize": 40,
+     "bold": false,
+     "italic": false,
+     "color": "#ffffff",
+     "strokeColor": "#000000",
+     "strokeWidth": 0,
+     "background": "#e6111111",
+     "align": 0,
+     "shadow": false
+    },
+    "transform": {
+     "x": -0.45,
+     "y": 0.72,
+     "scale": 1,
+     "rotation": 0,
+     "opacity": 1,
+     "flipH": false,
+     "flipV": false
+    },
+    "animIn": {
+     "kind": "slideRight",
+     "duration": 400000
+    },
+    "animOut": {
+     "kind": "fade",
+     "duration": 300000
+    }
+   }
+  }
+ ]
+}

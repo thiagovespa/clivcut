@@ -1,0 +1,166 @@
+{
+ "format": "clivcut",
+ "version": 1,
+ "id": "podcast-clip",
+ "name": "Podcast clip",
+ "width": 1080,
+ "height": 1920,
+ "fps": 30,
+ "background": "#000000",
+ "mainTrackMagnet": true,
+ "assets": [],
+ "tracks": [
+  {
+   "id": "trk_t0024",
+   "kind": "video",
+   "name": "Main",
+   "muted": false,
+   "hidden": false,
+   "locked": false,
+   "captions": false,
+   "clips": [
+    {
+     "id": "clp_t0023",
+     "type": "media",
+     "slot": "Video 1",
+     "assetId": "",
+     "start": 0,
+     "duration": 15000000,
+     "sourceIn": 0,
+     "speed": 1,
+     "volume": 1,
+     "transform": {
+      "x": 0,
+      "y": 0,
+      "scale": 1,
+      "rotation": 0,
+      "opacity": 1,
+      "flipH": false,
+      "flipV": false
+     }
+    }
+   ]
+  },
+  {
+   "id": "trk_t0028",
+   "kind": "text",
+   "name": "Text",
+   "muted": false,
+   "hidden": false,
+   "locked": false,
+   "captions": false,
+   "clips": [
+    {
+     "id": "txt_t0025",
+     "type": "text",
+     "text": "Episode title goes here",
+     "start": 0,
+     "duration": 15000000,
+     "style": {
+      "fontFamily": "Sans Serif",
+      "fontSize": 64,
+      "bold": true,
+      "italic": false,
+      "color": "#ffffff",
+      "strokeColor": "#000000",
+      "strokeWidth": 0,
+      "background": "#e6111111",
+      "align": 1,
+      "shadow": false
+     },
+     "transform": {
+      "x": 0,
+      "y": -0.72,
+      "scale": 1,
+      "rotation": 0,
+      "opacity": 1,
+      "flipH": false,
+      "flipV": false
+     },
+     "animIn": {
+      "kind": "fade",
+      "duration": 500000
+     },
+     "animOut": {
+      "kind": "fade",
+      "duration": 400000
+     }
+    },
+    {
+     "id": "txt_t0026",
+     "type": "text",
+     "text": "Guest Name",
+     "start": 1000000,
+     "duration": 4000000,
+     "style": {
+      "fontFamily": "Sans Serif",
+      "fontSize": 58,
+      "bold": true,
+      "italic": false,
+      "color": "#111111",
+      "strokeColor": "#000000",
+      "strokeWidth": 0,
+      "background": "#f5a524",
+      "align": 0,
+      "shadow": false
+     },
+     "transform": {
+      "x": -0.35,
+      "y": 0.62,
+      "scale": 1,
+      "rotation": 0,
+      "opacity": 1,
+      "flipH": false,
+      "flipV": false
+     },
+     "animIn": {
+      "kind": "slideRight",
+      "duration": 500000
+     },
+     "animOut": {
+      "kind": "fade",
+      "duration": 400000
+     }
+    },
+    {
+     "id": "txt_t0027",
+     "type": "text",
+     "text": "Role or company",
+     "start": 1200000,
+     "duration": 3800000,
+     "style": {
+      "fontFamily": "Sans Serif",
+      "fontSize": 42,
+      "bold": false,
+      "italic": false,
+      "color": "#ffffff",
+      "strokeColor": "#000000",
+      "strokeWidth": 0,
+      "background": "#cc000000",
+      "align": 0,
+      "shadow": false
+     },
+     "transform": {
+      "x": -0.35,
+      "y": 0.7,
+      "scale": 1,
+      "rotation": 0,
+      "opacity": 1,
+      "flipH": false,
+      "flipV": false
+     },
+     "animIn": {
+      "kind": "slideRight",
+      "duration": 500000
+     },
+     "animOut": {
+      "kind": "fade",
+      "duration": 400000
+     }
+    }
+   ]
+  }
+ ],
+ "markers": [],
+ "backgroundBlur": 0.6
+}

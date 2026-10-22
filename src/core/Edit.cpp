@@ -1003,7 +1003,9 @@ bool setClipMedia(Project &p, const QString &clipId, const MediaAsset &asset)
     if (!ref || p.tracks[ref->track].locked)
         return false;
     Clip &c = p.tracks[ref->track].clips[ref->index];
-    if (!c.hasMedia())
+    const bool audioTrack = p.tracks[ref->track].kind == TrackKind::Audio;
+    // Só áudio não cabe num espaço de imagem; numa faixa de áudio, um vídeo entra só com o som.
+    if (!c.hasMedia() || (!audioTrack && asset.kind == MediaKind::Audio))
         return false;
     if (!p.assets.count(asset.id))
         p.assets.emplace(asset.id, asset);
@@ -1011,7 +1013,7 @@ bool setClipMedia(Project &p, const QString &clipId, const MediaAsset &asset)
     c.slot.clear();
     c.sourceIn = 0;
     c.reverse = false;
-    c.audioOnly = asset.kind == MediaKind::Audio ? false : c.audioOnly;
+    c.audioOnly = audioTrack && asset.kind != MediaKind::Audio;
     const bool timed = asset.kind != MediaKind::Image && asset.duration > 0;
     if (timed && c.speed > 0) {
         const Micros fit = static_cast<Micros>(asset.duration / c.speed);

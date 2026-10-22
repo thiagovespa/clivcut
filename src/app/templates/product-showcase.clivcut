@@ -1,0 +1,238 @@
+{
+ "format": "clivcut",
+ "version": 1,
+ "id": "product-showcase",
+ "name": "Product showcase",
+ "width": 1080,
+ "height": 1080,
+ "fps": 30,
+ "background": "#000000",
+ "mainTrackMagnet": true,
+ "assets": [],
+ "tracks": [
+  {
+   "id": "trk_t0040",
+   "kind": "video",
+   "name": "Main",
+   "muted": false,
+   "hidden": false,
+   "locked": false,
+   "captions": false,
+   "clips": [
+    {
+     "id": "clp_t0036",
+     "type": "media",
+     "slot": "Photo 1",
+     "assetId": "",
+     "start": 0,
+     "duration": 2000000,
+     "sourceIn": 0,
+     "speed": 1,
+     "volume": 1,
+     "transform": {
+      "x": 0,
+      "y": 0,
+      "scale": 1,
+      "rotation": 0,
+      "opacity": 1,
+      "flipH": false,
+      "flipV": false
+     }
+    },
+    {
+     "id": "clp_t0037",
+     "type": "media",
+     "slot": "Photo 2",
+     "assetId": "",
+     "start": 2000000,
+     "duration": 2000000,
+     "sourceIn": 0,
+     "speed": 1,
+     "volume": 1,
+     "transform": {
+      "x": 0,
+      "y": 0,
+      "scale": 1,
+      "rotation": 0,
+      "opacity": 1,
+      "flipH": false,
+      "flipV": false
+     },
+     "transitionIn": {
+      "kind": "spin",
+      "duration": 500000
+     }
+    },
+    {
+     "id": "clp_t0038",
+     "type": "media",
+     "slot": "Photo 3",
+     "assetId": "",
+     "start": 4000000,
+     "duration": 2000000,
+     "sourceIn": 0,
+     "speed": 1,
+     "volume": 1,
+     "transform": {
+      "x": 0,
+      "y": 0,
+      "scale": 1,
+      "rotation": 0,
+      "opacity": 1,
+      "flipH": false,
+      "flipV": false
+     },
+     "transitionIn": {
+      "kind": "flashWhite",
+      "duration": 400000
+     }
+    },
+    {
+     "id": "clp_t0039",
+     "type": "media",
+     "slot": "Video 1",
+     "assetId": "",
+     "start": 6000000,
+     "duration": 3000000,
+     "sourceIn": 0,
+     "speed": 1,
+     "volume": 1,
+     "transform": {
+      "x": 0,
+      "y": 0,
+      "scale": 1,
+      "rotation": 0,
+      "opacity": 1,
+      "flipH": false,
+      "flipV": false
+     },
+     "transitionIn": {
+      "kind": "zoomOut",
+      "duration": 500000
+     }
+    }
+   ]
+  },
+  {
+   "id": "trk_t0043",
+   "kind": "text",
+   "name": "Text",
+   "muted": false,
+   "hidden": false,
+   "locked": false,
+   "captions": false,
+   "clips": [
+    {
+     "id": "txt_t0041",
+     "type": "text",
+     "text": "New *arrival*",
+     "start": 200000,
+     "duration": 1800000,
+     "style": {
+      "fontFamily": "Sans Serif",
+      "fontSize": 96,
+      "bold": true,
+      "italic": false,
+      "color": "#ffffff",
+      "strokeColor": "#000000",
+      "strokeWidth": 0,
+      "background": "",
+      "align": 1,
+      "shadow": true,
+      "highlightColor": "#f5a524"
+     },
+     "transform": {
+      "x": 0,
+      "y": 0.6,
+      "scale": 1,
+      "rotation": 0,
+      "opacity": 1,
+      "flipH": false,
+      "flipV": false
+     },
+     "animIn": {
+      "kind": "zoom",
+      "duration": 500000
+     },
+     "animOut": {
+      "kind": "fade",
+      "duration": 400000
+     }
+    },
+    {
+     "id": "txt_t0042",
+     "type": "text",
+     "text": "Shop now",
+     "start": 6400000,
+     "duration": 2600000,
+     "style": {
+      "fontFamily": "Sans Serif",
+      "fontSize": 80,
+      "bold": true,
+      "italic": false,
+      "color": "#111111",
+      "strokeColor": "#000000",
+      "strokeWidth": 0,
+      "background": "",
+      "align": 1,
+      "shadow": false,
+      "shape": "rounded",
+      "shapeColor": "#f5a524",
+      "shapeWidth": 560,
+      "shapeHeight": 170
+     },
+     "transform": {
+      "x": 0,
+      "y": 0.55,
+      "scale": 1,
+      "rotation": 0,
+      "opacity": 1,
+      "flipH": false,
+      "flipV": false
+     },
+     "animIn": {
+      "kind": "zoom",
+      "duration": 500000
+     },
+     "animOut": {
+      "kind": "fade",
+      "duration": 400000
+     }
+    }
+   ]
+  },
+  {
+   "id": "trk_t0045",
+   "kind": "audio",
+   "name": "Music",
+   "muted": false,
+   "hidden": false,
+   "locked": false,
+   "captions": false,
+   "clips": [
+    {
+     "id": "clp_t0044",
+     "type": "media",
+     "slot": "Music",
+     "assetId": "",
+     "start": 0,
+     "duration": 9000000,
+     "sourceIn": 0,
+     "speed": 1,
+     "volume": 1,
+     "transform": {
+      "x": 0,
+      "y": 0,
+      "scale": 1,
+      "rotation": 0,
+      "opacity": 1,
+      "flipH": false,
+      "flipV": false
+     },
+     "fadeOut": 1000000
+    }
+   ]
+  }
+ ],
+ "markers": []
+}

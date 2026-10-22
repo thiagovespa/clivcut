@@ -949,6 +949,74 @@ private slots:
         QVERIFY(m_ctrl->ttsProgress() < 0);
     }
 
+    void projectTemplates()
+    {
+        const QVariantList list = m_ctrl->templates();
+        int builtin = 0;
+        for (const auto &t : list)
+            builtin += t.toMap().value("builtin").toBool();
+        QCOMPARE(builtin, 6);
+        QVERIFY(m_ctrl->newFromTemplate(QStringLiteral("photo-slideshow")));
+        QCOMPARE(m_ctrl->emptySlotCount(), 7); // 6 fotos + música
+        QVERIFY(!m_ctrl->modified());
+
+        // Duas fotos e uma música: as fotos vão para os primeiros espaços, a música para o de áudio.
+        auto make = [&](const QString &name, const QStringList &args) {
+            QProcess p;
+            p.start(QStringLiteral("ffmpeg"), QStringList{"-hide_banner", "-loglevel", "error", "-y"} + args + QStringList{m_dir.filePath(name)});
+            p.waitForFinished(60000);
+            return QUrl::fromLocalFile(m_dir.filePath(name));
+        };
+        const QUrl a = make(QStringLiteral("a.png"), {"-f", "lavfi", "-i", "color=red:s=320x180", "-frames:v", "1"});
+        const QUrl b = make(QStringLiteral("b.png"), {"-f", "lavfi", "-i", "color=blue:s=320x180", "-frames:v", "1"});
+        const QUrl song = make(QStringLiteral("song.wav"), {"-f", "lavfi", "-i", "sine=duration=30"});
+        m_ctrl->fillSlots({song, a, b});
+        QCOMPARE(m_ctrl->emptySlotCount(), 4);
+        m_ctrl->undo();
+        QCOMPARE(m_ctrl->emptySlotCount(), 7);
+        m_ctrl->redo();
+
+        // Arrastar uma mídia para um clipe troca a mídia; com um espaço selecionado, o "+" preenche.
+        QString firstPhoto, slot;
+        for (const auto &c : clipsOf(0)) {
+            const QVariantMap m = c.toMap();
+            if (firstPhoto.isEmpty())
+                firstPhoto = m.value("id").toString();
+            else if (m.value("label").toString() == QLatin1String("Photo 3"))
+                slot = m.value("id").toString();
+        }
+        QVERIFY(!slot.isEmpty());
+        const QString videoAsset = [&] {
+            m_ctrl->importMedia({QUrl::fromLocalFile(m_video)});
+            for (const auto &x : m_ctrl->assets())
+                if (x.toMap().value("path").toString() == m_video)
+                    return x.toMap().value("id").toString();
+            return QString();
+        }();
+        QVERIFY(m_ctrl->replaceClipMedia(firstPhoto, videoAsset));
+        m_ctrl->select(slot);
+        m_ctrl->addAssetToTimeline(videoAsset);
+        QCOMPARE(m_ctrl->emptySlotCount(), 3);
+
+        // O projeto vira template do usuário: as mídias viram espaços.
+        QVERIFY(m_ctrl->saveAsTemplate(QStringLiteral("My slideshow")));
+        QString mine;
+        for (const auto &t : m_ctrl->templates())
+            if (!t.toMap().value("builtin").toBool() && t.toMap().value("name").toString() == QLatin1String("My slideshow"))
+                mine = t.toMap().value("id").toString();
+        QVERIFY(!mine.isEmpty());
+        QVERIFY(m_ctrl->newFromTemplate(mine));
+        QCOMPARE(m_ctrl->emptySlotCount(), 7);
+        m_ctrl->deleteTemplate(mine);
+        for (const auto &t : m_ctrl->templates())
+            QVERIFY(t.toMap().value("id").toString() != mine);
+
+        // Modelo de texto: nome e cargo no cursor.
+        m_ctrl->insertTextTemplate(QStringLiteral("lower-third"));
+        QCOMPARE(m_ctrl->selection().size(), 2);
+        QCOMPARE(m_ctrl->selectedClip().value("type").toString(), QStringLiteral("text"));
+    }
+
     void beatMarkers()
     {
         // Bumbo a 120 BPM (um golpe a cada 0,5 s) por 8 s.

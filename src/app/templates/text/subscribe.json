@@ -1,0 +1,51 @@
+{
+ "format": "clivcut-clips",
+ "assets": [],
+ "compounds": [],
+ "items": [
+  {
+   "track": 1,
+   "kind": "text",
+   "clip": {
+    "id": "txt_tt0003",
+    "type": "text",
+    "text": "Subscribe",
+    "start": 0,
+    "duration": 3000000,
+    "style": {
+     "fontFamily": "Sans Serif",
+     "fontSize": 70,
+     "bold": true,
+     "italic": false,
+     "color": "#ffffff",
+     "strokeColor": "#000000",
+     "strokeWidth": 0,
+     "background": "",
+     "align": 1,
+     "shadow": false,
+     "shape": "bubble",
+     "shapeColor": "#e53935",
+     "shapeWidth": 560,
+     "shapeHeight": 180
+    },
+    "transform": {
+     "x": 0,
+     "y": 0.55,
+     "scale": 1,
+     "rotation": 0,
+     "opacity": 1,
+     "flipH": false,
+     "flipV": false
+    },
+    "animIn": {
+     "kind": "zoom",
+     "duration": 400000
+    },
+    "animOut": {
+     "kind": "fade",
+     "duration": 300000
+    }
+   }
+  }
+ ]
+}

@@ -45,6 +45,9 @@ class ProjectController : public QObject {
     Q_PROPERTY(QString projectName READ projectName WRITE setProjectName NOTIFY projectChanged)
     Q_PROPERTY(QString filePath READ filePath NOTIFY fileChanged)
     Q_PROPERTY(bool modified READ modified NOTIFY modifiedChanged)
+    Q_PROPERTY(QVariantList templates READ templates NOTIFY templatesChanged)
+    Q_PROPERTY(int emptySlotCount READ emptySlotCount NOTIFY projectChanged)
+    Q_PROPERTY(QVariantList textTemplates READ textTemplates NOTIFY languageChanged)
     /// Clipes compostos abertos para edição, de fora para dentro: [{name}]. Vazio = timeline principal.
     Q_PROPERTY(QVariantList compoundPath READ compoundPath NOTIFY compoundPathChanged)
     Q_PROPERTY(int canvasWidth READ canvasWidth NOTIFY projectChanged)
@@ -248,6 +251,22 @@ public:
 
     // --- arquivos ---
     Q_INVOKABLE void newProject(int width, int height, double fps);
+    // --- templates ---
+    /// Templates prontos e os do usuário: [{id, name, description, width, height, slots, duration, builtin}].
+    QVariantList templates() const;
+    /// Novo projeto a partir de um template (os espaços ficam para preencher).
+    Q_INVOKABLE bool newFromTemplate(const QString &id);
+    /// Guarda o projeto atual como template do usuário (as mídias viram espaços).
+    Q_INVOKABLE bool saveAsTemplate(const QString &name);
+    Q_INVOKABLE void deleteTemplate(const QString &id);
+    /// Importa os arquivos e preenche os espaços vazios em ordem (um passo de desfazer).
+    Q_INVOKABLE void fillSlots(const QList<QUrl> &urls);
+    /// Troca a mídia de um clipe (ou preenche um espaço) mantendo lugar e aparência.
+    Q_INVOKABLE bool replaceClipMedia(const QString &clipId, const QString &assetId);
+    int emptySlotCount() const;
+    /// Modelos de texto prontos: [{id, name}]; inseridos no cursor.
+    QVariantList textTemplates() const;
+    Q_INVOKABLE void insertTextTemplate(const QString &id);
     Q_INVOKABLE bool openProject(const QUrl &url);
     Q_INVOKABLE bool saveProject();
     Q_INVOKABLE bool saveProjectAs(const QUrl &url);
@@ -452,6 +471,7 @@ signals:
     void fileChanged();
     void modifiedChanged();
     void compoundPathChanged();
+    void templatesChanged();
     void playheadChanged();
     void playingChanged();
     void selectionChanged();

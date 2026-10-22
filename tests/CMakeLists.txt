@@ -20,8 +20,10 @@ if(CLIVCUT_BUILD_APP)
         ${CMAKE_SOURCE_DIR}/src/app/Scopes.cpp)
     target_include_directories(tst_controller PRIVATE ${CMAKE_SOURCE_DIR}/src/app)
     file(GLOB CLIVCUT_TEST_STICKERS CONFIGURE_DEPENDS ${CMAKE_SOURCE_DIR}/src/app/stickers/*.svg)
+    file(GLOB CLIVCUT_TEST_TEMPLATES CONFIGURE_DEPENDS ${CMAKE_SOURCE_DIR}/src/app/templates/*.clivcut
+         ${CMAKE_SOURCE_DIR}/src/app/templates/text/*.json)
     qt_add_resources(tst_controller stickers PREFIX /qt/qml/Clivcut BASE ${CMAKE_SOURCE_DIR}/src/app
-        FILES ${CLIVCUT_TEST_STICKERS})
+        FILES ${CLIVCUT_TEST_STICKERS} ${CLIVCUT_TEST_TEMPLATES})
     target_link_libraries(tst_controller PRIVATE clivcut_engine Qt6::Qml Qt6::Network Qt6::Svg Qt6::Test clivcut::sdl2)
     if(TARGET whisper)
         target_compile_definitions(tst_controller PRIVATE CLIVCUT_WHISPER_SAMPLES="${CLIVCUT_WHISPER_SAMPLES}")

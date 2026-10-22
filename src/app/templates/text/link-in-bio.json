@@ -1,0 +1,51 @@
+{
+ "format": "clivcut-clips",
+ "assets": [],
+ "compounds": [],
+ "items": [
+  {
+   "track": 1,
+   "kind": "text",
+   "clip": {
+    "id": "txt_tt0010",
+    "type": "text",
+    "text": "Link in bio ↓",
+    "start": 0,
+    "duration": 3000000,
+    "style": {
+     "fontFamily": "Sans Serif",
+     "fontSize": 64,
+     "bold": true,
+     "italic": false,
+     "color": "#111111",
+     "strokeColor": "#000000",
+     "strokeWidth": 0,
+     "background": "",
+     "align": 1,
+     "shadow": false,
+     "shape": "rounded",
+     "shapeColor": "#ffffff",
+     "shapeWidth": 600,
+     "shapeHeight": 150
+    },
+    "transform": {
+     "x": 0,
+     "y": 0.7,
+     "scale": 1,
+     "rotation": 0,
+     "opacity": 1,
+     "flipH": false,
+     "flipV": false
+    },
+    "animIn": {
+     "kind": "slideUp",
+     "duration": 400000
+    },
+    "animOut": {
+     "kind": "fade",
+     "duration": 300000
+    }
+   }
+  }
+ ]
+}

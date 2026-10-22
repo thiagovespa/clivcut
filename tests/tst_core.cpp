@@ -658,8 +658,13 @@ private slots:
         QCOMPARE(edit::clipById(p, id2)->duration, 3 * kSecond);
         QVERIFY(edit::clipById(p, id2)->transitionIn.has_value());
         QVERIFY(edit::emptySlots(p).isEmpty());
-        // Texto não recebe mídia.
+        // Texto não recebe mídia; arquivo só de áudio não entra em espaço visual.
         QVERIFY(!edit::setClipMedia(p, p.tracks[1].clips[0].id, photo));
+        MediaAsset song;
+        song.id = newId("ast");
+        song.kind = MediaKind::Audio;
+        song.duration = 60 * kSecond;
+        QVERIFY(!edit::setClipMedia(p, id2, song));
     }
 
     void historyUndoRedo()
