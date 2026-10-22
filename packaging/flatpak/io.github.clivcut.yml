@@ -85,6 +85,9 @@ modules:
       - -DUSE_ASYNC=OFF
       - -DBUILD_TESTING=OFF
       - -DESPEAK_BUILD_MANPAGES=OFF
+      # O CMake do espeak-ng baixa o sonic se não achar no sistema; aqui ele vem como fonte.
+      - -DFETCHCONTENT_FULLY_DISCONNECTED=ON
+      - -DFETCHCONTENT_SOURCE_DIR_SONIC-GIT=/run/build/espeak-ng/sonic
     cleanup:
       - /bin
       - /include
@@ -93,6 +96,10 @@ modules:
       - type: archive
         url: https://github.com/espeak-ng/espeak-ng/archive/refs/tags/1.52.0.tar.gz
         sha256: bb4338102ff3b49a81423da8a1a158b420124b055b60fa76cfb4b18677130a23
+      - type: git
+        url: https://github.com/waywardgeek/sonic.git
+        commit: fbf75c3d6d846bad3bb3d456cbc5d07d9fd8c104
+        dest: sonic
 
   - name: clivcut
     buildsystem: cmake-ninja
