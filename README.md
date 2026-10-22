@@ -58,6 +58,7 @@ Written in **C++20 + Qt 6 (Qt Quick / RHI) + FFmpeg**. Video compositing runs on
 - **Speed:**
   - Constant from 0.1× to 10×, and reverse (audio included). The pitch is kept by default and can be unlocked per clip.
   - **Speed curves** (Montage, Hero, Bullet, Jump…), with a point-based graph editor. Speed curves from drafts are imported too.
+  - **Smooth slow motion** (RIFE, local AI): creates the in-between frames of slowed-down clips, in the background, so slow motion does not stutter. The model (23 MB, MIT) is downloaded once.
 - **Audio:**
   - Volume (up to 200%), gain in dB, fade in/out and multi-track mixing.
   - **Loudness normalization** (EBU R128) for social media (-14 LUFS), podcast (-16) or broadcast (-23).
@@ -98,7 +99,7 @@ Written in **C++20 + Qt 6 (Qt Quick / RHI) + FFmpeg**. Video compositing runs on
 
 New to clivcut? The **[user guide](docs/guide/README.md)** explains each feature by task, and the app has a one-minute guided tour (logo menu → Help → Take the tour).
 
-See the [roadmap](docs/ROADMAP.md) for what comes next: AI text-to-speech, interactive cutout, frame interpolation and more.
+See the [roadmap](docs/ROADMAP.md) for what comes next: interactive cutout, super-resolution, automatic reframing and more.
 
 ## Building
 

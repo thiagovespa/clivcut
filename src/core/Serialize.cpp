@@ -367,6 +367,8 @@ QJsonObject clipToJson(const Clip &c)
         o.insert("stabilize", c.stabilize);
     if (c.removeBackground)
         o.insert("removeBackground", true);
+    if (c.smoothSlowMotion)
+        o.insert("smoothSlowMotion", true);
     if (!c.keepPitch)
         o.insert("keepPitch", false);
     if (c.voiceIsolation > 0)
@@ -471,6 +473,7 @@ Clip clipFromJson(const QJsonObject &o)
     c.denoise = o.value("denoise").toDouble();
     c.stabilize = std::clamp(o.value("stabilize").toDouble(), 0.0, 1.0);
     c.removeBackground = o.value("removeBackground").toBool();
+    c.smoothSlowMotion = o.value("smoothSlowMotion").toBool();
     c.keepPitch = o.value("keepPitch").toBool(true);
     c.voiceIsolation = std::clamp(o.value("voiceIsolation").toDouble(), 0.0, 1.0);
     c.ducking = std::clamp(o.value("ducking").toDouble(), 0.0, 1.0);

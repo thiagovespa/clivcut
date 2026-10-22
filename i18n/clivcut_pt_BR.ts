@@ -558,6 +558,30 @@
         <source>Tracking only applies to videos</source>
         <translation>O rastreamento só vale para vídeos</translation>
     </message>
+    <message>
+        <source>Interpolation model not found: %1</source>
+        <translation>Modelo de interpolação não encontrado: %1</translation>
+    </message>
+    <message>
+        <source>Nothing to interpolate</source>
+        <translation>Nada a interpolar</translation>
+    </message>
+    <message>
+        <source>Frame interpolation only applies to videos</source>
+        <translation>A interpolação de quadros só vale para vídeos</translation>
+    </message>
+    <message>
+        <source>Could not read the video</source>
+        <translation>Não foi possível ler o vídeo</translation>
+    </message>
+    <message>
+        <source>Failed to write the interpolated video</source>
+        <translation>Falha ao gravar o vídeo interpolado</translation>
+    </message>
+    <message>
+        <source>Frame interpolation cancelled</source>
+        <translation>Interpolação de quadros cancelada</translation>
+    </message>
 </context>
 <context>
     <name>ExportDialog</name>
@@ -1195,6 +1219,42 @@ Atalhos: Espaço reproduz · Ctrl+B divide · Q/W exclui à esquerda/direita · 
     <message>
         <source>Filter</source>
         <translation>Filtro</translation>
+    </message>
+    <message>
+        <source>Smooth slow motion (AI)</source>
+        <translation>Câmera lenta fluida (IA)</translation>
+    </message>
+    <message>
+        <source>Create in-between frames</source>
+        <translation>Criar quadros intermediários</translation>
+    </message>
+    <message>
+        <source>Download model (23 MB)</source>
+        <translation>Baixar modelo (23 MB)</translation>
+    </message>
+    <message>
+        <source>Not needed at this speed: the video already has a frame for every frame of the project.</source>
+        <translation>Não é necessário nesta velocidade: o vídeo já tem um quadro para cada quadro do projeto.</translation>
+    </message>
+    <message>
+        <source>Downloading the interpolation model…</source>
+        <translation>Baixando o modelo de interpolação…</translation>
+    </message>
+    <message>
+        <source>Requires the frame interpolation model (RIFE, MIT), downloaded only once.</source>
+        <translation>Requer o modelo de interpolação de quadros (RIFE, MIT), baixado uma única vez.</translation>
+    </message>
+    <message>
+        <source>Creating frames… %1%</source>
+        <translation>Criando quadros… %1%</translation>
+    </message>
+    <message>
+        <source>✓ Smooth slow motion (processed locally)</source>
+        <translation>✓ Câmera lenta fluida (processada localmente)</translation>
+    </message>
+    <message>
+        <source>Slowed-down video repeats frames and stutters. The AI creates the missing frames between them, on your computer, in the background (it takes a while: about a second per new frame).</source>
+        <translation>Vídeo desacelerado repete quadros e fica travado. A IA cria os quadros que faltam entre eles, no seu computador, em segundo plano (leva um tempo: cerca de um segundo por quadro novo).</translation>
     </message>
     <message>
         <source>Choose a file for the slot</source>
@@ -2564,6 +2624,14 @@ Atalhos: Espaço reproduz · Ctrl+B divide · Q/W exclui à esquerda/direita · 
         <source>The voices for the AI narration</source>
         <translation>As vozes da narração com IA</translation>
     </message>
+    <message>
+        <source>Frame interpolation (RIFE)</source>
+        <translation>Interpolação de quadros (RIFE)</translation>
+    </message>
+    <message>
+        <source>Creates in-between frames for smooth slow motion</source>
+        <translation>Cria quadros intermediários para câmera lenta fluida</translation>
+    </message>
 </context>
 <context>
     <name>NewProjectDialog</name>
@@ -3553,6 +3621,18 @@ Atalhos: Espaço reproduz · Ctrl+B divide · Q/W exclui à esquerda/direita · 
         <translation>Falha ao remover o fundo: %1</translation>
     </message>
     <message>
+        <source>Creating smooth slow motion for %1…</source>
+        <translation>Criando câmera lenta fluida para %1…</translation>
+    </message>
+    <message>
+        <source>Smooth slow motion ready: %1</source>
+        <translation>Câmera lenta fluida pronta: %1</translation>
+    </message>
+    <message>
+        <source>Smooth slow motion failed: %1</source>
+        <translation>Falha na câmera lenta fluida: %1</translation>
+    </message>
+    <message>
         <source>Analyzing camera motion in %1…</source>
         <translation>Analisando o movimento da câmera em %1…</translation>
     </message>
@@ -4494,6 +4574,22 @@ Atalhos: Espaço reproduz · Ctrl+B divide · Q/W exclui à esquerda/direita · 
     <message>
         <source>Turn texts and captions into natural speech, generated on your computer, in Portuguese, Spanish, English and more: select a text and use “Read aloud” on the Text tab, or “Read all captions” in the Captions panel.</source>
         <translation>Transforme textos e legendas em fala natural, gerada no seu computador, em português, espanhol, inglês e outras línguas: selecione um texto e use “Ler em voz alta” na aba Texto, ou “Ler todas as legendas” no painel Legendas.</translation>
+    </message>
+    <message>
+        <source>Smooth slow motion</source>
+        <translation>Câmera lenta fluida</translation>
+    </message>
+    <message>
+        <source>Slowed-down clips no longer stutter: tick “Create in-between frames” on the Speed tab and the AI fills in the missing frames, locally, in the background.</source>
+        <translation>Clipes desacelerados não travam mais: marque “Criar quadros intermediários” na aba Velocidade e a IA preenche os quadros que faltam, localmente, em segundo plano.</translation>
+    </message>
+    <message>
+        <source>Faster playback and export</source>
+        <translation>Reprodução e exportação mais rápidas</translation>
+    </message>
+    <message>
+        <source>Each video decodes on its own thread, ahead of the playhead, and frames are converted on the GPU: multi-layer projects play more smoothly and export about twice as fast.</source>
+        <translation>Cada vídeo é decodificado na sua própria thread, à frente do cursor, e os quadros são convertidos na GPU: projetos com várias camadas tocam com mais fluidez e exportam cerca de duas vezes mais rápido.</translation>
     </message>
     <message>
         <source>Guided tour and this window</source>

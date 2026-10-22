@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 #pragma once
 
+#include "engine/FrameInterpolation.h"
 #include "core/Clipboard.h"
 #include "core/History.h"
 #include "core/Model.h"
@@ -643,6 +644,18 @@ private:
     std::shared_ptr<std::atomic<bool>> m_stabCancel = std::make_shared<std::atomic<bool>>(false);
     void refreshStabilize();
     void startNextStabilize();
+    /// Câmera lenta fluida: trechos de mídia aguardando a interpolação de quadros.
+    struct InterpolationJob {
+        QString path;
+        clv::engine::InterpolationSpan span;
+        QString key() const;
+    };
+    QList<InterpolationJob> m_interpQueue;
+    QString m_interpBuilding; ///< chave do trabalho em andamento
+    double m_interpProgress = 0;
+    std::shared_ptr<std::atomic<bool>> m_interpCancel = std::make_shared<std::atomic<bool>>(false);
+    void refreshInterpolations();
+    void startNextInterpolation();
     QStringList m_matteQueue;       ///< mídias aguardando remoção de fundo
     QString m_matteBuilding;
     double m_matteProgress = 0;

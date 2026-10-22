@@ -31,6 +31,8 @@ Drop a media file from the Media panel onto a clip to replace its media: positio
 
 On the **Speed** tab: a constant speed from 0.1× to 10×, reverse, and **speed curves** (Montage, Hero, Bullet, Jump… or your own points). Pitch is kept by default; untick it for the chipmunk effect.
 
+Slowing a video down repeats its frames, so slow motion stutters. Tick **Create in-between frames** (Smooth slow motion) on the same tab and a local AI model (RIFE, 23 MB, downloaded once) creates the missing frames. It works in the background on the part of the video the clip uses; until it finishes, the clip plays as before. It takes about a second per new frame, and the result is used in the player and in the export (exporting from the command line creates it if needed).
+
 ## Keyframes
 
 Every property with a **◆** button can be animated: move the playhead, change the value and press ◆ to add a keyframe. The **Keyframes** tab has a graph editor where you drag keyframes in time and value and pick the curve of each segment (linear, ease in/out, smooth, hold or a custom Bézier).

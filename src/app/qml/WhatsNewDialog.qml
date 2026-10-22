@@ -30,7 +30,9 @@ Popup {
     readonly property var releases: [
         { version: "0.4.0", items: [
             { title: qsTr("Templates"), text: qsTr("Start a video from a ready-made template and fill its slots with your media, save your own projects as templates, and add text templates (lower third, subscribe, quote and more) from the Text panel."), show: { area: "rail", panel: 1 } },
-            { title: qsTr("AI voice narration"), text: qsTr("Turn texts and captions into natural speech, generated on your computer, in Portuguese, Spanish, English and more: select a text and use “Read aloud” on the Text tab, or “Read all captions” in the Captions panel."), show: { area: "rail", panel: 2 } }
+            { title: qsTr("AI voice narration"), text: qsTr("Turn texts and captions into natural speech, generated on your computer, in Portuguese, Spanish, English and more: select a text and use “Read aloud” on the Text tab, or “Read all captions” in the Captions panel."), show: { area: "rail", panel: 2 } },
+            { title: qsTr("Smooth slow motion"), text: qsTr("Slowed-down clips no longer stutter: tick “Create in-between frames” on the Speed tab and the AI fills in the missing frames, locally, in the background."), show: { area: "inspector" } },
+            { title: qsTr("Faster playback and export"), text: qsTr("Each video decodes on its own thread, ahead of the playhead, and frames are converted on the GPU: multi-layer projects play more smoothly and export about twice as fast."), show: { area: "export" } }
         ] },
         { version: "0.3.0", items: [
             { title: qsTr("Guided tour and this window"), text: qsTr("A short tour of the editor for first-time users, and this summary after each update. Both live in the menu, under Help."), show: { area: "search" } },

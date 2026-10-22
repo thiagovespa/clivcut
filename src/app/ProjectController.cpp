@@ -149,6 +149,7 @@ ProjectController::~ProjectController()
     *m_proxyCancel = true;
     *m_denoiseCancel = true;
     *m_matteCancel = true;
+    *m_interpCancel = true;
     *m_stabCancel = true;
     *m_stemsCancel = true;
     *m_trackCancel = true;
@@ -218,6 +219,7 @@ void ProjectController::commitChange()
     ++m_revisionCounter;
     refreshDenoise();
     refreshMattes();
+    refreshInterpolations();
     refreshStabilize();
     refreshVoice();
     refreshEffects();
@@ -627,6 +629,23 @@ QVariantMap ProjectController::selectedClip() const
                    return m_matteQueue.contains(a->path) ? QStringLiteral("queued") : QStringLiteral("off");
                }()},
               {"matteProgress", m_matteProgress},
+              {"smoothSlowMotion", c->smoothSlowMotion},
+              {"smoothState", [&] {
+                   if (!a || !c->smoothSlowMotion)
+                       return QStringLiteral("off");
+                   if (!engine::interpolationAvailable() || a->kind != MediaKind::Video)
+                       return QStringLiteral("unavailable");
+                   const engine::InterpolationSpan span = engine::interpolationSpanFor(m_project, *c);
+                   if (span.factor <= 1)
+                       return QStringLiteral("notNeeded");
+                   if (!engine::findInterpolation(a->path, span).isEmpty())
+                       return QStringLiteral("ready");
+                   if (!engine::aiModelInstalled(engine::kInterpolationModel))
+                       return QStringLiteral("needsModel");
+                   return m_interpBuilding == InterpolationJob{a->path, span}.key() ? QStringLiteral("processing")
+                                                                                     : QStringLiteral("queued");
+               }()},
+              {"smoothProgress", m_interpProgress},
               {"speed", c->speed},
               {"speedCurve", [&] {
                    QVariantList pts;
@@ -1515,6 +1534,7 @@ bool applyClipProperty(Project &p, Clip *c, Micros rel, const QString &key, cons
     else if (key == QLatin1String("gainDb")) c->gainDb = std::clamp(value.toDouble(), -24.0, 24.0);
     else if (key == QLatin1String("denoise")) c->denoise = engine::quantizedDenoise(value.toDouble());
     else if (key == QLatin1String("removeBackground")) c->removeBackground = value.toBool();
+    else if (key == QLatin1String("smoothSlowMotion")) c->smoothSlowMotion = value.toBool();
     else if (key == QLatin1String("stabilize")) c->stabilize = std::clamp(std::round(value.toDouble() * 20) / 20, 0.0, 1.0);
     else if (key == QLatin1String("effect")) c->effect.id = effectShaderIndex(value.toString()) > 0 ? value.toString() : QString();
     else if (key == QLatin1String("effectIntensity")) c->effect.intensity = std::clamp(value.toDouble(), 0.0, 1.0);
@@ -2087,6 +2107,8 @@ void ProjectController::downloadModel(const QString &id)
             setStatus(tr("Model %1 installed").arg(id));
             if (id == engine::kMattingModel)
                 refreshMattes();
+            if (id == engine::kInterpolationModel)
+                refreshInterpolations();
             if (id == engine::kVoiceModel)
                 refreshVoice();
             if (id == engine::kTtsModel || id == engine::kTtsVoices) {
@@ -4495,6 +4517,97 @@ void ProjectController::startNextMatte()
             }
             emit selectedClipChanged();
             startNextMatte();
+        }, Qt::QueuedConnection);
+    }).detach();
+}
+
+QString ProjectController::InterpolationJob::key() const
+{
+    return QStringLiteral("%1|%2|%3|%4").arg(path).arg(span.in).arg(span.out).arg(span.factor);
+}
+
+void ProjectController::refreshInterpolations()
+{
+    if (!engine::interpolationAvailable() || !engine::aiModelInstalled(engine::kInterpolationModel))
+        return;
+    bool changed = false;
+    QSet<QString> discovered;
+    m_project.forEachClip([&](const Clip &c) {
+        const MediaAsset *a = c.hasMedia() && c.smoothSlowMotion ? m_project.asset(c.assetId) : nullptr;
+        if (!a || a->kind != MediaKind::Video || !QFileInfo::exists(a->path))
+            return;
+        const engine::InterpolationSpan span = engine::interpolationSpanFor(m_project, c);
+        if (span.factor <= 1)
+            return;
+        if (!discovered.contains(a->path)) {
+            discovered.insert(a->path);
+            engine::discoverInterpolations(a->path);
+        }
+        if (!engine::findInterpolation(a->path, span).isEmpty())
+            return;
+        const InterpolationJob job{a->path, span};
+        const bool queued = std::any_of(m_interpQueue.begin(), m_interpQueue.end(),
+                                        [&](const InterpolationJob &j) { return j.key() == job.key(); });
+        if (job.key() != m_interpBuilding && !queued) {
+            m_interpQueue << job;
+            changed = true;
+        }
+    });
+    if (changed) {
+        emit selectedClipChanged();
+        startNextInterpolation();
+    }
+}
+
+void ProjectController::startNextInterpolation()
+{
+    if (!m_interpBuilding.isEmpty() || m_interpQueue.isEmpty())
+        return;
+    const InterpolationJob job = m_interpQueue.takeFirst();
+    // O trecho pode já ter sido gerado por outro trabalho (outro clipe da mesma mídia).
+    if (!engine::findInterpolation(job.path, job.span).isEmpty()) {
+        startNextInterpolation();
+        return;
+    }
+    m_interpBuilding = job.key();
+    m_interpProgress = 0;
+    m_interpCancel = std::make_shared<std::atomic<bool>>(false);
+    const QString model = engine::aiModelPath(engine::kInterpolationModel);
+    auto cancel = m_interpCancel;
+    emit selectedClipChanged();
+    setStatus(tr("Creating smooth slow motion for %1…").arg(QFileInfo(job.path).fileName()));
+    std::thread([this, job, model, cancel] {
+        const QString out = engine::interpolationPathFor(job.path, job.span);
+        QString err;
+        Micros fileStart = 0;
+        double lastSent = 0;
+        const bool ok = engine::generateInterpolation(
+            job.path, job.span, model, out, &fileStart,
+            [&](double f) {
+                if (f - lastSent >= 0.01 && !*cancel) {
+                    lastSent = f;
+                    QMetaObject::invokeMethod(this, [this, f] {
+                        m_interpProgress = f;
+                        emit selectedClipChanged();
+                    }, Qt::QueuedConnection);
+                }
+                return !*cancel;
+            },
+            &err);
+        if (*cancel)
+            return;
+        QMetaObject::invokeMethod(this, [this, ok, err, job, out, fileStart] {
+            m_interpBuilding.clear();
+            if (ok) {
+                engine::registerInterpolation(job.path, job.span, fileStart, out);
+                setStatus(tr("Smooth slow motion ready: %1").arg(QFileInfo(job.path).fileName()));
+                ++m_revisionCounter;
+                emit revisionChanged();
+            } else {
+                emit errorOccurred(tr("Smooth slow motion failed: %1").arg(err));
+            }
+            emit selectedClipChanged();
+            startNextInterpolation();
         }, Qt::QueuedConnection);
     }).detach();
 }

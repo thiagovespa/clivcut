@@ -2,7 +2,9 @@
 #include "Exporter.h"
 
 #include "AudioMixer.h"
+#include "AiModels.h"
 #include "DecoderFrameSource.h"
+#include "FrameInterpolation.h"
 #include "Matting.h"
 #include "Stabilization.h"
 #include "core/Evaluate.h"
@@ -35,6 +37,17 @@ bool Exporter::run(const Project &p, ExportOptions opts, const Progress &progres
         // Sem análise ainda (ex.: linha de comando): analisa agora, para o vídeo sair estabilizado.
         if (a && c.stabilize > 0 && a->kind == MediaKind::Video && !discoverMotion(a->path))
             analyzeMotion(a->path, motionPathFor(a->path), {}, nullptr);
+        // Câmera lenta fluida ainda sem os quadros intermediários: gera agora (precisa do modelo).
+        if (a && c.smoothSlowMotion && a->kind == MediaKind::Video) {
+            discoverInterpolations(a->path);
+            const InterpolationSpan span = interpolationSpanFor(p, c);
+            if (span.factor > 1 && findInterpolation(a->path, span).isEmpty() && aiModelInstalled(kInterpolationModel)) {
+                Micros fileStart = 0;
+                const QString out = interpolationPathFor(a->path, span);
+                if (generateInterpolation(a->path, span, aiModelPath(kInterpolationModel), out, &fileStart, {}, nullptr))
+                    registerInterpolation(a->path, span, fileStart, out);
+            }
+        }
     });
     media::EncodeSettings &enc = opts.encode;
     if (enc.width <= 0 || enc.height <= 0) {

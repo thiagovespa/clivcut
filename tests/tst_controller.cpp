@@ -4,6 +4,7 @@
 #include "core/Serialize.h"
 #include "Scopes.h"
 #include "engine/AudioMixer.h"
+#include "engine/FrameInterpolation.h"
 #include "engine/AiModels.h"
 #include "media/Loudness.h"
 #include "engine/WhisperModels.h"
@@ -833,6 +834,38 @@ private slots:
         QVERIFY(f.layers.front().stab.zoom >= 1.0);
         m_ctrl->undo();
         QCOMPARE(m_ctrl->selectedClip().value("stabilize").toDouble(), 0.0);
+    }
+
+    void smoothSlowMotion()
+    {
+        const QString video = m_dir.filePath(QStringLiteral("curto.mp4"));
+        QProcess p;
+        p.start(QStringLiteral("ffmpeg"), {"-hide_banner", "-loglevel", "error", "-y", "-f", "lavfi", "-i",
+                                           "testsrc2=size=320x180:rate=30:duration=0.4", "-c:v", "libx264", "-preset",
+                                           "ultrafast", "-pix_fmt", "yuv420p", video});
+        QVERIFY(p.waitForFinished(60000) && p.exitCode() == 0);
+        m_ctrl->newProject(320, 180, 30);
+        m_ctrl->importMedia({QUrl::fromLocalFile(video)});
+        m_ctrl->addAssetToTimeline(m_ctrl->assets().first().toMap().value("id").toString());
+        const QString clip = clipsOf(0).first().toMap().value("id").toString();
+        m_ctrl->select(clip);
+        m_ctrl->setClipProperty(clip, QStringLiteral("smoothSlowMotion"), true);
+        // Velocidade normal: não há quadros a criar.
+        QCOMPARE(m_ctrl->selectedClip().value("smoothState").toString(), QStringLiteral("notNeeded"));
+        m_ctrl->setSpeed(clip, 0.5);
+        if (!clv::engine::aiModelInstalled(clv::engine::kInterpolationModel)) {
+            QCOMPARE(m_ctrl->selectedClip().value("smoothState").toString(), QStringLiteral("needsModel"));
+            QSKIP("modelo RIFE não instalado");
+        }
+        QTRY_COMPARE_WITH_TIMEOUT(m_ctrl->selectedClip().value("smoothState").toString(), QStringLiteral("ready"), 120000);
+        const auto snap = m_ctrl->snapshot();
+        const clv::Clip &c = snap->tracks[0].clips[0];
+        QVERIFY(c.smoothSlowMotion);
+        QVERIFY(!clv::engine::findInterpolation(video, clv::engine::interpolationSpanFor(*snap, c)).isEmpty());
+        m_ctrl->undo(); // velocidade
+        m_ctrl->undo(); // câmera lenta fluida
+        QCOMPARE(m_ctrl->selectedClip().value("smoothSlowMotion").toBool(), false);
+        QCOMPARE(m_ctrl->selectedClip().value("smoothState").toString(), QStringLiteral("off"));
     }
 
     void separateMusic()

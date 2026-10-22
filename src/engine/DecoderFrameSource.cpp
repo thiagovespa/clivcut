@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 #include "DecoderFrameSource.h"
 
+#include "FrameInterpolation.h"
 #include "Matting.h"
 #include "Proxy.h"
 #include "core/Evaluate.h"
@@ -10,6 +11,7 @@
 #include <condition_variable>
 #include <deque>
 #include <functional>
+#include <limits>
 #include <mutex>
 #include <optional>
 #include <set>
@@ -20,6 +22,7 @@ namespace clv::engine {
 struct DecoderFrameSource::Config {
     QString path;      ///< arquivo decodificado (mídia ou proxy)
     QString mattePath; ///< matte de remoção de fundo, se o clipe pede e ele já existe
+    Micros offset = 0; ///< tempo da mídia no início de `path` (vídeo interpolado de um trecho)
     QSize maxSize;
     bool operator==(const Config &) const = default;
 };
@@ -172,9 +175,13 @@ private:
         // Com matte, o alfa é aplicado em RGBA na CPU; sem, a GPU converte o YUV.
         const bool matte = !config.mattePath.isEmpty();
         Frame f;
-        f.img = m_dec->frameImage(t, !matte);
-        f.from = m_dec->frameStart();
-        f.until = m_dec->frameEnd();
+        f.img = m_dec->frameImage(t - config.offset, !matte);
+        // De volta aos tempos da mídia (os extremos "sempre" ficam como estão).
+        const auto toMedia = [&](Micros v) {
+            return v == std::numeric_limits<Micros>::min() || v == std::numeric_limits<Micros>::max() ? v : v + config.offset;
+        };
+        f.from = toMedia(m_dec->frameStart());
+        f.until = toMedia(m_dec->frameEnd());
         seeks = m_dec->seeks();
         if (matte && !f.img.isNull())
             applyMatte(t, f.img.rgba);
@@ -236,7 +243,19 @@ DecoderFrameSource::Config DecoderFrameSource::configFor(const VisualLayer &laye
     const MediaAsset &a = *layer.asset;
     Config c;
     c.path = a.path;
-    if (m_preferProxy) {
+    // Câmera lenta fluida: o vídeo com os quadros intermediários, quando já foi gerado.
+    QString smooth;
+    Micros start = 0;
+    int factor = 1;
+    if (layer.clip->smoothSlowMotion && a.kind == MediaKind::Video)
+        smooth = findInterpolation(a.path, {layer.clip->sourceIn, layer.clip->sourceOut(), 2}, &start, &factor);
+    if (!smooth.isEmpty()) {
+        c.path = smooth;
+        // Cada quadro interpolado representa um instante: vale o mais próximo, não o último que
+        // começou (senão um arredondamento de 1 µs repete o quadro anterior).
+        const double fileFps = (a.fps > 1 ? a.fps : 30.0) * factor;
+        c.offset = start - static_cast<Micros>(kSecond / (2 * fileFps));
+    } else if (m_preferProxy) {
         const QString proxy = registeredProxy(a.path);
         if (!proxy.isEmpty())
             c.path = proxy;

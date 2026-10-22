@@ -361,6 +361,7 @@ private slots:
         c.chroma.enabled = true;
         c.blend = BlendMode::Screen;
         c.removeBackground = true;
+        c.smoothSlowMotion = true;
         c.voiceIsolation = 0.7;
         p.inPoint = 250'000;
         p.outPoint = 900'000;
@@ -383,10 +384,12 @@ private slots:
         QCOMPARE(q.tracks[0].clips[0].keyframes[static_cast<int>(Prop::Scale)][0].ease, Easing::EaseIn);
         QCOMPARE(q.tracks[1].clips[0].text, QStringLiteral("Olá ✓"));
         QVERIFY(q.tracks[0].clips[0].removeBackground);
+        QVERIFY(q.tracks[0].clips[0].smoothSlowMotion);
         QCOMPARE(q.tracks[0].clips[0].voiceIsolation, 0.7);
         QCOMPARE(q.inPoint, 250'000);
         QCOMPARE(q.outPoint, 900'000);
         QVERIFY(!q.tracks[1].clips[0].removeBackground);
+        QVERIFY(!q.tracks[1].clips[0].smoothSlowMotion);
         QCOMPARE(q.tracks[0].clips[0].mask.shape, MaskShape::Rectangle);
         QVERIFY(q.tracks[0].clips[0].mask.invert);
         QCOMPARE(q.tracks[0].clips[0].mask.rotation, 15.0);

@@ -1,7 +1,9 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 #include "core/Edit.h"
 #include "core/Evaluate.h"
+#include "engine/AiModels.h"
 #include "engine/DecoderFrameSource.h"
+#include "engine/FrameInterpolation.h"
 #include "engine/Matting.h"
 #include "engine/RenderCache.h"
 #include "engine/Stabilization.h"
@@ -193,6 +195,81 @@ private slots:
             QVERIFY(!forward.frameFor(evaluate(proj, i * step).layers.front()).isNull());
         }
         QCOMPARE(forward.decoderSeeks(), 1);
+    }
+
+    void smoothSlowMotion()
+    {
+        // Clipe a 0,25× num projeto de 30 fps: 4 quadros por quadro do vídeo de 30 fps.
+        const QString video = m_dir.filePath(QStringLiteral("move.mp4"));
+        QProcess p;
+        p.start(QStringLiteral("ffmpeg"), {"-hide_banner", "-loglevel", "error", "-y", "-f", "lavfi", "-i",
+                                           "testsrc2=size=320x180:rate=30:duration=1", "-c:v", "libx264", "-preset",
+                                           "ultrafast", "-pix_fmt", "yuv420p", video});
+        QVERIFY(p.waitForFinished(120000) && p.exitCode() == 0);
+        Project proj = createProject(QStringLiteral("t"), 320, 180, 30);
+        MediaAsset a;
+        QVERIFY(media::probe(video, a));
+        a.id = newId("ast");
+        proj.assets.emplace(a.id, a);
+        Clip c = createMediaClip(a, 0);
+        c.sourceIn = 200'000;
+        c.speed = 0.25;
+        c.duration = 1'200'000; // 0,3 s da mídia
+        c.smoothSlowMotion = true;
+        edit::insertClip(proj, c, 0);
+        const Clip &clip = proj.tracks[0].clips[0];
+
+        const engine::InterpolationSpan span = engine::interpolationSpanFor(proj, clip);
+        QCOMPARE(span.factor, 4);
+        QVERIFY(span.in <= clip.sourceIn && span.out >= clip.sourceOut());
+        Clip normal = clip;
+        normal.speed = 1;
+        normal.duration = 300'000;
+        QCOMPARE(engine::interpolationSpanFor(proj, normal).factor, 1);
+
+        if (!engine::interpolationAvailable() || !engine::aiModelInstalled(engine::kInterpolationModel))
+            QSKIP("modelo RIFE não instalado");
+        const QString out = engine::interpolationPathFor(video, span);
+        Micros fileStart = -1;
+        QString err;
+        QVERIFY2(engine::generateInterpolation(video, span, engine::aiModelPath(engine::kInterpolationModel), out, &fileStart,
+                                               {}, &err),
+                 qPrintable(err));
+        QVERIFY(fileStart >= 0 && fileStart <= span.in);
+        MediaAsset info;
+        QVERIFY(media::probe(out, info));
+        QCOMPARE(std::lround(info.fps), 120L);
+
+        // Sem o vídeo interpolado, quatro quadros seguidos do projeto repetem a mesma imagem;
+        // com ele registrado, cada um é diferente e fica entre os quadros originais.
+        engine::DecoderFrameSource plain(QSize(320, 180), false);
+        const auto frames = [&](engine::DecoderFrameSource &src) {
+            QList<QImage> list;
+            for (int i = 0; i < 4; ++i)
+                list << src.frameFor(evaluate(proj, i * kSecond / 30).layers.front()).toImage();
+            return list;
+        };
+        const auto distinct = [](const QList<QImage> &l) {
+            int n = 1;
+            for (int i = 1; i < l.size(); ++i)
+                n += l[i] != l[i - 1];
+            return n;
+        };
+        QCOMPARE(distinct(frames(plain)), 1);
+        QVERIFY(engine::findInterpolation(video, span).isEmpty());
+        engine::registerInterpolation(video, span, fileStart, out);
+        QCOMPARE(engine::findInterpolation(video, span), out);
+        engine::DecoderFrameSource smooth(QSize(320, 180), false);
+        QCOMPARE(distinct(frames(smooth)), 4);
+
+        // O cache em disco é reencontrado pelo nome do arquivo.
+        const QString video2 = m_dir.filePath(QStringLiteral("move2.mp4"));
+        QVERIFY(QFile::copy(video, video2));
+        QVERIFY(QFile::copy(out, engine::interpolationPathFor(video2, span)));
+        engine::discoverInterpolations(video2);
+        Micros found = -1;
+        QCOMPARE(engine::findInterpolation(video2, span, &found), engine::interpolationPathFor(video2, span));
+        QCOMPARE(found, fileStart);
     }
 
     void renderCacheKeys()

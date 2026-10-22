@@ -235,6 +235,7 @@ struct Clip {
     double voiceIsolation = 0; ///< isolamento de voz por IA 0..1 (0 = desligado)
     bool keepPitch = true;   ///< mudança de velocidade preserva o tom (WSOLA)
     bool removeBackground = false; ///< alfa vindo do matte gerado por IA (engine/Matting.h)
+    bool smoothSlowMotion = false; ///< câmera lenta com quadros intermediários gerados por IA (engine/FrameInterpolation.h)
     bool audioOnly = false;  ///< usa só o áudio da mídia (clipe de áudio separado de um vídeo)
     Micros fadeIn = 0;
     Micros fadeOut = 0;

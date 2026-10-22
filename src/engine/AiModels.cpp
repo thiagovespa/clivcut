@@ -53,6 +53,14 @@ const std::vector<AiModel> &aiModels()
                                             "voices-v1.0.bin")),
                         QStringLiteral("Apache-2.0"),
                         QStringLiteral("bca610b8308e8d99f32e6fe4197e7ec01679264efed0cac9140fe9c29f1fbf7d")});
+        // RIFE v4.26 (Practical-RIFE, MIT) em ONNX, gerado por tools/rife/export_onnx.py a partir dos
+        // pesos oficiais e publicado numa release só de modelos.
+        list.push_back({kInterpolationModel, QString::fromUtf8(QT_TRANSLATE_NOOP("Models", "Frame interpolation (RIFE)")), 22'856'917,
+                        QString::fromUtf8(QT_TRANSLATE_NOOP("Models", "Creates in-between frames for smooth slow motion")),
+                        QStringLiteral("interpolation"), QStringLiteral("rife-v4.26.onnx"),
+                        QUrl(QStringLiteral("https://github.com/thiagovespa/clivcut/releases/download/models-v1/rife-v4.26.onnx")),
+                        QStringLiteral("MIT"),
+                        QStringLiteral("e4d8207ca790f803efc8324e84e3af69b1e65359abdfa7e92c976c224df60b8f")});
         return list;
     }();
     return models;

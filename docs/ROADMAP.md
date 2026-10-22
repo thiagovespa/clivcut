@@ -39,7 +39,7 @@
 |---|---|---|---|
 | 1 | Zero-copy hardware decoding and frame prefetching | 🟡 | VA-API decoding done (MVP #24); each clip decodes on its own thread, ahead of the playhead in preview and export (export ≈1.7× faster with three 4K layers), and upcoming clips open before the cut; 8-bit 4:2:0 frames reach the GPU as YUV planes and are converted there (half the upload, no color conversion on the CPU; export ≈2× faster in total); zero-copy (VA-API → dmabuf → Vulkan/GL texture) missing |
 | 2 | Compound clips | ✅ | create, break apart, edit the contents in place (nested), trim/split, render, mix and copy as one clip |
-| 3 | Speed curves and smooth slow motion | 🟡 | speed curves done (MVP #12); frame interpolation (RIFE) missing |
+| 3 | Speed curves and smooth slow motion | ✅ | speed curves (MVP #12); smooth slow motion with RIFE v4.26 (ONNX exported by `tools/rife/export_onnx.py`, published in the `models-v1` release): the span a clip uses is interpolated in the background at up to 1280 px and used in preview and export |
 | 4 | Advanced color: curves, HSL, color wheels, adjustment layers | ✅ | grading baked into a per-clip 3D LUT (also on adjustment layers); keyframing grading values missing |
 | 5 | Scopes (histogram, waveform, vectorscope) | ✅ | read back from the composited frame (what gets exported), up to 10 times per second; RGB parade missing |
 | 6 | Local background removal | 🟡 | RobustVideoMatting on ONNX Runtime: matte generated in the background, cached and applied as clip alpha in preview and export; model downloaded on demand from the Inspector. Interactive cutout (SAM 2) missing |

@@ -1207,6 +1207,49 @@ Rectangle {
                         ToolTip.delay: 500
                         ToolTip.text: qsTr("When off, the voice gets higher when sped up and lower when slowed down")
                     }
+
+                    SectionLabel {
+                        visible: root.isMedia && root.sel.mediaKind === "video" && root.sel.speed > 0
+                        text: qsTr("Smooth slow motion (AI)")
+                    }
+                    CheckBox {
+                        visible: root.isMedia && root.sel.mediaKind === "video" && root.sel.speed > 0
+                        text: qsTr("Create in-between frames")
+                        checked: root.isMedia && root.sel.smoothSlowMotion
+                        enabled: root.isMedia && root.sel.smoothState !== "unavailable"
+                        focusPolicy: Qt.NoFocus
+                        onToggled: root.setProp("smoothSlowMotion", checked)
+                    }
+                    ProgressBar {
+                        visible: root.isMedia && (root.sel.smoothState === "processing"
+                                                  || (root.sel.smoothState === "needsModel" && Project.downloadingModel === "rife"))
+                        Layout.fillWidth: true
+                        value: root.sel.smoothState === "processing" ? root.sel.smoothProgress : Project.modelDownloadProgress
+                    }
+                    PillButton {
+                        visible: root.isMedia && root.sel.smoothState === "needsModel" && Project.downloadingModel !== "rife"
+                        enabled: Project.downloadingModel === ""
+                        text: qsTr("Download model (23 MB)")
+                        iconName: "download"
+                        onClicked: Project.downloadModel("rife")
+                    }
+                    Text {
+                        visible: root.isMedia && root.sel.mediaKind === "video" && root.sel.speed > 0
+                        Layout.fillWidth: true
+                        wrapMode: Text.Wrap
+                        color: root.isMedia && root.sel.smoothState === "ready" ? Theme.accent : Theme.textFaint
+                        font.pixelSize: Theme.fontSmall
+                        text: !root.isMedia ? ""
+                              : root.sel.smoothState === "unavailable" ? qsTr("Not available in this build (compiled without ONNX Runtime).")
+                              : root.sel.smoothState === "notNeeded" ? qsTr("Not needed at this speed: the video already has a frame for every frame of the project.")
+                              : root.sel.smoothState === "needsModel" ? (Project.downloadingModel === "rife" ? qsTr("Downloading the interpolation model…")
+                                                                          : qsTr("Requires the frame interpolation model (RIFE, MIT), downloaded only once."))
+                              : root.sel.smoothState === "processing" ? qsTr("Creating frames… %1%").arg(Math.round(root.sel.smoothProgress * 100))
+                              : root.sel.smoothState === "queued" ? qsTr("Queued…")
+                              : root.sel.smoothState === "ready" ? qsTr("✓ Smooth slow motion (processed locally)")
+                              : qsTr("Slowed-down video repeats frames and stutters. The AI creates the missing frames between them, on your computer, in the background (it takes a while: about a second per new frame).")
+                    }
+
                     Button {
                         visible: root.isMedia && root.sel.mediaKind === "video"
                         text: qsTr("❄ Freeze frame at playhead") + (Keymap.label("freeze") !== "" ? " (" + Keymap.label("freeze") + ")" : "")

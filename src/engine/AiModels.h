@@ -35,5 +35,7 @@ inline const QString kStemsModel = QStringLiteral("htdemucs");
 /// Voz neural (Kokoro v1.0, Apache-2.0): o modelo e o arquivo com as vozes.
 inline const QString kTtsModel = QStringLiteral("kokoro");
 inline const QString kTtsVoices = QStringLiteral("kokoro-voices");
+/// Interpolação de quadros (RIFE v4.26, MIT), exportada por tools/rife/export_onnx.py.
+inline const QString kInterpolationModel = QStringLiteral("rife");
 
 } // namespace clv::engine
