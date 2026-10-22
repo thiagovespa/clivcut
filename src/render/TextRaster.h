@@ -20,4 +20,7 @@ QImage rasterizeText(const Clip &clip, double pxScale);
 /** Chave de cache que muda sempre que o resultado de rasterizeText mudaria. */
 quint64 textCacheKey(const Clip &clip, double pxScale);
 
+/** Cartão de um espaço de template vazio ("+ Video 1"), no tamanho dado. */
+QImage rasterizeSlot(const QString &label, QSize size);
+
 } // namespace clv::render

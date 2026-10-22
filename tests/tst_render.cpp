@@ -479,6 +479,25 @@ private slots:
         QVERIFY2(near(px(img, 160, 90), QColor(0, 128, 127), 8), qPrintable(px(img, 160, 90).name()));
     }
 
+    void emptyTemplateSlot()
+    {
+        Project p = createProject(QStringLiteral("t"), 320, 180, 30);
+        Clip c;
+        c.id = newId("clp");
+        c.type = ClipType::Media;
+        c.slot = QStringLiteral("Video 1");
+        c.duration = kSecond;
+        c.transform.scale = 0.5;
+        p.tracks[0].clips.push_back(c);
+        SolidSource src;
+        const QImage img = renderAt(p, 0, src);
+        // "+" laranja no centro do cartão; fora do cartão, a cor de fundo.
+        const QColor mid = px(img, 163, 83); // dentro do círculo (centro ~160,85; raio 8), fora da cruz
+        QVERIFY2(mid.red() > 200 && mid.green() > 120 && mid.blue() < 90, qPrintable(mid.name()));
+        QVERIFY(near(px(img, 10, 10), Qt::black));
+        QVERIFY(!near(px(img, 100, 60), Qt::black)); // dentro do cartão
+    }
+
     void cleanupTestCase() { m_comp.reset(); }
 };
 

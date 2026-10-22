@@ -491,6 +491,15 @@ void Compositor::composite(QRhiCommandBuffer *cb, const Project &p, const FrameD
                 natural = QSizeF(img.size()) / k;
                 imageKey = static_cast<qint64>(tkey);
             }
+        } else if (l.clip->isEmptySlot()) {
+            // Espaço de template vazio: um cartão do tamanho do canvas.
+            key = l.clip->id;
+            const quint64 skey = qHash(l.clip->slot) ^ (static_cast<quint64>(m_size.width()) << 32) ^ m_size.height();
+            auto it = m_slots.find(key);
+            if (it == m_slots.end() || (*it)->imageKey != static_cast<qint64>(skey))
+                img = rasterizeSlot(l.clip->slot, m_size);
+            imageKey = static_cast<qint64>(skey);
+            natural = QSizeF(p.width, p.height);
         } else {
             img = source.frameFor(l);
             if (img.isNull())

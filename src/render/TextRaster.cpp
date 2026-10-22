@@ -221,6 +221,43 @@ QImage rasterizeText(const Clip &clip, double pxScale)
     return img.convertToFormat(QImage::Format_RGBA8888);
 }
 
+QImage rasterizeSlot(const QString &label, QSize size)
+{
+    size = size.expandedTo(QSize(16, 16));
+    QImage img(size, QImage::Format_RGBA8888);
+    img.fill(QColor(0x26, 0x26, 0x2c));
+    QPainter p(&img);
+    p.setRenderHints(QPainter::Antialiasing | QPainter::TextAntialiasing);
+    // Listras diagonais discretas.
+    const double unit = std::max(8.0, size.height() / 18.0);
+    p.setPen(QPen(QColor(0x2e, 0x2e, 0x35), unit * 0.45));
+    for (double x = -size.height(); x < size.width(); x += unit * 1.6)
+        p.drawLine(QPointF(x, size.height()), QPointF(x + size.height(), 0));
+    // Moldura tracejada.
+    QPen border(QColor(0x6a, 0x6a, 0x76), std::max(2.0, unit * 0.12), Qt::DashLine);
+    p.setPen(border);
+    p.setBrush(Qt::NoBrush);
+    const double inset = unit * 0.6;
+    p.drawRoundedRect(QRectF(inset, inset, size.width() - 2 * inset, size.height() - 2 * inset), unit * 0.5, unit * 0.5);
+    // "+" num círculo e o rótulo.
+    const double r = std::min(size.width(), size.height()) * 0.09;
+    const QPointF c(size.width() / 2.0, size.height() / 2.0 - r * 0.6);
+    p.setPen(Qt::NoPen);
+    p.setBrush(QColor(0xf5, 0xa5, 0x24));
+    p.drawEllipse(c, r, r);
+    p.setPen(QPen(QColor(0x14, 0x14, 0x17), r * 0.22, Qt::SolidLine, Qt::RoundCap));
+    p.drawLine(QPointF(c.x() - r * 0.45, c.y()), QPointF(c.x() + r * 0.45, c.y()));
+    p.drawLine(QPointF(c.x(), c.y() - r * 0.45), QPointF(c.x(), c.y() + r * 0.45));
+    QFont font;
+    font.setPixelSize(std::max(10, static_cast<int>(r * 0.8)));
+    font.setBold(true);
+    p.setFont(font);
+    p.setPen(QColor(0xe6, 0xe6, 0xea));
+    p.drawText(QRectF(0, c.y() + r * 1.35, size.width(), r * 1.6), Qt::AlignHCenter | Qt::AlignTop, label);
+    p.end();
+    return img;
+}
+
 quint64 textCacheKey(const Clip &clip, double pxScale)
 {
     const TextStyle &s = clip.style;
