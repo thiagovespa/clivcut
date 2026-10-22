@@ -102,8 +102,12 @@ jobs:
       - name: Testes de render (Direct3D 11)
         shell: pwsh
         run: |
+          # Direto (não pelo ctest), com o resultado num arquivo: mostra o backend e cada caso.
           $env:QT_QPA_PLATFORM = "offscreen"
-          ctest --test-dir build -V -R render
+          & .\build\tst_render.exe -o render.txt,txt
+          $code = $LASTEXITCODE
+          Get-Content render.txt
+          exit $code
 
       - name: Instalador
         shell: pwsh
