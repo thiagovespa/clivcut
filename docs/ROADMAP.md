@@ -59,7 +59,7 @@
 | 20 | Packaging: .deb (Debian/Ubuntu) | 🟡 | built in CI (`packaging/linux/build-packages.sh`, Qt bundled under `/opt/clivcut`) and attached to releases; publishing to an apt repository (e.g. a PPA) is pending |
 | 21 | Packaging: .rpm (Fedora/openSUSE) | 🟡 | built in CI (same tree as the .deb, soname dependencies so one package fits both) and attached to releases; publishing to a dnf/zypper repository (e.g. COPR or OBS) is pending |
 | 22 | Packaging: .tar.gz | ✅ | relocatable binary tarball for other distributions, attached to releases |
-| 23 | Packaging: Gentoo ebuild | ⬜ | `media-video/clivcut` in the `vespa` overlay, bumped on every release |
+| 23 | Packaging: Gentoo ebuild | ✅ | `media-video/clivcut` (release and live `9999`) in the [`vespa` overlay](https://github.com/thiagovespa/vespa-overlay), built from source; bumped on every release |
 
 ## Phase 3
 

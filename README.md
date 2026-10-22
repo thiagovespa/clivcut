@@ -140,6 +140,8 @@ chmod +x dist/clivcut-*.AppImage && dist/clivcut-*.AppImage
 packaging/linux/build-packages.sh         # dist/clivcut-<version>-linux-x86_64.tar.gz, .deb and .rpm
 ```
 
+**Gentoo:** `media-video/clivcut` is in the [`vespa` overlay](https://github.com/thiagovespa/vespa-overlay) (`eselect repository enable vespa`), with the `whisper`, `onnx`, `tts` and `vulkan` USE flags.
+
 **Flatpak** (manifest in `packaging/flatpak/`; builds FFmpeg with x264, VA-API and whisper.cpp inside the sandbox):
 
 ```sh
