@@ -996,4 +996,83 @@ void mergeCompoundWorkspace(Project &outer, const QString &seqId, const Project 
     pruneCompounds(outer);
 }
 
+
+bool setClipMedia(Project &p, const QString &clipId, const MediaAsset &asset)
+{
+    const auto ref = findClip(p, clipId);
+    if (!ref || p.tracks[ref->track].locked)
+        return false;
+    Clip &c = p.tracks[ref->track].clips[ref->index];
+    if (!c.hasMedia())
+        return false;
+    if (!p.assets.count(asset.id))
+        p.assets.emplace(asset.id, asset);
+    c.assetId = asset.id;
+    c.slot.clear();
+    c.sourceIn = 0;
+    c.reverse = false;
+    c.audioOnly = asset.kind == MediaKind::Audio ? false : c.audioOnly;
+    const bool timed = asset.kind != MediaKind::Image && asset.duration > 0;
+    if (timed && c.speed > 0) {
+        const Micros fit = static_cast<Micros>(asset.duration / c.speed);
+        if (fit < c.duration)
+            c.duration = std::max(p.frameDuration(), fit);
+    }
+    clampAllKeyframes(c);
+    packMainTrack(p);
+    return true;
+}
+
+QStringList emptySlots(const Project &p)
+{
+    struct Ref {
+        Micros start;
+        int track;
+        QString id;
+    };
+    std::vector<Ref> refs;
+    for (int ti = 0; ti < static_cast<int>(p.tracks.size()); ++ti)
+        for (const Clip &c : p.tracks[ti].clips)
+            if (c.isEmptySlot())
+                refs.push_back({c.start, ti, c.id});
+    std::sort(refs.begin(), refs.end(), [](const Ref &a, const Ref &b) {
+        return a.start != b.start ? a.start < b.start : a.track < b.track;
+    });
+    QStringList out;
+    for (const Ref &r : refs)
+        out << r.id;
+    return out;
+}
+
+void makeTemplate(Project &p, const std::function<QString(MediaKind, int)> &label)
+{
+    std::map<MediaKind, int> counters;
+    auto convert = [&](std::vector<Track> &tracks) {
+        // Numeração em ordem de tempo, como o usuário vê.
+        std::vector<Clip *> clips;
+        for (Track &t : tracks)
+            for (Clip &c : t.clips)
+                if (c.hasMedia() && !c.assetId.isEmpty())
+                    clips.push_back(&c);
+        std::stable_sort(clips.begin(), clips.end(), [](const Clip *a, const Clip *b) { return a->start < b->start; });
+        for (Clip *c : clips) {
+            const MediaAsset *a = p.asset(c->assetId);
+            const MediaKind kind = a ? a->kind : MediaKind::Video;
+            c->slot = label(kind, ++counters[kind]);
+            c->assetId.clear();
+            c->sourceIn = 0;
+            c->denoise = 0;
+            c->voiceIsolation = 0;
+            c->removeBackground = false;
+            c->stabilize = 0;
+        }
+    };
+    convert(p.tracks);
+    for (Sequence &s : p.compounds)
+        convert(s.tracks);
+    p.assets.clear();
+    p.markers.clear();
+    p.inPoint = p.outPoint = -1;
+}
+
 } // namespace clv::edit

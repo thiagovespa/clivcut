@@ -345,6 +345,8 @@ QJsonObject clipToJson(const Clip &c)
     o.insert("assetId", c.assetId);
     if (c.isCompound())
         o.insert("compoundId", c.compoundId);
+    if (!c.slot.isEmpty())
+        o.insert("slot", c.slot);
     o.insert("sourceIn", us(c.sourceIn));
     o.insert("speed", c.speed);
     if (c.speedCurve.size() >= 2) {
@@ -455,6 +457,7 @@ Clip clipFromJson(const QJsonObject &o)
 
     c.assetId = o.value("assetId").toString();
     c.compoundId = o.value("compoundId").toString();
+    c.slot = o.value("slot").toString();
     c.sourceIn = toUs(o.value("sourceIn"));
     c.speed = o.value("speed").toDouble(1);
     for (const auto &v : o.value("speedCurve").toArray()) {

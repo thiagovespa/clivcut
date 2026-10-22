@@ -217,6 +217,8 @@ struct Clip {
     // --- mídia ---
     QString assetId;
     QString compoundId; ///< clipe composto: id da sequência em Project::compounds
+    /// Template: espaço para mídia ("Video 1"). Sem mídia, aparece como um cartão a preencher.
+    QString slot;
     Micros sourceIn = 0; ///< ponto de entrada na mídia
     double speed = 1;    ///< duração de origem = duration * speed (média, se houver curva); 0 = quadro congelado
     /// Curva de velocidade (vazia = constante). Linear por partes, u crescente de 0 a 1.
@@ -254,6 +256,8 @@ struct Clip {
     bool isAdjust() const { return type == ClipType::Adjust; }
     bool hasMedia() const { return type == ClipType::Media; }
     bool isCompound() const { return type == ClipType::Compound; }
+    /// Espaço de template ainda vazio.
+    bool isEmptySlot() const { return type == ClipType::Media && assetId.isEmpty() && !slot.isEmpty(); }
 };
 
 enum class TrackKind { Video, Audio, Text, Adjust };

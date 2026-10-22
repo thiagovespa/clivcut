@@ -609,6 +609,59 @@ private slots:
         QVERIFY(!applyTrackedPath(p, txt, QStringLiteral("nada"), 0, path));
     }
 
+    void templatesAndSlots()
+    {
+        Project p = createProject();
+        p.mainTrackMagnet = true;
+        auto video = videoAsset(p, 10 * kSecond);
+        auto c1 = createMediaClip(video, 0);
+        c1.duration = 4 * kSecond;
+        c1.transform.scale = 0.8;
+        c1.color.filter = QStringLiteral("vivid");
+        auto c2 = createMediaClip(video, 4 * kSecond);
+        c2.duration = 3 * kSecond;
+        c2.transitionIn = Transition{TransitionKind::Dissolve, 500'000};
+        const QString id1 = edit::insertClip(p, c1, 0), id2 = edit::insertClip(p, c2, 0);
+        edit::insertClip(p, createTextClip(QStringLiteral("Title"), 0, 2 * kSecond), -1);
+
+        edit::makeTemplate(p, [](MediaKind k, int n) {
+            return QStringLiteral("%1 %2").arg(k == MediaKind::Image ? QStringLiteral("Photo") : QStringLiteral("Video")).arg(n);
+        });
+        QVERIFY(p.assets.empty());
+        const QStringList empty = edit::emptySlots(p);
+        QCOMPARE(empty, (QStringList{id1, id2}));
+        QCOMPARE(edit::clipById(p, id1)->slot, QStringLiteral("Video 1"));
+        QCOMPARE(edit::clipById(p, id2)->slot, QStringLiteral("Video 2"));
+        QVERIFY(edit::clipById(p, id1)->isEmptySlot());
+        // Texto continua; salvar e reabrir mantém os espaços.
+        Project q;
+        QVERIFY(parseProject(serializeProject(p), q));
+        QCOMPARE(edit::emptySlots(q), empty);
+
+        // Vídeo curto no primeiro espaço: o espaço encolhe e a principal fecha o buraco;
+        // escala, filtro e transição ficam.
+        MediaAsset shortClip = videoAsset(p, 2 * kSecond);
+        QVERIFY(edit::setClipMedia(p, id1, shortClip));
+        const Clip *f1 = edit::clipById(p, id1);
+        QVERIFY(!f1->isEmptySlot());
+        QCOMPARE(f1->duration, 2 * kSecond);
+        QCOMPARE(f1->transform.scale, 0.8);
+        QCOMPARE(f1->color.filter, QStringLiteral("vivid"));
+        QCOMPARE(edit::clipById(p, id2)->start, 2 * kSecond);
+        // Foto num espaço de vídeo: mantém a duração do espaço.
+        MediaAsset photo;
+        photo.id = newId("ast");
+        photo.kind = MediaKind::Image;
+        photo.width = 800;
+        photo.height = 600;
+        QVERIFY(edit::setClipMedia(p, id2, photo));
+        QCOMPARE(edit::clipById(p, id2)->duration, 3 * kSecond);
+        QVERIFY(edit::clipById(p, id2)->transitionIn.has_value());
+        QVERIFY(edit::emptySlots(p).isEmpty());
+        // Texto não recebe mídia.
+        QVERIFY(!edit::setClipMedia(p, p.tracks[1].clips[0].id, photo));
+    }
+
     void historyUndoRedo()
     {
         Project p = createProject();

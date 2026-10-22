@@ -8,6 +8,7 @@
 
 #include <QStringList>
 
+#include <functional>
 #include <optional>
 
 /**
@@ -130,6 +131,22 @@ QString createCompound(Project &p, const QStringList &ids, const QString &name, 
  * mesma posição, com a primeira faixa interna no lugar do composto. Retorna os ids novos.
  */
 QStringList breakCompound(Project &p, const QString &clipId);
+
+/**
+ * Põe a mídia `asset` no clipe (espaço de template ou troca de mídia): mantém posição, efeitos,
+ * transições e o tempo na timeline; a origem recomeça do início. Vídeo/áudio mais curto que o
+ * clipe encurta o clipe. Retorna false se o clipe não for de mídia.
+ */
+bool setClipMedia(Project &p, const QString &clipId, const MediaAsset &asset);
+
+/** Espaços de template ainda vazios, em ordem de tempo (e de faixa, de baixo para cima). */
+QStringList emptySlots(const Project &p);
+
+/**
+ * Transforma o projeto num template: cada clipe de mídia vira um espaço vazio ("Video 1",
+ * "Photo 1", "Audio 1"…, rótulos passados por `label(kind, n)`) e as mídias saem do projeto.
+ */
+void makeTemplate(Project &p, const std::function<QString(MediaKind, int)> &label);
 
 /** Remove as sequências que nenhum clipe composto usa mais. */
 void pruneCompounds(Project &p);
