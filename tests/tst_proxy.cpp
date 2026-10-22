@@ -8,6 +8,7 @@
 #include "engine/MotionTracking.h"
 #include "engine/Proxy.h"
 #include "media/MediaProbe.h"
+#include "media/VideoDecoder.h"
 
 #include <QFileInfo>
 #include <QPainter>
@@ -122,6 +123,73 @@ private slots:
         proj.tracks[0].clips[0].removeBackground = false;
         const VisualLayer plain = evaluate(proj, kSecond).layers.front();
         QCOMPARE(qAlpha(source.frameFor(plain).pixel(1080, 360)), 255);
+    }
+
+    void prefetchMatchesDirectDecoding()
+    {
+        // Clipe normal na faixa principal e o mesmo vídeo invertido a 1,5× por cima.
+        Project proj = createProject(QStringLiteral("t"), 1280, 720, 30);
+        MediaAsset a;
+        QVERIFY(media::probe(m_video, a));
+        a.id = newId("ast");
+        proj.assets.emplace(a.id, a);
+        edit::insertClip(proj, createMediaClip(a, 0), 0);
+        proj.tracks.push_back(createTrack(TrackKind::Video));
+        Clip rev = createMediaClip(a, 0);
+        rev.speed = 1.5;
+        rev.reverse = true;
+        rev.duration = static_cast<Micros>(a.duration / rev.speed);
+        proj.tracks.back().clips.push_back(rev);
+
+        const QSize maxSize(640, 360);
+        engine::DecoderFrameSource source(maxSize, false);
+        std::unordered_map<QString, std::unique_ptr<media::VideoDecoder>> direct;
+        const Micros step = kSecond / 30;
+        // Reprodução, um salto para trás e mais reprodução.
+        std::vector<Micros> times;
+        for (int i = 0; i < 30; ++i)
+            times.push_back(i * step);
+        for (int i = 10; i < 40; ++i)
+            times.push_back(i * step);
+        int compared = 0;
+        for (size_t i = 0; i < times.size(); ++i) {
+            std::vector<Micros> ahead;
+            for (int k = 0; k < 4; ++k)
+                ahead.push_back(times[i] + k * step);
+            source.prefetch(proj, ahead, {times[i] + kSecond / 2});
+            if (i % 3 == 0)
+                QTest::qWait(20); // dá tempo de decodificar à frente
+            for (const VisualLayer &l : evaluate(proj, times[i]).layers) {
+                auto &dec = direct[l.clip->id];
+                if (!dec) {
+                    dec = std::make_unique<media::VideoDecoder>();
+                    QVERIFY(dec->open(m_video, maxSize));
+                }
+                const QImage expected = dec->frameAt(l.sourceTime);
+                QVERIFY(!expected.isNull());
+                QVERIFY2(source.frameFor(l) == expected, qPrintable(QStringLiteral("t=%1 clip=%2").arg(times[i]).arg(l.clip->id)));
+                ++compared;
+            }
+        }
+        QCOMPARE(compared, 120);
+        QVERIFY(source.prefetchHits() > 0);
+        QCOMPARE(source.prefetchHits() + source.prefetchMisses(), compared);
+
+        // Reprodução para a frente como no export: um único seek (o inicial), por mais que a
+        // decodificação à frente e os pedidos se intercalem.
+        proj.tracks.pop_back();
+        engine::DecoderFrameSource forward(maxSize, false);
+        forward.setCacheFrames(engine::kExportLookahead + 2);
+        for (int i = 0; i < 60; ++i) {
+            std::vector<Micros> ahead;
+            for (int k = i; k <= i + engine::kExportLookahead; ++k)
+                ahead.push_back(k * step);
+            forward.prefetch(proj, ahead);
+            if (i % 7 == 0)
+                QTest::qWait(15);
+            QVERIFY(!forward.frameFor(evaluate(proj, i * step).layers.front()).isNull());
+        }
+        QCOMPARE(forward.decoderSeeks(), 1);
     }
 
     void renderCacheKeys()

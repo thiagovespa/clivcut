@@ -42,6 +42,14 @@ public:
 
     /** Quadro em RGBA8888 premultiplicado. Retorna imagem nula em erro/fim. */
     QImage frameAt(Micros t);
+    /**
+     * Intervalo [início, fim) de tempos que devolvem o mesmo quadro do último `frameAt`
+     * (imagens estáticas: o tempo todo; último quadro do vídeo: até o infinito).
+     */
+    Micros frameStart() const;
+    Micros frameEnd() const;
+    /** Buscas feitas (saltos no arquivo), para medir o custo de um padrão de acesso. */
+    int seeks() const { return m_seeks; }
 
 private:
     bool decodeUntil(Micros t);
@@ -78,6 +86,7 @@ private:
     Micros m_currentPts = -1;
     Micros m_frameDur = 33'333;
     bool m_eof = false;
+    int m_seeks = 0;
     int m_swsSrcFormat = -1;
     int m_swsSrcW = 0, m_swsSrcH = 0;
 };

@@ -15,6 +15,7 @@ extern "C" {
 #include <QTransform>
 
 #include <cmath>
+#include <limits>
 
 namespace clv::media {
 
@@ -204,6 +205,7 @@ bool VideoDecoder::open(const QString &path, QSize maxSize, QString *error, bool
 
 bool VideoDecoder::seekTo(Micros t)
 {
+    ++m_seeks;
     const std::int64_t ts = microsToStream(t, m_tb);
     av_seek_frame(m_fmt.get(), m_stream, ts, AVSEEK_FLAG_BACKWARD);
     avcodec_flush_buffers(m_dec.get());
@@ -269,6 +271,24 @@ QImage VideoDecoder::frameAt(Micros t)
         m_currentPts = m_lastPts;
     }
     return m_current;
+}
+
+Micros VideoDecoder::frameStart() const
+{
+    if (!m_still.isNull() || m_currentPts < 0)
+        return std::numeric_limits<Micros>::min();
+    return m_currentPts - m_startTime;
+}
+
+Micros VideoDecoder::frameEnd() const
+{
+    if (!m_still.isNull() || m_currentPts < 0)
+        return std::numeric_limits<Micros>::max();
+    if (m_currentPts == m_lastPts && m_peek)
+        return m_peekPts - m_startTime;
+    if (m_eof)
+        return std::numeric_limits<Micros>::max();
+    return m_currentPts + m_frameDur - m_startTime;
 }
 
 QImage VideoDecoder::convert(const AVFrame *f)

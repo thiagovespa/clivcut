@@ -26,6 +26,10 @@ QRectF fitRect(QSizeF content, QSizeF box)
     return {(box.width() - s.width()) / 2, (box.height() - s.height()) / 2, s.width(), s.height()};
 }
 
+// Quadros decodificados à frente do cursor, tocando e parado (para avançar quadro a quadro).
+constexpr int kPlayLookahead = 8;
+constexpr int kPausedLookahead = 2;
+
 // Fonte de um único quadro: o trecho já renderizado do cache.
 class ImageSource : public clv::render::FrameSource {
 public:
@@ -134,6 +138,17 @@ public:
             m_compositor->blitTo(cb, rt, vp, QColor(0x14, 0x14, 0x17));
             return;
         }
+
+        // Decodificação em segundo plano: o quadro atual (todas as camadas em paralelo), os
+        // próximos durante a reprodução e o primeiro quadro dos clipes que vão começar.
+        const clv::Micros step = static_cast<clv::Micros>(clv::kSecond / std::max(1.0, m_project->fps));
+        std::vector<clv::Micros> ahead{m_time};
+        for (int k = 1; k <= (m_playing ? kPlayLookahead : kPausedLookahead); ++k)
+            ahead.push_back(m_time + k * step);
+        std::vector<clv::Micros> warm;
+        if (m_playing)
+            warm = {m_time + clv::kSecond / 2, m_time + clv::kSecond};
+        m_frames.prefetch(*m_project, ahead, warm);
 
         const clv::FrameDesc frame = clv::evaluate(*m_project, m_time);
         if (++m_pruneCounter % 120 == 0) {

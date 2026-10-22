@@ -133,6 +133,7 @@ bool renderChunks(const Project &p, const std::vector<int> &chunks, int longSide
     render::Compositor compositor(rhi);
     compositor.setRenderSize(size);
     DecoderFrameSource frames(size * 2);
+    frames.setCacheFrames(kExportLookahead + 2);
 
     // Total de quadros, para o progresso.
     const double fps = p.fps;
@@ -165,7 +166,12 @@ bool renderChunks(const Project &p, const std::vector<int> &chunks, int longSide
         if (!enc.open(tmp, es, &err))
             return fail(err);
         for (std::int64_t i = 0; i < n; ++i) {
-            const Micros t = start + static_cast<Micros>(std::llround(i * kSecond / fps));
+            const auto frameTime = [&](std::int64_t k) { return start + static_cast<Micros>(std::llround(k * kSecond / fps)); };
+            const Micros t = frameTime(i);
+            std::vector<Micros> ahead;
+            for (std::int64_t k = i; k <= std::min(i + kExportLookahead, n - 1); ++k)
+                ahead.push_back(frameTime(k));
+            frames.prefetch(p, ahead);
             QRhiCommandBuffer *cb = nullptr;
             if (rhi->beginOffscreenFrame(&cb) != QRhi::FrameOpSuccess)
                 return fail(QCoreApplication::translate("Engine", "GPU failure while rendering frame %1").arg(i));

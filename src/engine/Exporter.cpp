@@ -106,13 +106,20 @@ bool Exporter::run(const Project &p, ExportOptions opts, const Progress &progres
     compositor.setRenderSize(QSize(enc.width, enc.height));
     compositor.setTransparentBackground(media::codecHasAlpha(enc.codec));
     DecoderFrameSource frames(QSize(enc.width * 2, enc.height * 2));
+    frames.setCacheFrames(kExportLookahead + 2);
     AudioMixer mixer;
     std::vector<float> audioBuf;
 
     const std::int64_t totalFrames =
         std::max<std::int64_t>(1, std::llround(static_cast<double>(end - start) * enc.fps / kSecond));
     for (std::int64_t i = 0; i < totalFrames; ++i) {
-        const Micros t = start + static_cast<Micros>(std::llround(i * kSecond / enc.fps));
+        const auto frameTime = [&](std::int64_t k) { return start + static_cast<Micros>(std::llround(k * kSecond / enc.fps)); };
+        const Micros t = frameTime(i);
+        // Os próximos quadros decodificam enquanto este é composto e codificado.
+        std::vector<Micros> ahead;
+        for (std::int64_t k = i; k <= std::min(i + kExportLookahead, totalFrames - 1); ++k)
+            ahead.push_back(frameTime(k));
+        frames.prefetch(scaled, ahead);
         const FrameDesc frame = evaluate(scaled, t);
 
         QRhiCommandBuffer *cb = nullptr;
