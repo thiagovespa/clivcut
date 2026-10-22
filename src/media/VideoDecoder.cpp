@@ -15,6 +15,7 @@ extern "C" {
 #include <QTransform>
 
 #include <cmath>
+#include <cstring>
 #include <limits>
 
 namespace clv::media {
@@ -249,52 +250,75 @@ bool VideoDecoder::decodeUntil(Micros target)
     return bool(m_last);
 }
 
+bool VideoDecoder::position(Micros t)
+{
+    const Micros target = std::max<Micros>(0, t) + m_startTime;
+    const bool haveFrame = m_last && m_lastPts >= 0;
+    const bool withinCurrent = haveFrame && target >= m_lastPts && (!m_peek || target < m_peekPts);
+    if (withinCurrent)
+        return true;
+    const bool forward = haveFrame && target > m_lastPts && target - m_lastPts < kForwardDecodeLimit;
+    if (!forward)
+        seekTo(target);
+    return decodeUntil(target);
+}
+
 QImage VideoDecoder::frameAt(Micros t)
 {
     if (!m_still.isNull())
         return m_still;
     if (!m_fmt)
         return {};
-    const Micros target = std::max<Micros>(0, t) + m_startTime;
-
-    const bool haveFrame = m_last && m_lastPts >= 0;
-    const bool withinCurrent = haveFrame && target >= m_lastPts && (!m_peek || target < m_peekPts);
-    if (!withinCurrent) {
-        const bool forward = haveFrame && target > m_lastPts && target - m_lastPts < kForwardDecodeLimit;
-        if (!forward)
-            seekTo(target);
-        if (!decodeUntil(target))
-            return m_current;
-    }
+    if (!position(t))
+        return m_current;
     if (m_lastPts != m_currentPts || m_current.isNull()) {
-        m_current = convert(m_last.get());
+        m_current = toRgba(toCpu(m_last.get()));
         m_currentPts = m_lastPts;
     }
+    m_shownPts = m_currentPts;
     return m_current;
+}
+
+VideoImage VideoDecoder::frameImage(Micros t, bool allowYuv)
+{
+    if (!allowYuv)
+        return frameAt(t);
+    if (!m_still.isNull())
+        return m_still;
+    if (!m_fmt)
+        return {};
+    if (!position(t))
+        return m_image;
+    if (m_lastPts != m_imagePts || m_image.isNull()) {
+        m_image = toVideoImage(m_last.get());
+        m_imagePts = m_lastPts;
+    }
+    m_shownPts = m_imagePts;
+    return m_image;
 }
 
 Micros VideoDecoder::frameStart() const
 {
-    if (!m_still.isNull() || m_currentPts < 0)
+    if (!m_still.isNull() || m_shownPts < 0)
         return std::numeric_limits<Micros>::min();
-    return m_currentPts - m_startTime;
+    return m_shownPts - m_startTime;
 }
 
 Micros VideoDecoder::frameEnd() const
 {
-    if (!m_still.isNull() || m_currentPts < 0)
+    if (!m_still.isNull() || m_shownPts < 0)
         return std::numeric_limits<Micros>::max();
-    if (m_currentPts == m_lastPts && m_peek)
+    if (m_shownPts == m_lastPts && m_peek)
         return m_peekPts - m_startTime;
     if (m_eof)
         return std::numeric_limits<Micros>::max();
-    return m_currentPts + m_frameDur - m_startTime;
+    return m_shownPts + m_frameDur - m_startTime;
 }
 
-QImage VideoDecoder::convert(const AVFrame *f)
+const AVFrame *VideoDecoder::toCpu(const AVFrame *f)
 {
     if (!f)
-        return {};
+        return nullptr;
     // Quadro na GPU: reduz na GPU (VA-API) e então copia só o necessário.
     QSize gpuTarget = m_outSize;
     if (std::lround(std::abs(m_rotation)) % 180 == 90)
@@ -325,11 +349,18 @@ QImage VideoDecoder::convert(const AVFrame *f)
             m_swFrame.reset(av_frame_alloc());
         av_frame_unref(m_swFrame.get());
         if (av_hwframe_transfer_data(m_swFrame.get(), f, 0) < 0)
-            return {};
+            return nullptr;
         m_swFrame->color_range = f->color_range;
         m_swFrame->colorspace = f->colorspace;
         f = m_swFrame.get();
     }
+    return f;
+}
+
+QImage VideoDecoder::toRgba(const AVFrame *f)
+{
+    if (!f)
+        return {};
     QSize decoded = m_outSize;
     const bool swap = std::lround(std::abs(m_rotation)) % 180 == 90;
     if (swap)
@@ -355,6 +386,71 @@ QImage VideoDecoder::convert(const AVFrame *f)
     sws_scale(m_sws.get(), f->data, f->linesize, 0, f->height, dst, dstStride);
     if (std::abs(m_rotation) > 0.5)
         img = img.transformed(QTransform().rotate(m_rotation));
+    return img;
+}
+
+VideoImage VideoDecoder::toVideoImage(const AVFrame *original)
+{
+    const AVFrame *f = toCpu(original);
+    if (!f)
+        return {};
+    const int rot = static_cast<int>(((std::lround(m_rotation) % 360) + 360) % 360);
+    const auto fmt = static_cast<AVPixelFormat>(f->format);
+    const bool nv12 = fmt == AV_PIX_FMT_NV12;
+    const bool i420 = fmt == AV_PIX_FMT_YUV420P || fmt == AV_PIX_FMT_YUVJ420P;
+    if (rot % 90 != 0 || !(nv12 || i420))
+        return toRgba(f);
+
+    QSize decoded = m_outSize;
+    if (rot == 90 || rot == 270)
+        decoded.transpose();
+    const QSize srcSize(f->width, f->height);
+    if (srcSize != decoded) {
+        // Só redimensiona, no mesmo formato: a cor é convertida na GPU. YUVJ é o mesmo layout
+        // de YUV420P; tratado assim, o sws não converte a faixa de cor.
+        const AVPixelFormat swsFmt = nv12 ? AV_PIX_FMT_NV12 : AV_PIX_FMT_YUV420P;
+        if (!m_yuvSws || m_yuvSwsFormat != swsFmt || m_yuvSwsSrc != srcSize || m_yuvSwsDst != decoded) {
+            m_yuvSws.reset(sws_getContext(srcSize.width(), srcSize.height(), swsFmt, decoded.width(), decoded.height(), swsFmt,
+                                          SWS_BILINEAR, nullptr, nullptr, nullptr));
+            m_yuvFrame.reset(av_frame_alloc());
+            m_yuvFrame->format = swsFmt;
+            m_yuvFrame->width = decoded.width();
+            m_yuvFrame->height = decoded.height();
+            if (!m_yuvSws || av_frame_get_buffer(m_yuvFrame.get(), 0) < 0) {
+                m_yuvSws.reset();
+                return toRgba(f);
+            }
+            m_yuvSwsFormat = swsFmt;
+            m_yuvSwsSrc = srcSize;
+            m_yuvSwsDst = decoded;
+        }
+        sws_scale(m_yuvSws.get(), f->data, f->linesize, 0, f->height, m_yuvFrame->data, m_yuvFrame->linesize);
+    }
+    const AVFrame *src = srcSize != decoded ? m_yuvFrame.get() : f;
+
+    VideoImage img;
+    img.format = nv12 ? VideoImage::Format::Nv12 : VideoImage::Format::I420;
+    img.size = decoded;
+    img.rotation = rot;
+    // Mesma escolha de matriz da conversão em RGBA, pela altura original do vídeo.
+    img.bt709 = f->colorspace == AVCOL_SPC_BT709 || (f->colorspace == AVCOL_SPC_UNSPECIFIED && original->height >= 720);
+    img.fullRange = f->color_range == AVCOL_RANGE_JPEG || fmt == AV_PIX_FMT_YUVJ420P;
+    img.key = VideoImage::newKey();
+    const QSize c = img.chromaSize();
+    const auto copyPlane = [&](int i, int rowBytes, int rows) {
+        QByteArray &out = img.planes[i];
+        out.resize(static_cast<qsizetype>(rowBytes) * rows);
+        for (int y = 0; y < rows; ++y)
+            std::memcpy(out.data() + static_cast<qsizetype>(y) * rowBytes, src->data[i] + static_cast<qsizetype>(y) * src->linesize[i],
+                        static_cast<size_t>(rowBytes));
+    };
+    copyPlane(0, decoded.width(), decoded.height());
+    if (nv12) {
+        copyPlane(1, c.width() * 2, c.height());
+    } else {
+        copyPlane(1, c.width(), c.height());
+        copyPlane(2, c.width(), c.height());
+    }
     return img;
 }
 

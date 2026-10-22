@@ -66,6 +66,15 @@ struct Compositor::Slot {
     QSize size;
     qint64 imageKey = -1;
     quint64 lastFrame = 0;
+
+    // Quadros YUV: os planos e o passe que os converte em `tex`.
+    std::unique_ptr<QRhiTexture> planes[3];
+    VideoImage::Format planeFormat = VideoImage::Format::None;
+    QSize planeSize;
+    std::unique_ptr<QRhiTextureRenderTarget> rt;
+    std::unique_ptr<QRhiRenderPassDescriptor> rp;
+    std::unique_ptr<QRhiBuffer> yuvUbo;
+    std::unique_ptr<QRhiShaderResourceBindings> yuvSrb;
 };
 
 Compositor::Compositor(QRhi *rhi) : m_rhi(rhi) {}
@@ -243,7 +252,10 @@ Compositor::Slot &Compositor::slotFor(const QString &key, QSize texSize, QRhiTex
         s.tex.reset();
         s.size = texSize;
     } else if (!usesBackdrop && (!s.tex || s.size != texSize)) {
-        s.tex.reset(m_rhi->newTexture(QRhiTexture::RGBA8, texSize));
+        // Alvo de render também: quadros YUV são convertidos direto nela.
+        s.rt.reset();
+        s.yuvSrb.reset();
+        s.tex.reset(m_rhi->newTexture(QRhiTexture::RGBA8, texSize, 1, QRhiTexture::RenderTarget));
         s.tex->create();
         s.size = texSize;
         s.imageKey = -1;
@@ -340,14 +352,14 @@ void Compositor::fillUbo(LayerUbo &u, const VisualLayer &l, const Project &p, do
     }
 }
 
-const QImage &Compositor::blurredBackground(const QImage &frame, double amount)
+const QImage &Compositor::blurredBackground(const VideoImage &frame, double amount)
 {
     if (frame.cacheKey() == m_bgSourceKey && amount == m_bgAmount)
         return m_bgImage;
     // Desfoque barato: reduz muito, borra a imagem pequena e deixa o filtro linear da GPU ampliar.
     const int side = static_cast<int>(std::lround(96 - 72 * std::clamp(amount, 0.0, 1.0))); // 96 → 24 px
-    const QSize small = frame.size().scaled(side, side, Qt::KeepAspectRatio).expandedTo({2, 2});
-    QImage img = frame.scaled(small * 4, Qt::IgnoreAspectRatio, Qt::FastTransformation)
+    const QSize small = frame.displaySize().scaled(side, side, Qt::KeepAspectRatio).expandedTo({2, 2});
+    QImage img = frame.toImage(small * 4)
                      .scaled(small, Qt::IgnoreAspectRatio, Qt::SmoothTransformation)
                      .convertToFormat(QImage::Format_RGBA8888);
     // Duas passadas de caixa 3×3 suavizam os blocos que a ampliação deixaria visíveis.
@@ -414,7 +426,7 @@ void Compositor::composite(QRhiCommandBuffer *cb, const Project &p, const FrameD
         const auto main = std::find_if(frame.layers.begin(), frame.layers.end(), [](const VisualLayer &l) {
             return l.trackIndex == 0 && l.clip && l.clip->hasMedia() && l.asset;
         });
-        const QImage src = main != frame.layers.end() ? source.frameFor(*main) : QImage();
+        const VideoImage src = main != frame.layers.end() ? source.frameFor(*main) : VideoImage();
         if (!src.isNull()) {
             const QImage &bg = blurredBackground(src, p.backgroundBlur);
             Slot &slot = slotFor(QStringLiteral("#background"), bg.size(), m_identityLut.get(), m_identityLut.get(),
@@ -464,7 +476,7 @@ void Compositor::composite(QRhiCommandBuffer *cb, const Project &p, const FrameD
             continue;
         }
 
-        QImage img;
+        VideoImage img;
         QString key;
         QSizeF natural; // tamanho natural em px do projeto antes de escala
         double fit = 1;
@@ -488,7 +500,7 @@ void Compositor::composite(QRhiCommandBuffer *cb, const Project &p, const FrameD
                 imageKey = static_cast<qint64>(tkey);
             } else {
                 img = rasterizeText(*l.clip, pxScale);
-                natural = QSizeF(img.size()) / k;
+                natural = QSizeF(img.displaySize()) / k;
                 imageKey = static_cast<qint64>(tkey);
             }
         } else if (l.clip->isEmptySlot()) {
@@ -506,14 +518,17 @@ void Compositor::composite(QRhiCommandBuffer *cb, const Project &p, const FrameD
                 continue;
             key = l.clip->id;
             imageKey = img.cacheKey();
-            natural = (l.asset && l.asset->width > 0) ? QSizeF(l.asset->width, l.asset->height) : QSizeF(img.size());
+            natural = (l.asset && l.asset->width > 0) ? QSizeF(l.asset->width, l.asset->height) : QSizeF(img.displaySize());
             fit = std::min(p.width / natural.width(), p.height / natural.height());
         }
 
-        const QSize texSize = external ? m_size : img.isNull() ? m_slots[key]->size : img.size();
+        const QSize texSize = external ? m_size : img.isNull() ? m_slots[key]->size : img.displaySize();
         Slot &slot = slotFor(key, texSize, filterLut, userLut, gradeLut, false, external);
         if (!img.isNull() && slot.imageKey != imageKey) {
-            u->uploadTexture(slot.tex.get(), img);
+            if (img.isYuv() && yuvSupported())
+                convertYuv(cb, slot, img);
+            else
+                u->uploadTexture(slot.tex.get(), img.isYuv() ? img.toImage() : img.rgba);
             slot.imageKey = imageKey;
         }
 
@@ -585,6 +600,109 @@ void Compositor::composite(QRhiCommandBuffer *cb, const Project &p, const FrameD
         }
         std::erase_if(m_children, [&](const auto &kv) { return m_frameCounter - kv.second.second > 240; });
     }
+}
+
+bool Compositor::yuvSupported() const
+{
+    return m_rhi->isTextureFormatSupported(QRhiTexture::R8) && m_rhi->isTextureFormatSupported(QRhiTexture::RG8);
+}
+
+void Compositor::convertYuv(QRhiCommandBuffer *cb, Slot &slot, const VideoImage &img)
+{
+    constexpr int kYuvUboSize = 32; // flip + params
+    const bool nv12 = img.format == VideoImage::Format::Nv12;
+    const QSize chroma = img.chromaSize();
+
+    // Pipeline única; o layout vem de um alvo e de texturas de referência próprios.
+    if (!m_yuvPipe) {
+        m_yuvLayoutTarget.reset(m_rhi->newTexture(QRhiTexture::RGBA8, QSize(2, 2), 1, QRhiTexture::RenderTarget));
+        m_yuvLayoutTarget->create();
+        m_yuvLayoutRt.reset(m_rhi->newTextureRenderTarget({m_yuvLayoutTarget.get()}));
+        m_yuvRp.reset(m_yuvLayoutRt->newCompatibleRenderPassDescriptor());
+        m_yuvLayoutRt->setRenderPassDescriptor(m_yuvRp.get());
+        m_yuvLayoutRt->create();
+        m_yuvLayoutPlane.reset(m_rhi->newTexture(QRhiTexture::R8, QSize(2, 2)));
+        m_yuvLayoutPlane->create();
+        m_yuvLayoutUbo.reset(m_rhi->newBuffer(QRhiBuffer::Dynamic, QRhiBuffer::UniformBuffer, kYuvUboSize));
+        m_yuvLayoutUbo->create();
+        m_yuvLayoutSrb.reset(m_rhi->newShaderResourceBindings());
+        const auto stages = QRhiShaderResourceBinding::VertexStage | QRhiShaderResourceBinding::FragmentStage;
+        m_yuvLayoutSrb->setBindings({
+            QRhiShaderResourceBinding::uniformBuffer(0, stages, m_yuvLayoutUbo.get()),
+            QRhiShaderResourceBinding::sampledTexture(1, QRhiShaderResourceBinding::FragmentStage, m_yuvLayoutPlane.get(), m_sampler.get()),
+            QRhiShaderResourceBinding::sampledTexture(2, QRhiShaderResourceBinding::FragmentStage, m_yuvLayoutPlane.get(), m_sampler.get()),
+            QRhiShaderResourceBinding::sampledTexture(3, QRhiShaderResourceBinding::FragmentStage, m_yuvLayoutPlane.get(), m_sampler.get()),
+        });
+        m_yuvLayoutSrb->create();
+        m_yuvPipe.reset(m_rhi->newGraphicsPipeline());
+        m_yuvPipe->setShaderStages({{QRhiShaderStage::Vertex, loadShader(QStringLiteral("yuv.vert"))},
+                                    {QRhiShaderStage::Fragment, loadShader(QStringLiteral("yuv.frag"))}});
+        m_yuvPipe->setVertexInputLayout({});
+        m_yuvPipe->setShaderResourceBindings(m_yuvLayoutSrb.get());
+        m_yuvPipe->setRenderPassDescriptor(m_yuvRp.get());
+        m_yuvPipe->create();
+    }
+
+    // Planos: Y em R8; cor em RG8 (NV12) ou dois R8 (I420), na metade do tamanho.
+    if (slot.planeFormat != img.format || slot.planeSize != img.size) {
+        slot.planes[0].reset(m_rhi->newTexture(QRhiTexture::R8, img.size));
+        slot.planes[0]->create();
+        slot.planes[1].reset(m_rhi->newTexture(nv12 ? QRhiTexture::RG8 : QRhiTexture::R8, chroma));
+        slot.planes[1]->create();
+        slot.planes[2].reset();
+        if (!nv12) {
+            slot.planes[2].reset(m_rhi->newTexture(QRhiTexture::R8, chroma));
+            slot.planes[2]->create();
+        }
+        slot.planeFormat = img.format;
+        slot.planeSize = img.size;
+        slot.yuvSrb.reset();
+    }
+    if (!slot.rt) {
+        slot.rt.reset(m_rhi->newTextureRenderTarget({slot.tex.get()}));
+        slot.rp.reset(slot.rt->newCompatibleRenderPassDescriptor());
+        slot.rt->setRenderPassDescriptor(slot.rp.get());
+        slot.rt->create();
+    }
+    if (!slot.yuvUbo) {
+        slot.yuvUbo.reset(m_rhi->newBuffer(QRhiBuffer::Dynamic, QRhiBuffer::UniformBuffer, kYuvUboSize));
+        slot.yuvUbo->create();
+    }
+    if (!slot.yuvSrb) {
+        slot.yuvSrb.reset(m_rhi->newShaderResourceBindings());
+        const auto stages = QRhiShaderResourceBinding::VertexStage | QRhiShaderResourceBinding::FragmentStage;
+        QRhiTexture *v = nv12 ? slot.planes[1].get() : slot.planes[2].get();
+        slot.yuvSrb->setBindings({
+            QRhiShaderResourceBinding::uniformBuffer(0, stages, slot.yuvUbo.get()),
+            QRhiShaderResourceBinding::sampledTexture(1, QRhiShaderResourceBinding::FragmentStage, slot.planes[0].get(), m_sampler.get()),
+            QRhiShaderResourceBinding::sampledTexture(2, QRhiShaderResourceBinding::FragmentStage, slot.planes[1].get(), m_sampler.get()),
+            QRhiShaderResourceBinding::sampledTexture(3, QRhiShaderResourceBinding::FragmentStage, v, m_sampler.get()),
+        });
+        slot.yuvSrb->create();
+    }
+
+    QRhiResourceUpdateBatch *u = m_rhi->nextResourceUpdateBatch();
+    const auto upload = [&](int i, int bytesPerPixel, QSize size) {
+        QRhiTextureSubresourceUploadDescription d(img.planes[i].constData(), static_cast<quint32>(img.planes[i].size()));
+        d.setDataStride(static_cast<quint32>(size.width() * bytesPerPixel));
+        u->uploadTexture(slot.planes[i].get(), QRhiTextureUploadDescription({0, 0, d}));
+    };
+    upload(0, 1, img.size);
+    upload(1, nv12 ? 2 : 1, chroma);
+    if (!nv12)
+        upload(2, 1, chroma);
+    // Linha 0 da textura = topo da imagem, como num upload de QImage.
+    const float params[8] = {m_rhi->isYUpInNDC() != m_rhi->isYUpInFramebuffer() ? 1.f : 0.f, 0, 0, 0,
+                             nv12 ? 1.f : 0.f, static_cast<float>(img.rotation / 90), img.fullRange ? 1.f : 0.f,
+                             img.bt709 ? 1.f : 0.f};
+    u->updateDynamicBuffer(slot.yuvUbo.get(), 0, sizeof params, params);
+
+    cb->beginPass(slot.rt.get(), Qt::black, {1.0f, 0}, u);
+    cb->setGraphicsPipeline(m_yuvPipe.get());
+    cb->setViewport(QRhiViewport(0, 0, slot.size.width(), slot.size.height()));
+    cb->setShaderResources(slot.yuvSrb.get());
+    cb->draw(3);
+    cb->endPass();
 }
 
 void Compositor::blitTo(QRhiCommandBuffer *cb, QRhiRenderTarget *rt, const QRectF &viewport, const QColor &clear)

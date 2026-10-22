@@ -34,7 +34,7 @@ constexpr int kPausedLookahead = 2;
 class ImageSource : public clv::render::FrameSource {
 public:
     QImage image;
-    QImage frameFor(const clv::VisualLayer &) override { return image; }
+    clv::VideoImage frameFor(const clv::VisualLayer &) override { return image; }
 };
 
 class PreviewRenderer : public QQuickRhiItemRenderer {

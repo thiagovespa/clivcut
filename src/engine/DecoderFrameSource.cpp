@@ -50,7 +50,7 @@ public:
     std::atomic<int> seeks = 0;
 
     /** Quadro no tempo `t` da mídia; espera a decodificação se ele ainda não estiver pronto. */
-    QImage get(Micros t, bool *hit)
+    VideoImage get(Micros t, bool *hit)
     {
         std::unique_lock lock(m_mutex);
         m_lastRequested = t;
@@ -79,7 +79,7 @@ public:
 
 private:
     struct Frame {
-        QImage img;
+        VideoImage img;
         Micros from = 0, until = 0; ///< tempos da mídia que mostram este quadro
     };
 
@@ -169,13 +169,15 @@ private:
                 return {};
             }
         }
+        // Com matte, o alfa é aplicado em RGBA na CPU; sem, a GPU converte o YUV.
+        const bool matte = !config.mattePath.isEmpty();
         Frame f;
-        f.img = m_dec->frameAt(t);
+        f.img = m_dec->frameImage(t, !matte);
         f.from = m_dec->frameStart();
         f.until = m_dec->frameEnd();
         seeks = m_dec->seeks();
-        if (!config.mattePath.isEmpty() && !f.img.isNull())
-            applyMatte(t, f.img);
+        if (matte && !f.img.isNull())
+            applyMatte(t, f.img.rgba);
         return f;
     }
 
@@ -219,7 +221,7 @@ private:
     std::set<Micros> m_attempted; ///< pedidos de m_wanted já decodificados (ou que falharam)
     std::optional<Micros> m_urgent;
     quint64 m_urgentId = 0, m_servedId = 0;
-    QImage m_served;
+    VideoImage m_served;
     Micros m_lastRequested = 0;
     bool m_stop = false;
     std::thread m_thread; // por último: começa com o resto já construído
@@ -254,12 +256,12 @@ DecoderFrameSource::Worker &DecoderFrameSource::workerFor(const QString &clipId,
     return *w;
 }
 
-QImage DecoderFrameSource::frameFor(const VisualLayer &layer)
+VideoImage DecoderFrameSource::frameFor(const VisualLayer &layer)
 {
     if (!layer.clip || !layer.asset)
         return {};
     bool hit = false;
-    const QImage img = workerFor(layer.clip->id, configFor(layer)).get(layer.sourceTime, &hit);
+    const VideoImage img = workerFor(layer.clip->id, configFor(layer)).get(layer.sourceTime, &hit);
     ++(hit ? m_hits : m_misses);
     return img;
 }

@@ -80,8 +80,8 @@ private slots:
         edit::insertClip(proj, createMediaClip(a, 0), 0);
         const VisualLayer layer = evaluate(proj, kSecond).layers.front();
         engine::DecoderFrameSource original(QSize(2560, 1440), false), proxied(QSize(2560, 1440), true);
-        QCOMPARE(original.frameFor(layer).size(), QSize(2560, 1440));
-        QCOMPARE(proxied.frameFor(layer).size(), QSize(960, 540));
+        QCOMPARE(original.frameFor(layer).displaySize(), QSize(2560, 1440));
+        QCOMPARE(proxied.frameFor(layer).displaySize(), QSize(960, 540));
 
         // Arquivo original alterado → outro caminho de proxy.
         engine::unregisterProxy(m_video);
@@ -110,10 +110,13 @@ private slots:
         engine::DecoderFrameSource source(QSize(1280, 720), false);
 
         // Sem matte pronto: quadro opaco.
-        QCOMPARE(qAlpha(source.frameFor(layer).pixel(100, 360)), 255);
+        QCOMPARE(qAlpha(source.frameFor(layer).toImage().pixel(100, 360)), 255);
 
         engine::registerMatte(m_video, matte);
-        const QImage img = source.frameFor(layer);
+        // Com matte o quadro vem em RGBA (o alfa é aplicado na CPU).
+        const VideoImage matted = source.frameFor(layer);
+        QCOMPARE(matted.format, VideoImage::Format::Rgba);
+        const QImage img = matted.rgba;
         QCOMPARE(img.size(), QSize(1280, 720));
         QVERIFY(qAlpha(img.pixel(200, 360)) > 240);
         QVERIFY(qAlpha(img.pixel(1080, 360)) < 15);
@@ -122,7 +125,7 @@ private slots:
 
         proj.tracks[0].clips[0].removeBackground = false;
         const VisualLayer plain = evaluate(proj, kSecond).layers.front();
-        QCOMPARE(qAlpha(source.frameFor(plain).pixel(1080, 360)), 255);
+        QCOMPARE(qAlpha(source.frameFor(plain).toImage().pixel(1080, 360)), 255);
     }
 
     void prefetchMatchesDirectDecoding()
@@ -165,8 +168,8 @@ private slots:
                     dec = std::make_unique<media::VideoDecoder>();
                     QVERIFY(dec->open(m_video, maxSize));
                 }
-                const QImage expected = dec->frameAt(l.sourceTime);
-                QVERIFY(!expected.isNull());
+                const VideoImage expected = dec->frameImage(l.sourceTime);
+                QVERIFY(expected.isYuv());
                 QVERIFY2(source.frameFor(l) == expected, qPrintable(QStringLiteral("t=%1 clip=%2").arg(times[i]).arg(l.clip->id)));
                 ++compared;
             }

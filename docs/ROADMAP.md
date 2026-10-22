@@ -37,7 +37,7 @@
 
 | # | Feature | Status | Notes |
 |---|---|---|---|
-| 1 | Zero-copy hardware decoding and frame prefetching | 🟡 | VA-API decoding done (MVP #24); each clip decodes on its own thread, ahead of the playhead in preview and export (export ≈1.7× faster with three 4K layers), and upcoming clips open before the cut; zero-copy (VA-API → dmabuf → Vulkan/GL texture) missing |
+| 1 | Zero-copy hardware decoding and frame prefetching | 🟡 | VA-API decoding done (MVP #24); each clip decodes on its own thread, ahead of the playhead in preview and export (export ≈1.7× faster with three 4K layers), and upcoming clips open before the cut; 8-bit 4:2:0 frames reach the GPU as YUV planes and are converted there (half the upload, no color conversion on the CPU; export ≈2× faster in total); zero-copy (VA-API → dmabuf → Vulkan/GL texture) missing |
 | 2 | Compound clips | ✅ | create, break apart, edit the contents in place (nested), trim/split, render, mix and copy as one clip |
 | 3 | Speed curves and smooth slow motion | 🟡 | speed curves done (MVP #12); frame interpolation (RIFE) missing |
 | 4 | Advanced color: curves, HSL, color wheels, adjustment layers | ✅ | grading baked into a per-clip 3D LUT (also on adjustment layers); keyframing grading values missing |

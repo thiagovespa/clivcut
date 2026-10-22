@@ -29,7 +29,7 @@ public:
     explicit DecoderFrameSource(QSize maxSize = {}, bool preferProxy = false);
     ~DecoderFrameSource() override;
 
-    QImage frameFor(const VisualLayer &layer) override;
+    VideoImage frameFor(const VisualLayer &layer) override;
 
     /**
      * Decodifica em segundo plano os quadros de `p` nos instantes `times` da timeline,

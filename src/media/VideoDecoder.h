@@ -3,6 +3,7 @@
 
 #include "FFmpegUtil.h"
 #include "core/Model.h"
+#include "core/VideoImage.h"
 
 #include <QImage>
 #include <QString>
@@ -43,6 +44,11 @@ public:
     /** Quadro em RGBA8888 premultiplicado. Retorna imagem nula em erro/fim. */
     QImage frameAt(Micros t);
     /**
+     * O mesmo quadro de `frameAt`, mas em YUV 4:2:0 de 8 bits (para a GPU converter) quando o
+     * vídeo permite; senão (outros formatos, rotação fora de 90°, `allowYuv` falso) em RGBA.
+     */
+    VideoImage frameImage(Micros t, bool allowYuv = true);
+    /**
      * Intervalo [início, fim) de tempos que devolvem o mesmo quadro do último `frameAt`
      * (imagens estáticas: o tempo todo; último quadro do vídeo: até o infinito).
      */
@@ -54,7 +60,12 @@ public:
 private:
     bool decodeUntil(Micros t);
     bool seekTo(Micros t);
-    QImage convert(const AVFrame *f);
+    /** Posiciona m_last no quadro de `t`; false se não há quadro novo (fica o anterior). */
+    bool position(Micros t);
+    /** Quadro na memória (reduzido na GPU e baixado, se estiver na GPU), ou nulo. */
+    const AVFrame *toCpu(const AVFrame *f);
+    QImage toRgba(const AVFrame *f);
+    VideoImage toVideoImage(const AVFrame *gpuOrCpu);
 
     QString m_path;
     QImage m_still;
@@ -81,9 +92,16 @@ private:
     FramePtr m_peek;
     Micros m_peekPts = -1;
 
-    // Último quadro convertido para RGBA.
+    // Último quadro convertido para RGBA e para VideoImage, e o pts do último devolvido.
     QImage m_current;
     Micros m_currentPts = -1;
+    VideoImage m_image;
+    Micros m_imagePts = -1;
+    Micros m_shownPts = -1;
+    SwsPtr m_yuvSws; ///< só redimensiona (YUV → YUV)
+    FramePtr m_yuvFrame;
+    int m_yuvSwsFormat = -1;
+    QSize m_yuvSwsSrc, m_yuvSwsDst;
     Micros m_frameDur = 33'333;
     bool m_eof = false;
     int m_seeks = 0;

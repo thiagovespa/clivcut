@@ -3,6 +3,7 @@
 
 #include "core/Evaluate.h"
 #include "core/Model.h"
+#include "core/VideoImage.h"
 
 #include <QColor>
 #include <QHash>
@@ -21,11 +22,11 @@ struct Lut3D;
 
 namespace clv::render {
 
-/** Fornece a imagem (quadro de vídeo/imagem) de uma camada de mídia. */
+/** Fornece a imagem (quadro de vídeo/imagem, em RGBA ou YUV) de uma camada de mídia. */
 class FrameSource {
 public:
     virtual ~FrameSource() = default;
-    virtual QImage frameFor(const VisualLayer &layer) = 0;
+    virtual VideoImage frameFor(const VisualLayer &layer) = 0;
 };
 
 /**
@@ -72,7 +73,10 @@ private:
     std::unique_ptr<QRhiTexture> uploadLut(const Lut3D &lut, QRhiResourceUpdateBatch *u);
     void fillUbo(LayerUbo &u, const VisualLayer &l, const Project &p, double frameAspect) const;
     /** Versão pequena e borrada do quadro, reaproveitada enquanto o quadro não muda. */
-    const QImage &blurredBackground(const QImage &frame, double amount);
+    const QImage &blurredBackground(const VideoImage &frame, double amount);
+    /** Converte um quadro YUV na textura do slot (um passe na GPU, antes da composição). */
+    void convertYuv(QRhiCommandBuffer *cb, Slot &slot, const VideoImage &img);
+    bool yuvSupported() const;
 
     QRhi *m_rhi;
     QSize m_size;
@@ -97,6 +101,15 @@ private:
     std::unique_ptr<QRhiGraphicsPipeline> m_blitPipe;
     QVector<quint32> m_blitRpFormat;
     QRhiTexture *m_blitSrbTex = nullptr;
+
+    // Conversão YUV → RGBA: pipeline e layout (alvo e texturas de referência).
+    std::unique_ptr<QRhiGraphicsPipeline> m_yuvPipe;
+    std::unique_ptr<QRhiShaderResourceBindings> m_yuvLayoutSrb;
+    std::unique_ptr<QRhiRenderPassDescriptor> m_yuvRp;
+    std::unique_ptr<QRhiTextureRenderTarget> m_yuvLayoutRt;
+    std::unique_ptr<QRhiTexture> m_yuvLayoutTarget;
+    std::unique_ptr<QRhiTexture> m_yuvLayoutPlane;
+    std::unique_ptr<QRhiBuffer> m_yuvLayoutUbo;
 
     QHash<QString, std::shared_ptr<Slot>> m_slots;
     /// Composições internas dos clipes compostos (por id do clipe) e o último quadro em que apareceram.

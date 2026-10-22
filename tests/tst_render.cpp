@@ -16,8 +16,8 @@ namespace {
 
 class SolidSource : public render::FrameSource {
 public:
-    QHash<QString, QImage> images; // por assetId
-    QImage frameFor(const VisualLayer &l) override { return images.value(l.clip->assetId); }
+    QHash<QString, VideoImage> images; // por assetId
+    VideoImage frameFor(const VisualLayer &l) override { return images.value(l.clip->assetId); }
 };
 
 QImage solid(QColor c, QSize s = {160, 90})
@@ -25,6 +25,53 @@ QImage solid(QColor c, QSize s = {160, 90})
     QImage img(s, QImage::Format_RGBA8888);
     img.fill(c);
     return img;
+}
+
+/** Converte RGB em YUV 4:2:0 (cor média de cada bloco 2×2), como sairia de um decodificador. */
+VideoImage toYuv(const QImage &rgb, bool nv12, bool bt709, bool fullRange, int rotation = 0)
+{
+    const QImage src = rgb.convertToFormat(QImage::Format_RGBA8888);
+    const int w = src.width(), h = src.height();
+    VideoImage v;
+    v.format = nv12 ? VideoImage::Format::Nv12 : VideoImage::Format::I420;
+    v.size = src.size();
+    v.bt709 = bt709;
+    v.fullRange = fullRange;
+    v.rotation = rotation;
+    v.key = VideoImage::newKey();
+    const double kr = bt709 ? 0.2126 : 0.299, kb = bt709 ? 0.0722 : 0.114;
+    const auto yuv = [&](QColor c, double &y, double &cb, double &cr) {
+        y = kr * c.redF() + (1 - kr - kb) * c.greenF() + kb * c.blueF();
+        cb = (c.blueF() - y) / (2 * (1 - kb));
+        cr = (c.redF() - y) / (2 * (1 - kr));
+    };
+    const auto Y8 = [&](double y) { return static_cast<char>(std::lround(fullRange ? y * 255 : 16 + y * 219)); };
+    const auto C8 = [&](double c) { return static_cast<char>(std::lround(fullRange ? 128 + c * 255 : 128 + c * 224)); };
+    const QSize cs = v.chromaSize();
+    v.planes[0].resize(w * h);
+    v.planes[1].resize(cs.width() * cs.height() * (nv12 ? 2 : 1));
+    if (!nv12)
+        v.planes[2].resize(cs.width() * cs.height());
+    for (int y = 0; y < h; ++y)
+        for (int x = 0; x < w; ++x) {
+            double l, cb, cr;
+            yuv(src.pixelColor(x, y), l, cb, cr);
+            v.planes[0][y * w + x] = Y8(l);
+        }
+    for (int cy = 0; cy < cs.height(); ++cy)
+        for (int cx = 0; cx < cs.width(); ++cx) {
+            double l, cb, cr;
+            yuv(src.pixelColor(std::min(cx * 2, w - 1), std::min(cy * 2, h - 1)), l, cb, cr);
+            const int i = cy * cs.width() + cx;
+            if (nv12) {
+                v.planes[1][i * 2] = C8(cb);
+                v.planes[1][i * 2 + 1] = C8(cr);
+            } else {
+                v.planes[1][i] = C8(cb);
+                v.planes[2][i] = C8(cr);
+            }
+        }
+    return v;
 }
 
 MediaAsset imageAsset(Project &p, QSize s = {160, 90})
@@ -496,6 +543,51 @@ private slots:
         QVERIFY2(mid.red() > 200 && mid.green() > 120 && mid.blue() < 90, qPrintable(mid.name()));
         QVERIFY(near(px(img, 10, 10), Qt::black));
         QVERIFY(!near(px(img, 100, 60), Qt::black)); // dentro do cartão
+    }
+
+    void yuvFrames()
+    {
+        // Metade esquerda vermelha, direita azul: a GPU converte o YUV com a matriz, a faixa e a
+        // rotação do quadro, e o resultado bate com a conversão na CPU.
+        QImage pattern(160, 90, QImage::Format_RGBA8888);
+        pattern.fill(QColor(220, 40, 30));
+        for (int y = 0; y < 90; ++y)
+            for (int x = 80; x < 160; ++x)
+                pattern.setPixelColor(x, y, QColor(30, 60, 210));
+
+        struct Case {
+            bool nv12, bt709, full;
+        };
+        for (const Case &k : {Case{false, false, false}, Case{true, true, false}, Case{false, true, true}, Case{true, false, true}}) {
+            Project p = createProject(QStringLiteral("t"), 160, 90, 30);
+            auto a = imageAsset(p);
+            edit::insertClip(p, createMediaClip(a, 0), 0);
+            SolidSource src;
+            const VideoImage frame = toYuv(pattern, k.nv12, k.bt709, k.full);
+            src.images[a.id] = frame;
+            const QImage out = renderAt(p, 0, src);
+            const QImage cpu = frame.toImage();
+            for (const QPoint &pt : {QPoint(30, 45), QPoint(130, 45)}) {
+                QVERIFY2(near(px(out, pt.x(), pt.y()), pattern.pixelColor(pt), 8),
+                         qPrintable(QStringLiteral("nv12=%1 709=%2 full=%3 at %4,%5: %6")
+                                        .arg(k.nv12).arg(k.bt709).arg(k.full).arg(pt.x()).arg(pt.y())
+                                        .arg(px(out, pt.x(), pt.y()).name())));
+                QVERIFY(near(px(out, pt.x(), pt.y()), cpu.pixelColor(pt), 3));
+            }
+        }
+
+        // Vídeo de celular (90° horário): o lado esquerdo vai para cima.
+        Project p = createProject(QStringLiteral("t"), 90, 160, 30);
+        auto a = imageAsset(p, {90, 160});
+        edit::insertClip(p, createMediaClip(a, 0), 0);
+        SolidSource src;
+        const VideoImage rotated = toYuv(pattern, false, false, false, 90);
+        QCOMPARE(rotated.displaySize(), QSize(90, 160));
+        src.images[a.id] = rotated;
+        const QImage out = renderAt(p, 0, src);
+        QVERIFY2(near(px(out, 45, 30), pattern.pixelColor(30, 45), 8), qPrintable(px(out, 45, 30).name()));
+        QVERIFY2(near(px(out, 45, 130), pattern.pixelColor(130, 45), 8), qPrintable(px(out, 45, 130).name()));
+        QVERIFY(near(rotated.toImage().pixelColor(45, 30), pattern.pixelColor(30, 45), 8));
     }
 
     void cleanupTestCase() { m_comp.reset(); }

@@ -17,4 +17,6 @@ qt_add_shaders(clivcut_render "clivcut_shaders"
         shaders/layer.frag
         shaders/blit.vert
         shaders/blit.frag
+        shaders/yuv.vert
+        shaders/yuv.frag
 )
