@@ -71,11 +71,35 @@ modules:
         url: https://github.com/ggml-org/whisper.cpp.git
         tag: v1.9.4
 
+  # Texto → fonemas para a voz neural; os dados ficam em /app/share/espeak-ng-data.
+  - name: espeak-ng
+    buildsystem: cmake-ninja
+    config-opts:
+      - -DCMAKE_BUILD_TYPE=Release
+      - -DBUILD_SHARED_LIBS=ON
+      - -DUSE_MBROLA=OFF
+      - -DUSE_LIBSONIC=OFF
+      - -DUSE_LIBPCAUDIO=OFF
+      - -DUSE_KLATT=OFF
+      - -DUSE_SPEECHPLAYER=OFF
+      - -DUSE_ASYNC=OFF
+      - -DBUILD_TESTING=OFF
+      - -DESPEAK_BUILD_MANPAGES=OFF
+    cleanup:
+      - /bin
+      - /include
+      - /share/vim
+    sources:
+      - type: archive
+        url: https://github.com/espeak-ng/espeak-ng/archive/refs/tags/1.52.0.tar.gz
+        sha256: bb4338102ff3b49a81423da8a1a158b420124b055b60fa76cfb4b18677130a23
+
   - name: clivcut
     buildsystem: cmake-ninja
     config-opts:
       - -DCMAKE_BUILD_TYPE=Release
       - -DCLIVCUT_BUILD_TESTS=OFF
+      - -DCLIVCUT_SYSTEM_ESPEAK=ON
       # O build do Flatpak não tem rede: o ONNX Runtime vem como fonte abaixo, não pelo FetchContent.
       - -DCLIVCUT_ONNXRUNTIME_ROOT=/run/build/clivcut/onnxruntime
     sources:

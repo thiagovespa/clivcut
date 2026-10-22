@@ -99,6 +99,10 @@ class Bundler:
         self.frameworks.mkdir(exist_ok=True)
         self.copy_plugins()
         self.copy_qml()
+        # Dados de fonemas da voz neural (gerados no build, só as línguas usadas).
+        espeak = self.build / 'tts/espeak-ng-data'
+        if espeak.is_dir():
+            shutil.copytree(espeak, self.contents / 'Resources/espeak-ng-data', dirs_exist_ok=True)
         (self.contents / 'Resources/qt.conf').write_text(
             '[Paths]\nPlugins = PlugIns\nImports = Resources/qml\nQmlImports = Resources/qml\n')
         self.patch_info_plist()

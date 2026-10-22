@@ -18,6 +18,7 @@ option(CLIVCUT_BUILD_APP "Compilar a interface gráfica" ON)
 option(CLIVCUT_WITH_WHISPER "Legendas automáticas locais com whisper.cpp" ON)
 option(CLIVCUT_WHISPER_VULKAN "Aceleração Vulkan no whisper.cpp (compilação mais lenta)" OFF)
 option(CLIVCUT_WITH_ONNX "IA local (remoção de fundo, isolamento de voz) com ONNX Runtime" ON)
+option(CLIVCUT_WITH_TTS "Narração por texto (Kokoro via ONNX Runtime + espeak-ng)" ON)
 set(CLIVCUT_ONNXRUNTIME_ROOT "" CACHE PATH "ONNX Runtime já instalado (com include/ e lib/); vazio = baixar o pacote oficial")
 
 find_package(Qt6 6.7 REQUIRED COMPONENTS Core Gui ShaderTools)
@@ -139,6 +140,10 @@ if(CLIVCUT_WITH_ONNX)
         install(FILES ${ORT_RUNTIME_FILES} DESTINATION ${CMAKE_INSTALL_LIBDIR})
         list(APPEND CMAKE_INSTALL_RPATH "$ORIGIN/../${CMAKE_INSTALL_LIBDIR}")
     endif()
+endif()
+
+if(CLIVCUT_WITH_ONNX AND CLIVCUT_WITH_TTS)
+    include(cmake/Espeak.cmake)
 endif()
 
 if(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")

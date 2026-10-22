@@ -83,7 +83,7 @@ ARG MACOS_MIN=13.0
 ARG OSXCROSS_COMMIT=27d21e4977c9751d01199c7a226a6faf494c3dd9
 ENV MACOS_MIN=${MACOS_MIN}
 RUN apt-get update && apt-get install -y --no-install-recommends \
-        cpio patch libxml2-dev libssl-dev zlib1g-dev liblzma-dev libbz2-dev uuid-dev \
+        cpio patch libxml2-dev libssl-dev zlib1g-dev liblzma-dev libbz2-dev uuid-dev libc6-dev \
  && rm -rf /var/lib/apt/lists/* \
  && ln -s /usr/lib/llvm-${LLVM_VERSION}/bin/clang /usr/local/bin/cc \
  && ln -s /usr/lib/llvm-${LLVM_VERSION}/bin/clang++ /usr/local/bin/c++

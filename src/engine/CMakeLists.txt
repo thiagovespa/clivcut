@@ -9,6 +9,7 @@ add_library(clivcut_engine STATIC
     Stabilization.h Stabilization.cpp
     MotionTracking.h MotionTracking.cpp
     StemSeparation.h StemSeparation.cpp
+    TextToSpeech.h TextToSpeech.cpp
     Beats.h Beats.cpp
     VoiceEffects.h VoiceEffects.cpp
     Exporter.h Exporter.cpp
@@ -28,4 +29,8 @@ endif()
 if(TARGET clivcut_onnxruntime)
     target_link_libraries(clivcut_engine PUBLIC clivcut_onnxruntime)
     target_compile_definitions(clivcut_engine PRIVATE CLIVCUT_HAVE_ONNX)
+    if(TARGET clivcut_espeak)
+        target_link_libraries(clivcut_engine PRIVATE clivcut_espeak)
+        target_compile_definitions(clivcut_engine PRIVATE CLIVCUT_HAVE_TTS)
+    endif()
 endif()
