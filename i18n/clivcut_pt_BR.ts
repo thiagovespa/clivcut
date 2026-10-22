@@ -3610,6 +3610,10 @@ Atalhos: Espaço reproduz · Ctrl+B divide · Q/W exclui à esquerda/direita · 
 <context>
     <name>Render</name>
     <message>
+        <source>No graphics backend without a display: run it in a graphical session or under xvfb-run</source>
+        <translation>Nenhum backend gráfico sem tela: rode numa sessão gráfica ou com xvfb-run</translation>
+    </message>
+    <message>
         <source>No graphics backend available (Vulkan/OpenGL)</source>
         <translation>Nenhum backend gráfico disponível (Vulkan/OpenGL)</translation>
     </message>

@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
-# Instala os pacotes de dist/ em contêineres limpos e confere que o clivcut abre (Xvfb) e
-# que o clivcut-render renderiza sem tela. Pega dependência faltando e plugin ausente.
+# Instala os pacotes de dist/ em contêineres limpos e confere que o clivcut abre e o
+# clivcut-render renderiza (num X virtual) e lê mídia sem tela nenhuma. Pega dependência
+# faltando e plugin ausente.
 #
 # Uso: packaging/linux/test-packages.sh [pasta dos pacotes]   (requer Docker e ffmpeg)
 # DISTROS escolhe os testes (padrão: todos): ubuntu-24.04 debian-13 fedora-42 opensuse-tumbleweed arch-tar.gz
@@ -38,9 +39,11 @@ set -e
 APP=${1:-clivcut}; RENDER=${2:-clivcut-render}
 export HOME=/tmp LC_ALL=C.UTF-8
 echo "-- $(. /etc/os-release; echo "$PRETTY_NAME")"
-# Sem tela: plugin offscreen + Vulkan/OpenGL por software.
-env -u DISPLAY -u WAYLAND_DISPLAY "$RENDER" /t/project.clivcut /tmp/out.mp4 --height 360 >/dev/null 2>/tmp/render.log \
-    || { tail -8 /tmp/render.log; echo "FAIL: headless render"; exit 1; }
+# Sem tela nenhuma (plugin offscreen): os comandos que não usam a GPU.
+env -u DISPLAY -u WAYLAND_DISPLAY "$RENDER" --probe /t/clip.mp4 | grep -q 'size: 1280x720' || { echo "FAIL: headless probe"; exit 1; }
+# Render: Vulkan/OpenGL por software num X virtual.
+xvfb-run -a "$RENDER" /t/project.clivcut /tmp/out.mp4 --height 360 >/dev/null 2>/tmp/render.log \
+    || { tail -8 /tmp/render.log; echo "FAIL: render"; exit 1; }
 "$RENDER" --probe /tmp/out.mp4 | grep -q 'size: 640x360' || { echo "FAIL: output"; exit 1; }
 # Interface: plugin xcb num X virtual.
 xvfb-run -a "$APP" --version || { echo "FAIL: GUI"; exit 1; }

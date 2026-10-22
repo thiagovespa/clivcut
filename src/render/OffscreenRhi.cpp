@@ -2,6 +2,7 @@
 #include "OffscreenRhi.h"
 
 #include <QCoreApplication>
+#include <QGuiApplication>
 #include <QOffscreenSurface>
 #include <QSurfaceFormat>
 #ifdef CLIVCUT_HAS_VULKAN
@@ -89,8 +90,13 @@ bool OffscreenRhi::create(QString *error, QOffscreenSurface *fallbackSurface)
     }
 #endif
 
-    if (error)
-        *error = QCoreApplication::translate("Render", "No graphics backend available (Vulkan/OpenGL)");
+    if (error) {
+        // Sem tela (plugin offscreen) o Qt não oferece Vulkan nem OpenGL.
+        *error = QGuiApplication::platformName() == QLatin1String("offscreen")
+                     ? QCoreApplication::translate("Render", "No graphics backend without a display: run it in a graphical "
+                                                             "session or under xvfb-run")
+                     : QCoreApplication::translate("Render", "No graphics backend available (Vulkan/OpenGL)");
+    }
     return false;
 }
 
