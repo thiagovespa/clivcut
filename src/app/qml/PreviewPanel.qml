@@ -284,6 +284,63 @@ Rectangle {
                 onVisibleChanged: if (visible) forceActiveFocus()
             }
 
+            // Recorte de objeto: cliques sobre o objeto (Alt+clique ou botão direito: o que não é dele).
+            Item {
+                id: cutoutPick
+                visible: Project.cutoutPick
+                x: preview.canvasRect.x
+                y: preview.canvasRect.y
+                width: preview.canvasRect.width
+                height: preview.canvasRect.height
+                property var markers: visible ? (Project.playhead, Project.revision, Project.cutoutMarkers()) : []
+                MouseArea {
+                    anchors.fill: parent
+                    cursorShape: Qt.CrossCursor
+                    acceptedButtons: Qt.LeftButton | Qt.RightButton
+                    onClicked: (mouse) => Project.addCutoutPoint(mouse.x / width, mouse.y / height,
+                                                                 mouse.button === Qt.LeftButton && !(mouse.modifiers & Qt.AltModifier))
+                }
+                Repeater {
+                    model: cutoutPick.markers
+                    Rectangle {
+                        required property var modelData
+                        x: modelData.x * cutoutPick.width - width / 2
+                        y: modelData.y * cutoutPick.height - height / 2
+                        width: 18
+                        height: 18
+                        radius: 9
+                        color: modelData.positive ? "#2e7d32" : "#c62828"
+                        border.color: "white"
+                        border.width: 2
+                        Text {
+                            anchors.centerIn: parent
+                            text: parent.modelData.positive ? "+" : "−"
+                            color: "white"
+                            font.pixelSize: 13
+                            font.bold: true
+                        }
+                    }
+                }
+                Rectangle {
+                    anchors.horizontalCenter: parent.horizontalCenter
+                    anchors.top: parent.top
+                    anchors.topMargin: 10
+                    width: cutoutHint.implicitWidth + 20
+                    height: 28
+                    radius: 14
+                    color: "#cc000000"
+                    Text {
+                        id: cutoutHint
+                        anchors.centerIn: parent
+                        color: "white"
+                        font.pixelSize: Theme.fontSmall
+                        text: qsTr("Click the object · Alt+click or right-click: not part of it · Esc finishes")
+                    }
+                }
+                Keys.onEscapePressed: Project.cancelCutoutPick()
+                onVisibleChanged: if (visible) forceActiveFocus()
+            }
+
             Text {
                 anchors.centerIn: parent
                 visible: Project.duration <= 0

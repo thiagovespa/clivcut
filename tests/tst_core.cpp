@@ -362,6 +362,10 @@ private slots:
         c.blend = BlendMode::Screen;
         c.removeBackground = true;
         c.smoothSlowMotion = true;
+        c.cutout.object = true;
+        c.cutout.time = 1'250'000;
+        c.cutout.points = {{0.25, 0.5, true}, {0.75, 0.1, false}};
+        c.cutout.tracked = true;
         c.voiceIsolation = 0.7;
         p.inPoint = 250'000;
         p.outPoint = 900'000;
@@ -385,6 +389,8 @@ private slots:
         QCOMPARE(q.tracks[1].clips[0].text, QStringLiteral("Olá ✓"));
         QVERIFY(q.tracks[0].clips[0].removeBackground);
         QVERIFY(q.tracks[0].clips[0].smoothSlowMotion);
+        QVERIFY(q.tracks[0].clips[0].cutout == c.cutout);
+        QVERIFY(q.tracks[0].clips[0].cutout.active());
         QCOMPARE(q.tracks[0].clips[0].voiceIsolation, 0.7);
         QCOMPARE(q.inPoint, 250'000);
         QCOMPARE(q.outPoint, 900'000);

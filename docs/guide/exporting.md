@@ -25,4 +25,4 @@ clivcut-render project.clivcut out.mp4 --codec hevc --height 2160
 clivcut-render --transcribe --model small --language en video.mp4 captions.srt
 ```
 
-Stabilization and background removal are applied there too (a missing stabilization analysis is done on the spot).
+Stabilization, background removal and smooth slow motion are applied there too (a missing stabilization analysis, object cutout or slow-motion interpolation is done on the spot).

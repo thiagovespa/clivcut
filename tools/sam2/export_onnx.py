@@ -7,7 +7,7 @@ the clip. The video tracking state (memory bank, object pointers) is kept by the
 these graphs are the networks between those steps.
 
 Requires the sam2 package at commit SAM2_COMMIT (pip install --no-deps -e <checkout>,
-with SAM2_BUILD_CUDA=0), torch (CPU), onnx, onnxruntime and numpy. The checkpoint is
+with SAM2_BUILD_CUDA=0), torch (CPU), onnx, onnxsim, onnxruntime and numpy. The checkpoint is
 downloaded from Meta's link in the SAM 2 README and checked by SHA-256.
 
 Graphs (batch 1, image 1024x1024, features 64x64):
@@ -185,6 +185,15 @@ def export(module, args, path, inputs, outputs, dynamic=None):
         expected = module(*copy())
         torch.onnx.export(module, copy(), path, opset_version=OPSET, dynamo=False, input_names=inputs,
                           output_names=outputs, dynamic_axes=dynamic or {})
+    # Folds the shape arithmetic the tracer leaves behind; ONNX Runtime 1.30 fails to load the
+    # encoder without this (its Reshape fusion trips on the window partitioning of Hiera).
+    import onnx
+    import onnxsim
+
+    simplified, ok = onnxsim.simplify(onnx.load(path))
+    if not ok:
+        sys.exit(f"could not simplify {path}")
+    onnx.save(simplified, path)
     import onnxruntime as ort
 
     session = ort.InferenceSession(path, providers=["CPUExecutionProvider"])

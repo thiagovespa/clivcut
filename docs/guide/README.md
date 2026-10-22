@@ -16,4 +16,4 @@ Two habits make everything easier to find:
 - **Ctrl+K** opens the command palette: type what you want ("split", "captions", "beats") and it shows the action and its shortcut.
 - The menu under the clivcut logo has **Help → Take the tour** (a one-minute walk through the window) and **Help → What's new**.
 
-All AI features (captions, transcript, voice isolation, music separation, background removal) run **on your computer**; their models are downloaded once, when you first use them.
+All AI features (captions, transcript, voice isolation, music separation, background and object cutout, smooth slow motion, AI voice) run **on your computer**; their models are downloaded once, when you first use them.

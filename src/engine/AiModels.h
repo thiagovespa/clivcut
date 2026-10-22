@@ -2,6 +2,7 @@
 #pragma once
 
 #include <QString>
+#include <QStringList>
 #include <QUrl>
 
 #include <vector>
@@ -37,5 +38,11 @@ inline const QString kTtsModel = QStringLiteral("kokoro");
 inline const QString kTtsVoices = QStringLiteral("kokoro-voices");
 /// Interpolação de quadros (RIFE v4.26, MIT), exportada por tools/rife/export_onnx.py.
 inline const QString kInterpolationModel = QStringLiteral("rife");
+/// Recorte de objetos (SAM 2.1 Hiera-Tiny, Apache-2.0) em quatro grafos, exportados por tools/sam2/export_onnx.py.
+inline const QString kCutoutEncoder = QStringLiteral("sam2-encoder");
+inline const QString kCutoutHeads = QStringLiteral("sam2-heads");
+inline const QString kCutoutMemoryEncoder = QStringLiteral("sam2-memory-encoder");
+inline const QString kCutoutMemoryAttention = QStringLiteral("sam2-memory-attention");
+inline const QStringList kCutoutModels{kCutoutEncoder, kCutoutHeads, kCutoutMemoryEncoder, kCutoutMemoryAttention};
 
 } // namespace clv::engine

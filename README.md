@@ -74,6 +74,7 @@ Written in **C++20 + Qt 6 (Qt Quick / RHI) + FFmpeg**. Video compositing runs on
 - **Motion tracking:** make a text, sticker or image follow something that moves in the video below it: draw a box around it on the player and the clip gets position keyframes from the playhead in both directions (editable afterwards).
 - **Stabilization:** smooths out camera shake with an adjustable strength. Each video is analyzed once in the background (block phase correlation and a robust shift/rotation/zoom fit); the correction, with a slight zoom that hides the moving edges, is applied while rendering, so changing the strength is instant and preview matches export.
 - **Background removal:** cuts people out of videos without a green screen, using a local AI model (RobustVideoMatting on ONNX Runtime, downloaded once). Processing runs in the background and the result is used in preview and export.
+  - **Any object:** click the object on the player (Alt+click marks what is not part of it), check the preview of that frame, and the AI (SAM 2, 195 MB, Apache-2.0, downloaded once) follows it through the whole clip, before and after the frame you clicked.
 - **Canvas:** 16:9, 9:16, 1:1, 4:3, 3:4, 4:5 and 21:9, with a background color or a blurred copy of the main video.
 - **Export:**
   - H.264, HEVC, AV1 and ProRes 422 HQ codecs, depending on the installed FFmpeg.
@@ -99,7 +100,7 @@ Written in **C++20 + Qt 6 (Qt Quick / RHI) + FFmpeg**. Video compositing runs on
 
 New to clivcut? The **[user guide](docs/guide/README.md)** explains each feature by task, and the app has a one-minute guided tour (logo menu → Help → Take the tour).
 
-See the [roadmap](docs/ROADMAP.md) for what comes next: interactive cutout, super-resolution, automatic reframing and more.
+See the [roadmap](docs/ROADMAP.md) for what comes next: super-resolution, automatic reframing and more.
 
 ## Building
 

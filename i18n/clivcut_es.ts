@@ -582,6 +582,22 @@
         <source>Frame interpolation cancelled</source>
         <translation>Interpolación de fotogramas cancelada</translation>
     </message>
+    <message>
+        <source>The object cutout model is not installed</source>
+        <translation>El modelo de recorte de objetos no está instalado</translation>
+    </message>
+    <message>
+        <source>Click on the object to cut out first</source>
+        <translation>Primero haz clic en el objeto que quieres recortar</translation>
+    </message>
+    <message>
+        <source>Object cutout only applies to videos</source>
+        <translation>El recorte de objetos solo se aplica a videos</translation>
+    </message>
+    <message>
+        <source>Object cutout cancelled</source>
+        <translation>Recorte de objeto cancelado</translation>
+    </message>
 </context>
 <context>
     <name>ExportDialog</name>
@@ -1257,6 +1273,73 @@ Atajos: Espacio reproduce · Ctrl+B divide · Q/W eliminan a la izquierda/derech
         <translation>El video ralentizado repite fotogramas y se ve a saltos. La IA crea los fotogramas que faltan entre ellos, en tu computadora, en segundo plano (tarda: alrededor de un segundo por fotograma nuevo).</translation>
     </message>
     <message>
+        <source>Remove the background</source>
+        <translation>Quitar el fondo</translation>
+    </message>
+    <message>
+        <source>People (automatic)</source>
+        <translation>Personas (automático)</translation>
+    </message>
+    <message>
+        <source>Pick an object</source>
+        <translation>Elegir un objeto</translation>
+    </message>
+    <message>
+        <source>Download model (195 MB)</source>
+        <translation>Descargar modelo (195 MB)</translation>
+    </message>
+    <message>
+        <source>Done picking</source>
+        <translation>Terminar selección</translation>
+    </message>
+    <message>
+        <source>Add or fix points on the player</source>
+        <translation>Añadir o corregir puntos en el reproductor</translation>
+    </message>
+    <message>
+        <source>Click the object on the player</source>
+        <translation>Haz clic en el objeto en el reproductor</translation>
+    </message>
+    <message>
+        <source>Undo point</source>
+        <translation>Deshacer punto</translation>
+    </message>
+    <message>
+        <source>Go to the frame</source>
+        <translation>Ir al fotograma</translation>
+    </message>
+    <message>
+        <source>Cut out in the whole clip</source>
+        <translation>Recortar en todo el clip</translation>
+    </message>
+    <message>
+        <source>Downloading the object cutout model…</source>
+        <translation>Descargando el modelo de recorte de objetos…</translation>
+    </message>
+    <message>
+        <source>Requires the object cutout model (SAM 2, Apache-2.0), downloaded only once.</source>
+        <translation>Requiere el modelo de recorte de objetos (SAM 2, Apache-2.0), que se descarga una sola vez.</translation>
+    </message>
+    <message>
+        <source>Click the object on the player to select it; Alt+click (or right-click) marks what is not part of it.</source>
+        <translation>Haz clic en el objeto en el reproductor para seleccionarlo; Alt+clic (o clic derecho) marca lo que no forma parte de él.</translation>
+    </message>
+    <message numerus="yes">
+        <source>%n point(s). The preview shows the selection on this frame; add points to fix it, then cut it out in the whole clip (it takes a few seconds per frame).</source>
+        <translation>
+            <numerusform>%n punto. La vista previa muestra la selección en este fotograma; añade puntos para corregirla y luego recórtalo en todo el clip (tarda unos segundos por fotograma).</numerusform>
+            <numerusform>%n puntos. La vista previa muestra la selección en este fotograma; añade puntos para corregirla y luego recórtalo en todo el clip (tarda unos segundos por fotograma).</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Following the object… %1%</source>
+        <translation>Siguiendo el objeto… %1%</translation>
+    </message>
+    <message>
+        <source>✓ Object cut out in the whole clip (processed locally)</source>
+        <translation>✓ Objeto recortado en todo el clip (procesado localmente)</translation>
+    </message>
+    <message>
         <source>Choose a file for the slot</source>
         <translation>Elige un archivo para el hueco</translation>
     </message>
@@ -1756,10 +1839,6 @@ Atajos: Espacio reproduce · Ctrl+B divide · Q/W eliminan a la izquierda/derech
     <message>
         <source>Remove background (AI)</source>
         <translation>Quitar fondo (IA)</translation>
-    </message>
-    <message>
-        <source>Cut out people automatically</source>
-        <translation>Recortar personas automáticamente</translation>
     </message>
     <message>
         <source>Download model (15 MB)</source>
@@ -2632,6 +2711,26 @@ Atajos: Espacio reproduce · Ctrl+B divide · Q/W eliminan a la izquierda/derech
         <source>Creates in-between frames for smooth slow motion</source>
         <translation>Crea fotogramas intermedios para una cámara lenta fluida</translation>
     </message>
+    <message>
+        <source>Cuts out any object you click on, following it through the clip</source>
+        <translation>Recorta cualquier objeto en el que hagas clic y lo sigue por el clip</translation>
+    </message>
+    <message>
+        <source>Object cutout (SAM 2): image encoder</source>
+        <translation>Recorte de objetos (SAM 2): codificador de imagen</translation>
+    </message>
+    <message>
+        <source>Object cutout (SAM 2): mask decoder</source>
+        <translation>Recorte de objetos (SAM 2): decodificador de máscara</translation>
+    </message>
+    <message>
+        <source>Object cutout (SAM 2): memory encoder</source>
+        <translation>Recorte de objetos (SAM 2): codificador de memoria</translation>
+    </message>
+    <message>
+        <source>Object cutout (SAM 2): memory attention</source>
+        <translation>Recorte de objetos (SAM 2): atención a la memoria</translation>
+    </message>
 </context>
 <context>
     <name>NewProjectDialog</name>
@@ -2745,6 +2844,10 @@ Atajos: Espacio reproduce · Ctrl+B divide · Q/W eliminan a la izquierda/derech
     <message>
         <source>Drag a box around what the clip should follow · right-click or Esc cancels</source>
         <translation>Arrastra un recuadro alrededor de lo que debe seguir el clip · clic derecho o Esc cancela</translation>
+    </message>
+    <message>
+        <source>Click the object · Alt+click or right-click: not part of it · Esc finishes</source>
+        <translation>Haz clic en el objeto · Alt+clic o clic derecho: no forma parte · Esc termina</translation>
     </message>
     <message>
         <source>Import media and drag it to the timeline</source>
@@ -3631,6 +3734,42 @@ Atajos: Espacio reproduce · Ctrl+B divide · Q/W eliminan a la izquierda/derech
     <message>
         <source>Smooth slow motion failed: %1</source>
         <translation>Error en la cámara lenta fluida: %1</translation>
+    </message>
+    <message>
+        <source>Cutting out the object in %1…</source>
+        <translation>Recortando el objeto en %1…</translation>
+    </message>
+    <message>
+        <source>Object cut out: %1</source>
+        <translation>Objeto recortado: %1</translation>
+    </message>
+    <message>
+        <source>Object cutout failed: %1</source>
+        <translation>Error en el recorte de objeto: %1</translation>
+    </message>
+    <message>
+        <source>Click the object to cut out · Alt+click or right-click marks what is not part of it</source>
+        <translation>Haz clic en el objeto que quieres recortar · Alt+clic o clic derecho marca lo que no forma parte de él</translation>
+    </message>
+    <message>
+        <source>Move the playhead over the clip</source>
+        <translation>Mueve el cursor sobre el clip</translation>
+    </message>
+    <message>
+        <source>Click on the video</source>
+        <translation>Haz clic sobre el video</translation>
+    </message>
+    <message>
+        <source>Select object</source>
+        <translation>Seleccionar objeto</translation>
+    </message>
+    <message>
+        <source>Clear object selection</source>
+        <translation>Borrar selección del objeto</translation>
+    </message>
+    <message>
+        <source>Cut out object</source>
+        <translation>Recortar objeto</translation>
     </message>
     <message>
         <source>Analyzing camera motion in %1…</source>
@@ -4574,6 +4713,14 @@ Atajos: Espacio reproduce · Ctrl+B divide · Q/W eliminan a la izquierda/derech
     <message>
         <source>Turn texts and captions into natural speech, generated on your computer, in Portuguese, Spanish, English and more: select a text and use “Read aloud” on the Text tab, or “Read all captions” in the Captions panel.</source>
         <translation>Convierte textos y subtítulos en voz natural, generada en tu equipo, en portugués, español, inglés y más: selecciona un texto y usa “Leer en voz alta” en la pestaña Texto, o “Leer todos los subtítulos” en el panel Subtítulos.</translation>
+    </message>
+    <message>
+        <source>Cut out any object</source>
+        <translation>Recorta cualquier objeto</translation>
+    </message>
+    <message>
+        <source>Background removal now cuts out anything you click on, not just people: pick the object on the player and the AI follows it through the clip (Advanced tab).</source>
+        <translation>Quitar el fondo ahora recorta cualquier cosa en la que hagas clic, no solo personas: elige el objeto en el reproductor y la IA lo sigue por el clip (pestaña Avanzado).</translation>
     </message>
     <message>
         <source>Smooth slow motion</source>

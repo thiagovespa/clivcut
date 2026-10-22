@@ -3,6 +3,7 @@
 
 #include "FrameInterpolation.h"
 #include "Matting.h"
+#include "ObjectCutout.h"
 #include "Proxy.h"
 #include "core/Evaluate.h"
 #include "media/VideoDecoder.h"
@@ -23,6 +24,7 @@ struct DecoderFrameSource::Config {
     QString path;      ///< arquivo decodificado (mídia ou proxy)
     QString mattePath; ///< matte de remoção de fundo, se o clipe pede e ele já existe
     Micros offset = 0; ///< tempo da mídia no início de `path` (vídeo interpolado de um trecho)
+    Micros matteOffset = 0; ///< tempo da mídia no início do matte (recorte de objeto de um trecho)
     QSize maxSize;
     bool operator==(const Config &) const = default;
 };
@@ -201,7 +203,7 @@ private:
                 return;
             }
         }
-        QImage m = m_matte->frameAt(t);
+        QImage m = m_matte->frameAt(t - config.matteOffset);
         if (m.isNull())
             return;
         if (m.size() != img.size())
@@ -260,8 +262,17 @@ DecoderFrameSource::Config DecoderFrameSource::configFor(const VisualLayer &laye
         if (!proxy.isEmpty())
             c.path = proxy;
     }
-    if (layer.clip->removeBackground)
+    if (layer.clip->removeBackground && layer.clip->cutout.object) {
+        // Objeto escolhido com cliques: o matte do trecho, quando o acompanhamento terminou.
+        const ObjectCutout &cut = layer.clip->cutout;
+        Micros start = 0;
+        double fps = 30;
+        if (cut.active())
+            c.mattePath = findObjectMatte(a.path, cut, layer.clip->sourceIn, layer.clip->sourceOut(), &start, &fps);
+        c.matteOffset = start - static_cast<Micros>(kSecond / (2 * fps)); // o quadro de matte mais próximo
+    } else if (layer.clip->removeBackground) {
         c.mattePath = registeredMatte(a.path);
+    }
     c.maxSize = m_maxSize;
     return c;
 }

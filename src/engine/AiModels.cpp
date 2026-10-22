@@ -61,6 +61,23 @@ const std::vector<AiModel> &aiModels()
                         QUrl(QStringLiteral("https://github.com/thiagovespa/clivcut/releases/download/models-v1/rife-v4.26.onnx")),
                         QStringLiteral("MIT"),
                         QStringLiteral("e4d8207ca790f803efc8324e84e3af69b1e65359abdfa7e92c976c224df60b8f")});
+        // SAM 2.1 Hiera-Tiny (Meta, Apache-2.0) em quatro grafos ONNX gerados por tools/sam2/export_onnx.py.
+        const auto sam2 = [&](const QString &id, const char *label, qint64 size, const char *file, const char *sha) {
+            list.push_back({id, QString::fromUtf8(label), size,
+                            QString::fromUtf8(QT_TRANSLATE_NOOP("Models", "Cuts out any object you click on, following it through the clip")),
+                            QStringLiteral("cutout"), QString::fromLatin1(file),
+                            QUrl(QStringLiteral("https://github.com/thiagovespa/clivcut/releases/download/models-v1/") +
+                                 QString::fromLatin1(file)),
+                            QStringLiteral("Apache-2.0"), QString::fromLatin1(sha)});
+        };
+        sam2(kCutoutEncoder, QT_TRANSLATE_NOOP("Models", "Object cutout (SAM 2): image encoder"), 134'437'025,
+             "sam2_encoder.onnx", "7c7249d45308131f2537b6d367c4ad395fdac0178a69c51d1aff1b688c9f595b");
+        sam2(kCutoutHeads, QT_TRANSLATE_NOOP("Models", "Object cutout (SAM 2): mask decoder"), 26'060'486,
+             "sam2_heads.onnx", "55c8c974629c806173e4f119809b5e06a1d4a2536a2b59fe353443469ae00a4a");
+        sam2(kCutoutMemoryEncoder, QT_TRANSLATE_NOOP("Models", "Object cutout (SAM 2): memory encoder"), 6'629'392,
+             "sam2_memory_encoder.onnx", "83e7dc02bbf3994d0931d71bc850a961ddc008d8b4acb52c53c1493d8ca8dd68");
+        sam2(kCutoutMemoryAttention, QT_TRANSLATE_NOOP("Models", "Object cutout (SAM 2): memory attention"), 28'163'613,
+             "sam2_memory_attention.onnx", "d7490e629164319ce0d924fafea76ee3148580771ea6bbb49a915153319a3920");
         return list;
     }();
     return models;

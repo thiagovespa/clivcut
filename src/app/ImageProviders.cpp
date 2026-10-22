@@ -222,6 +222,17 @@ QQuickImageResponse *FilterPreviewProvider::requestImageResponse(const QString &
     return resp;
 }
 
+QImage CutoutPreviewProvider::requestImage(const QString &, QSize *size, const QSize &requestedSize)
+{
+    auto *ctrl = ProjectController::instance();
+    QImage img = ctrl ? ctrl->cutoutPreviewImage() : QImage();
+    if (!img.isNull() && requestedSize.isValid())
+        img = img.scaled(requestedSize, Qt::KeepAspectRatio, Qt::SmoothTransformation);
+    if (size)
+        *size = img.size();
+    return img;
+}
+
 QImage IconProvider::requestImage(const QString &id, QSize *size, const QSize &requestedSize)
 {
     const QString name = id.section(QLatin1Char('/'), 0, 0);

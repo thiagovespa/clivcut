@@ -4,6 +4,7 @@
 #include "engine/AiModels.h"
 #include "engine/DecoderFrameSource.h"
 #include "engine/FrameInterpolation.h"
+#include "engine/ObjectCutout.h"
 #include "engine/Matting.h"
 #include "engine/RenderCache.h"
 #include "engine/Stabilization.h"
@@ -270,6 +271,80 @@ private slots:
         Micros found = -1;
         QCOMPARE(engine::findInterpolation(video2, span, &found), engine::interpolationPathFor(video2, span));
         QCOMPARE(found, fileStart);
+    }
+
+    void objectCutout()
+    {
+        // Bola vermelha (raio 38 px) cruzando um fundo detalhado: centro em (100 + 400t, 180 + 60·sen 4t).
+        const QString video = m_dir.filePath(QStringLiteral("bola.mp4"));
+        QProcess p;
+        p.start(QStringLiteral("ffmpeg"),
+                {"-hide_banner", "-loglevel", "error", "-y", "-f", "lavfi", "-i", "mandelbrot=size=640x360:rate=30", "-f",
+                 "lavfi", "-i", "color=c=red:size=80x80:rate=30", "-filter_complex",
+                 "[1]format=rgba,geq=r=255:g=40:b=40:a='if(lt(hypot(X-40,Y-40),38),255,0)'[b];"
+                 "[0][b]overlay=x='60+t*400':y='140+60*sin(t*4)'",
+                 "-t", "0.5", "-c:v", "libx264", "-preset", "ultrafast", "-crf", "12", "-pix_fmt", "yuv420p", video});
+        QVERIFY(p.waitForFinished(120000) && p.exitCode() == 0);
+        if (!engine::objectCutoutAvailable() || !engine::objectCutoutModelsInstalled())
+            QSKIP("modelo SAM 2 não instalado");
+
+        const auto center = [](double t) { return QPointF(100 + 400 * t, 180 + 60 * std::sin(4 * t)); };
+        // IoU da máscara com o disco esperado (máscara em 640x360 aqui, igual ao vídeo).
+        const auto iou = [&](const QImage &mask, double t) {
+            const QPointF c = center(t);
+            int inter = 0, uni = 0;
+            for (int y = 0; y < mask.height(); ++y)
+                for (int x = 0; x < mask.width(); ++x) {
+                    const bool a = qGray(mask.pixel(x, y)) > 127;
+                    const bool b = std::hypot(x + 0.5 - c.x(), y + 0.5 - c.y()) < 38;
+                    inter += a && b;
+                    uni += a || b;
+                }
+            return uni ? static_cast<double>(inter) / uni : 0.0;
+        };
+
+        engine::ObjectSegmenter seg;
+        QString err;
+        // Clique no meio da bola no quadro 7 (t ≈ 0,233 s).
+        const Micros t0 = 7 * kSecond / 30;
+        const QPointF c0 = center(7.0 / 30);
+        const std::vector<CutoutPoint> pts{{c0.x() / 640, c0.y() / 360, true}};
+        const QImage one = seg.segmentFrame(video, t0, pts, &err);
+        QVERIFY2(!one.isNull(), qPrintable(err));
+        QCOMPARE(one.size(), QSize(640, 360));
+        QVERIFY2(iou(one, 7.0 / 30) > 0.9, qPrintable(QString::number(iou(one, 7.0 / 30))));
+
+        ObjectCutout cut;
+        cut.object = true;
+        cut.time = t0;
+        cut.points = pts;
+        cut.tracked = true;
+        const QString out = engine::objectMattePathFor(video, cut, 0, 400'000);
+        Micros start = -1;
+        double fps = 0;
+        QVERIFY2(seg.track(video, cut, 0, 400'000, out, &start, &fps, {}, &err), qPrintable(err));
+        QCOMPARE(start, 0);
+        QCOMPARE(fps, 30.0);
+        // Cada quadro do matte acompanha a bola, antes e depois do quadro clicado.
+        media::VideoDecoder matte;
+        QVERIFY(matte.open(out));
+        double worst = 1;
+        for (int i = 0; i <= 12; ++i) {
+            const QImage m = matte.frameAt(i * kSecond / 30 + kSecond / 60); // meio do quadro
+            QVERIFY(!m.isNull());
+            worst = std::min(worst, iou(m, i / 30.0));
+        }
+        QVERIFY2(worst > 0.85, qPrintable(QString::number(worst)));
+
+        // Registro, busca e reencontro em disco.
+        QVERIFY(engine::findObjectMatte(video, cut, 0, 400'000).isEmpty());
+        engine::discoverObjectMattes(video);
+        Micros found = -1;
+        QCOMPARE(engine::findObjectMatte(video, cut, 33'333, 300'000, &found), out);
+        QCOMPARE(found, 0);
+        ObjectCutout other = cut;
+        other.points.front().u += 0.1;
+        QVERIFY(engine::findObjectMatte(video, other, 0, 400'000).isEmpty());
     }
 
     void renderCacheKeys()

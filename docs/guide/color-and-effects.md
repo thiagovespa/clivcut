@@ -10,7 +10,10 @@
 
 ## Masks, blending and keying
 
-The **Mask** tab has linear, mirror, circle and rounded-rectangle masks with feather and invert (also on adjustment layers, to grade one region). The **Advanced** tab has blend modes, chroma key and **background removal** (cuts people out of a video without a green screen, with a local AI model).
+The **Mask** tab has linear, mirror, circle and rounded-rectangle masks with feather and invert (also on adjustment layers, to grade one region). The **Advanced** tab has blend modes, chroma key and **background removal**, with a local AI model and no green screen:
+
+- **People (automatic)** cuts out the people in the video.
+- **Pick an object** cuts out anything you choose. Click **Click the object on the player**, then click the object in the player; Alt+click (or right-click) marks parts that do not belong to it. A preview of that frame shows the selection after each click. When it looks right, **Cut out in the whole clip** follows the object through the clip, before and after that frame. It runs in the background and takes a few seconds per frame; the model (SAM 2, 195 MB) is downloaded once.
 
 ## Effects and transitions
 

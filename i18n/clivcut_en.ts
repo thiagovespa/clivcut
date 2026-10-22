@@ -12,6 +12,16 @@
     </message>
 </context>
 <context>
+    <name>Inspector</name>
+    <message numerus="yes">
+        <source>%n point(s). The preview shows the selection on this frame; add points to fix it, then cut it out in the whole clip (it takes a few seconds per frame).</source>
+        <translation>
+            <numerusform>%n point. The preview shows the selection on this frame; add points to fix it, then cut it out in the whole clip (it takes a few seconds per frame).</numerusform>
+            <numerusform>%n points. The preview shows the selection on this frame; add points to fix it, then cut it out in the whole clip (it takes a few seconds per frame).</numerusform>
+        </translation>
+    </message>
+</context>
+<context>
     <name>ProjectController</name>
     <message numerus="yes">
         <source>Template ready: fill its %n slot(s) with your media</source>

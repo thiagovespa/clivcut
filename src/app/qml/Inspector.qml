@@ -1305,27 +1305,58 @@ Rectangle {
                     }
                     CheckBox {
                         visible: root.isMedia && root.sel.mediaKind === "video"
-                        text: qsTr("Cut out people automatically")
+                        text: qsTr("Remove the background")
                         checked: root.isMedia && root.sel.removeBackground
-                        enabled: root.isMedia && root.sel.matteState !== "unavailable"
+                        enabled: root.isMedia && (root.sel.matteState !== "unavailable" || root.sel.cutoutObject)
                         focusPolicy: Qt.NoFocus
                         onToggled: root.setProp("removeBackground", checked)
                     }
+                    // Pessoas (automático) | Objeto (cliques)
+                    Row {
+                        id: cutoutMode
+                        visible: root.isMedia && root.sel.mediaKind === "video" && root.sel.removeBackground
+                        spacing: 4
+                        Repeater {
+                            model: [{ o: false, t: qsTr("People (automatic)") }, { o: true, t: qsTr("Pick an object") }]
+                            Rectangle {
+                                required property var modelData
+                                width: cutoutModeText.implicitWidth + 22
+                                height: 26
+                                radius: 13
+                                color: root.sel.cutoutObject === modelData.o ? Theme.surfaceHi : "transparent"
+                                border.color: root.sel.cutoutObject === modelData.o ? Theme.accent : Theme.border
+                                Text {
+                                    id: cutoutModeText
+                                    anchors.centerIn: parent
+                                    text: parent.modelData.t
+                                    color: Theme.text
+                                    font.pixelSize: Theme.fontSmall
+                                }
+                                MouseArea {
+                                    anchors.fill: parent
+                                    cursorShape: Qt.PointingHandCursor
+                                    onClicked: root.setProp("cutoutObject", parent.modelData.o)
+                                }
+                            }
+                        }
+                    }
+
+                    // ---- Pessoas (RobustVideoMatting)
                     ProgressBar {
-                        visible: root.isMedia && (root.sel.matteState === "processing"
+                        visible: root.isMedia && !root.sel.cutoutObject && (root.sel.matteState === "processing"
                                                   || (root.sel.matteState === "needsModel" && Project.downloadingModel === "rvm"))
                         Layout.fillWidth: true
                         value: root.sel.matteState === "processing" ? root.sel.matteProgress : Project.modelDownloadProgress
                     }
                     PillButton {
-                        visible: root.isMedia && root.sel.matteState === "needsModel" && Project.downloadingModel !== "rvm"
+                        visible: root.isMedia && !root.sel.cutoutObject && root.sel.matteState === "needsModel" && Project.downloadingModel !== "rvm"
                         enabled: Project.downloadingModel === ""
                         text: qsTr("Download model (15 MB)")
                         iconName: "download"
                         onClicked: Project.downloadModel("rvm")
                     }
                     Text {
-                        visible: root.isMedia && root.sel.mediaKind === "video"
+                        visible: root.isMedia && root.sel.mediaKind === "video" && !root.sel.cutoutObject
                         Layout.fillWidth: true
                         wrapMode: Text.Wrap
                         color: root.isMedia && root.sel.matteState === "ready" ? Theme.accent : Theme.textFaint
@@ -1338,6 +1369,99 @@ Rectangle {
                               : root.sel.matteState === "queued" ? qsTr("Queued…")
                               : root.sel.matteState === "ready" ? qsTr("✓ Background removed (processed locally)")
                               : qsTr("Separates people from the background without a green screen. Everything runs on your computer, in the background.")
+                    }
+
+                    // ---- Objeto escolhido com cliques (SAM 2)
+                    ColumnLayout {
+                        id: objectCutout
+                        visible: root.isMedia && root.sel.mediaKind === "video" && root.sel.removeBackground && root.sel.cutoutObject
+                        Layout.fillWidth: true
+                        spacing: 6
+                        readonly property string state: root.isMedia ? root.sel.cutoutState : ""
+                        readonly property bool downloading: Project.downloadingModel.startsWith("sam2")
+
+                        ProgressBar {
+                            visible: objectCutout.state === "processing" || (objectCutout.state === "needsModel" && objectCutout.downloading)
+                            Layout.fillWidth: true
+                            value: objectCutout.state === "processing" ? root.sel.cutoutProgress : Project.modelDownloadProgress
+                        }
+                        PillButton {
+                            visible: objectCutout.state === "needsModel" && !objectCutout.downloading
+                            enabled: Project.downloadingModel === ""
+                            text: qsTr("Download model (195 MB)")
+                            iconName: "download"
+                            onClicked: Project.downloadCutoutModels()
+                        }
+                        Button {
+                            visible: objectCutout.state !== "needsModel" && objectCutout.state !== "unavailable"
+                            Layout.fillWidth: true
+                            checkable: true
+                            checked: Project.cutoutPick
+                            focusPolicy: Qt.NoFocus
+                            text: Project.cutoutPick ? qsTr("Done picking") : (root.sel.cutoutPoints > 0 ? qsTr("Add or fix points on the player")
+                                                                                                          : qsTr("Click the object on the player"))
+                            onClicked: Project.cutoutPick ? Project.cancelCutoutPick() : Project.startCutoutPick()
+                        }
+                        Item {
+                            visible: Project.cutoutPreview !== "" || Project.cutoutPreviewBusy
+                            Layout.fillWidth: true
+                            Layout.preferredHeight: width * 9 / 16
+                            Image {
+                                anchors.fill: parent
+                                fillMode: Image.PreserveAspectFit
+                                source: Project.cutoutPreview
+                                cache: false
+                                asynchronous: false
+                            }
+                            BusyIndicator {
+                                anchors.centerIn: parent
+                                running: Project.cutoutPreviewBusy
+                                visible: running
+                            }
+                        }
+                        RowLayout {
+                            visible: root.sel.cutoutPoints > 0
+                            Layout.fillWidth: true
+                            spacing: 4
+                            Button {
+                                text: qsTr("Undo point")
+                                focusPolicy: Qt.NoFocus
+                                onClicked: Project.undoCutoutPoint()
+                            }
+                            Button {
+                                text: qsTr("Clear")
+                                focusPolicy: Qt.NoFocus
+                                onClicked: Project.clearCutout()
+                            }
+                            Button {
+                                text: qsTr("Go to the frame")
+                                focusPolicy: Qt.NoFocus
+                                onClicked: Project.seekToCutoutFrame()
+                            }
+                        }
+                        Button {
+                            visible: objectCutout.state === "picked"
+                            Layout.fillWidth: true
+                            highlighted: true
+                            text: qsTr("Cut out in the whole clip")
+                            focusPolicy: Qt.NoFocus
+                            onClicked: Project.applyCutout()
+                        }
+                        Text {
+                            Layout.fillWidth: true
+                            wrapMode: Text.Wrap
+                            color: objectCutout.state === "ready" ? Theme.accent : Theme.textFaint
+                            font.pixelSize: Theme.fontSmall
+                            text: objectCutout.state === "unavailable" ? qsTr("Not available in this build (compiled without ONNX Runtime).")
+                                  : objectCutout.state === "needsModel" ? (objectCutout.downloading ? qsTr("Downloading the object cutout model…")
+                                                                           : qsTr("Requires the object cutout model (SAM 2, Apache-2.0), downloaded only once."))
+                                  : objectCutout.state === "noPoints" ? qsTr("Click the object on the player to select it; Alt+click (or right-click) marks what is not part of it.")
+                                  : objectCutout.state === "picked" ? qsTr("%n point(s). The preview shows the selection on this frame; add points to fix it, then cut it out in the whole clip (it takes a few seconds per frame).", "", root.sel.cutoutPoints)
+                                  : objectCutout.state === "processing" ? qsTr("Following the object… %1%").arg(Math.round(root.sel.cutoutProgress * 100))
+                                  : objectCutout.state === "queued" ? qsTr("Queued…")
+                                  : objectCutout.state === "ready" ? qsTr("✓ Object cut out in the whole clip (processed locally)")
+                                  : ""
+                        }
                     }
                 }
 

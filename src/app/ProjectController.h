@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 #pragma once
 
+#include "engine/ObjectCutout.h"
 #include "engine/FrameInterpolation.h"
 #include "core/Clipboard.h"
 #include "core/History.h"
@@ -94,6 +95,10 @@ class ProjectController : public QObject {
     Q_PROPERTY(bool detectingBeats READ detectingBeats NOTIFY beatsChanged)
     /// Escolhendo a região a rastrear no player; progresso do rastreamento (-1 = parado).
     Q_PROPERTY(bool trackingPick READ trackingPick NOTIFY trackingChanged)
+    /// Recorte de objeto: cliques no player ligados, e a prévia (quadro clicado com a máscara).
+    Q_PROPERTY(bool cutoutPick READ cutoutPick NOTIFY cutoutChanged)
+    Q_PROPERTY(QString cutoutPreview READ cutoutPreview NOTIFY cutoutChanged)
+    Q_PROPERTY(bool cutoutPreviewBusy READ cutoutPreviewBusy NOTIFY cutoutChanged)
     /// Voz neural: vozes [{id, name, language, female}], a escolhida, a velocidade e o estado
     /// ("unavailable", "needsModel", "ready", "processing"); progresso -1 = parado.
     Q_PROPERTY(QVariantList ttsVoices READ ttsVoices NOTIFY languageChanged)
@@ -336,6 +341,23 @@ public:
     Q_INVOKABLE void cancelTracking();
     Q_INVOKABLE void clearTracking();
     bool trackingPick() const { return m_trackingPick; }
+    /// Recorte de objeto (SAM 2) no clipe selecionado: cliques no player (coordenadas do canvas
+    /// 0..1) marcam o objeto (ou o que não é dele) no quadro do cursor; "aplicar" o acompanha
+    /// pelo clipe todo em segundo plano.
+    Q_INVOKABLE void startCutoutPick();
+    Q_INVOKABLE void cancelCutoutPick();
+    Q_INVOKABLE void addCutoutPoint(double x, double y, bool positive);
+    Q_INVOKABLE void undoCutoutPoint();
+    Q_INVOKABLE void clearCutout();
+    Q_INVOKABLE void applyCutout();
+    Q_INVOKABLE void seekToCutoutFrame();
+    Q_INVOKABLE void downloadCutoutModels();
+    /// Pontos clicados no canvas (0..1, com `positive`), se o cursor está no quadro clicado.
+    Q_INVOKABLE QVariantList cutoutMarkers() const;
+    bool cutoutPick() const { return m_cutoutPick; }
+    QString cutoutPreview() const;
+    bool cutoutPreviewBusy() const { return m_cutoutPreviewBusy; }
+    QImage cutoutPreviewImage() const;
     QVariantList ttsVoices() const;
     QString ttsVoice() const;
     void setTtsVoice(const QString &id);
@@ -497,6 +519,7 @@ signals:
     void silencesChanged();
     void beatsChanged();
     void trackingChanged();
+    void cutoutChanged();
     void ttsChanged();
     void transcriptChanged();
     void scopesChanged();
@@ -644,6 +667,31 @@ private:
     std::shared_ptr<std::atomic<bool>> m_stabCancel = std::make_shared<std::atomic<bool>>(false);
     void refreshStabilize();
     void startNextStabilize();
+    /// Recorte de objeto: trechos aguardando o acompanhamento, e a prévia dos cliques.
+    struct CutoutJob {
+        QString path;
+        clv::ObjectCutout cutout;
+        clv::Micros in = 0, out = 0;
+        QString key() const;
+    };
+    QList<CutoutJob> m_cutoutQueue;
+    QString m_cutoutBuilding;
+    double m_cutoutProgress = 0;
+    std::shared_ptr<std::atomic<bool>> m_cutoutCancel = std::make_shared<std::atomic<bool>>(false);
+    void refreshCutouts();
+    void startNextCutout();
+    bool m_cutoutPick = false;
+    bool m_cutoutPreviewBusy = false;
+    int m_cutoutPreviewCounter = 0;
+    QString m_cutoutPreviewKey;  ///< clipe + cliques da prévia mostrada
+    QString m_cutoutPreviewWanted; ///< e a pedida (para não refazer a mesma)
+    mutable std::mutex m_cutoutPreviewMutex;
+    QImage m_cutoutPreviewImage;
+    std::shared_ptr<clv::engine::ObjectSegmenter> m_previewSegmenter;
+    std::shared_ptr<std::mutex> m_previewSegmenterMutex = std::make_shared<std::mutex>();
+    std::shared_ptr<std::atomic<int>> m_previewGeneration = std::make_shared<std::atomic<int>>(0);
+    /// Pede a prévia do clipe selecionado, se os cliques mudaram desde a última.
+    void updateCutoutPreview();
     /// Câmera lenta fluida: trechos de mídia aguardando a interpolação de quadros.
     struct InterpolationJob {
         QString path;

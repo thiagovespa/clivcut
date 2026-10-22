@@ -14,6 +14,8 @@
 #include "AudioRecorder.h"
 #include "Language.h"
 #include "core/Effects.h"
+#include <QPointer>
+#include "media/VideoDecoder.h"
 #include "engine/AiModels.h"
 #include "media/AudioDecoder.h"
 #include "engine/AudioCleanup.h"
@@ -123,6 +125,12 @@ ProjectController::ProjectController(QObject *parent) : QObject(parent)
     m_autosave.setInterval(customInterval && interval > 0 ? interval : 30'000);
     connect(&m_autosave, &QTimer::timeout, this, &ProjectController::autosaveNow);
     m_autosave.start();
+    // Recorte de objeto: a prévia segue o clipe selecionado; os cliques valem só para ele.
+    connect(this, &ProjectController::selectionChanged, this, [this] {
+        if (m_cutoutPick)
+            cancelCutoutPick();
+        updateCutoutPreview();
+    });
     m_ticker.setInterval(15);
     m_ticker.setTimerType(Qt::PreciseTimer);
     connect(&m_ticker, &QTimer::timeout, this, &ProjectController::tick);
@@ -150,6 +158,8 @@ ProjectController::~ProjectController()
     *m_denoiseCancel = true;
     *m_matteCancel = true;
     *m_interpCancel = true;
+    *m_cutoutCancel = true;
+    ++*m_previewGeneration;
     *m_stabCancel = true;
     *m_stemsCancel = true;
     *m_trackCancel = true;
@@ -220,6 +230,8 @@ void ProjectController::commitChange()
     refreshDenoise();
     refreshMattes();
     refreshInterpolations();
+    refreshCutouts();
+    updateCutoutPreview();
     refreshStabilize();
     refreshVoice();
     refreshEffects();
@@ -629,6 +641,25 @@ QVariantMap ProjectController::selectedClip() const
                    return m_matteQueue.contains(a->path) ? QStringLiteral("queued") : QStringLiteral("off");
                }()},
               {"matteProgress", m_matteProgress},
+              {"cutoutObject", c->cutout.object},
+              {"cutoutPoints", static_cast<int>(c->cutout.points.size())},
+              {"cutoutTracked", c->cutout.tracked},
+              {"cutoutState", [&] {
+                   if (!a || a->kind != MediaKind::Video || !engine::objectCutoutAvailable())
+                       return QStringLiteral("unavailable");
+                   if (!engine::objectCutoutModelsInstalled())
+                       return QStringLiteral("needsModel");
+                   if (!c->cutout.hasPoints())
+                       return QStringLiteral("noPoints");
+                   if (!c->cutout.tracked)
+                       return QStringLiteral("picked");
+                   if (!engine::findObjectMatte(a->path, c->cutout, c->sourceIn, c->sourceOut()).isEmpty())
+                       return QStringLiteral("ready");
+                   return m_cutoutBuilding == CutoutJob{a->path, c->cutout, c->sourceIn, c->sourceOut()}.key()
+                              ? QStringLiteral("processing")
+                              : QStringLiteral("queued");
+               }()},
+              {"cutoutProgress", m_cutoutProgress},
               {"smoothSlowMotion", c->smoothSlowMotion},
               {"smoothState", [&] {
                    if (!a || !c->smoothSlowMotion)
@@ -1535,6 +1566,7 @@ bool applyClipProperty(Project &p, Clip *c, Micros rel, const QString &key, cons
     else if (key == QLatin1String("denoise")) c->denoise = engine::quantizedDenoise(value.toDouble());
     else if (key == QLatin1String("removeBackground")) c->removeBackground = value.toBool();
     else if (key == QLatin1String("smoothSlowMotion")) c->smoothSlowMotion = value.toBool();
+    else if (key == QLatin1String("cutoutObject")) c->cutout.object = value.toBool();
     else if (key == QLatin1String("stabilize")) c->stabilize = std::clamp(std::round(value.toDouble() * 20) / 20, 0.0, 1.0);
     else if (key == QLatin1String("effect")) c->effect.id = effectShaderIndex(value.toString()) > 0 ? value.toString() : QString();
     else if (key == QLatin1String("effectIntensity")) c->effect.intensity = std::clamp(value.toDouble(), 0.0, 1.0);
@@ -2109,6 +2141,16 @@ void ProjectController::downloadModel(const QString &id)
                 refreshMattes();
             if (id == engine::kInterpolationModel)
                 refreshInterpolations();
+            if (engine::kCutoutModels.contains(id)) {
+                // São quatro arquivos: baixa o próximo; com todos, a prévia e os pendentes.
+                QMetaObject::invokeMethod(this, [this] {
+                    downloadCutoutModels();
+                    if (engine::objectCutoutModelsInstalled()) {
+                        refreshCutouts();
+                        updateCutoutPreview();
+                    }
+                }, Qt::QueuedConnection);
+            }
             if (id == engine::kVoiceModel)
                 refreshVoice();
             if (id == engine::kTtsModel || id == engine::kTtsVoices) {
@@ -4458,7 +4500,7 @@ void ProjectController::refreshMattes()
         return;
     bool changed = false;
     m_project.forEachClip([&](const Clip &c) {
-        const MediaAsset *a = c.hasMedia() && c.removeBackground ? m_project.asset(c.assetId) : nullptr;
+        const MediaAsset *a = c.hasMedia() && c.removeBackground && !c.cutout.object ? m_project.asset(c.assetId) : nullptr;
         if (!a || a->kind != MediaKind::Video || !QFileInfo::exists(a->path))
             return;
         if (!engine::registeredMatte(a->path).isEmpty() || engine::discoverMatte(a->path))
@@ -4608,6 +4650,342 @@ void ProjectController::startNextInterpolation()
             }
             emit selectedClipChanged();
             startNextInterpolation();
+        }, Qt::QueuedConnection);
+    }).detach();
+}
+
+QString ProjectController::CutoutJob::key() const
+{
+    return QStringLiteral("%1|%2|%3|%4").arg(path, engine::cutoutKey(cutout)).arg(in).arg(out);
+}
+
+void ProjectController::refreshCutouts()
+{
+    if (!engine::objectCutoutAvailable() || !engine::objectCutoutModelsInstalled())
+        return;
+    bool changed = false;
+    QSet<QString> discovered;
+    m_project.forEachClip([&](const Clip &c) {
+        const MediaAsset *a = c.hasMedia() && c.removeBackground && c.cutout.active() ? m_project.asset(c.assetId) : nullptr;
+        if (!a || a->kind != MediaKind::Video || !QFileInfo::exists(a->path))
+            return;
+        if (!discovered.contains(a->path)) {
+            discovered.insert(a->path);
+            engine::discoverObjectMattes(a->path);
+        }
+        if (!engine::findObjectMatte(a->path, c.cutout, c.sourceIn, c.sourceOut()).isEmpty())
+            return;
+        const CutoutJob job{a->path, c.cutout, c.sourceIn, c.sourceOut()};
+        const bool queued = std::any_of(m_cutoutQueue.begin(), m_cutoutQueue.end(),
+                                        [&](const CutoutJob &j) { return j.key() == job.key(); });
+        if (job.key() != m_cutoutBuilding && !queued) {
+            m_cutoutQueue << job;
+            changed = true;
+        }
+    });
+    if (changed) {
+        emit selectedClipChanged();
+        startNextCutout();
+    }
+}
+
+void ProjectController::startNextCutout()
+{
+    if (!m_cutoutBuilding.isEmpty() || m_cutoutQueue.isEmpty())
+        return;
+    const CutoutJob job = m_cutoutQueue.takeFirst();
+    if (!engine::findObjectMatte(job.path, job.cutout, job.in, job.out).isEmpty()) {
+        startNextCutout();
+        return;
+    }
+    m_cutoutBuilding = job.key();
+    m_cutoutProgress = 0;
+    m_cutoutCancel = std::make_shared<std::atomic<bool>>(false);
+    auto cancel = m_cutoutCancel;
+    emit selectedClipChanged();
+    setStatus(tr("Cutting out the object in %1…").arg(QFileInfo(job.path).fileName()));
+    std::thread([this, job, cancel] {
+        const QString out = engine::objectMattePathFor(job.path, job.cutout, job.in, job.out);
+        QString err;
+        Micros fileStart = 0;
+        double fileFps = 30;
+        double lastSent = 0;
+        engine::ObjectSegmenter segmenter;
+        const bool ok = segmenter.track(
+            job.path, job.cutout, job.in, job.out, out, &fileStart, &fileFps,
+            [&](double f) {
+                if (f - lastSent >= 0.01 && !*cancel) {
+                    lastSent = f;
+                    QMetaObject::invokeMethod(this, [this, f] {
+                        m_cutoutProgress = f;
+                        emit selectedClipChanged();
+                    }, Qt::QueuedConnection);
+                }
+                return !*cancel;
+            },
+            &err);
+        if (*cancel)
+            return;
+        QMetaObject::invokeMethod(this, [this, ok, err, job, out, fileStart, fileFps] {
+            m_cutoutBuilding.clear();
+            if (ok) {
+                engine::registerObjectMatte(job.path, job.cutout, job.in, job.out, fileStart, fileFps, out);
+                setStatus(tr("Object cut out: %1").arg(QFileInfo(job.path).fileName()));
+                ++m_revisionCounter;
+                emit revisionChanged();
+            } else {
+                emit errorOccurred(tr("Object cutout failed: %1").arg(err));
+            }
+            emit selectedClipChanged();
+            startNextCutout();
+        }, Qt::QueuedConnection);
+    }).detach();
+}
+
+void ProjectController::downloadCutoutModels()
+{
+    for (const QString &id : engine::kCutoutModels)
+        if (!engine::aiModelInstalled(id)) {
+            downloadModel(id);
+            return;
+        }
+}
+
+void ProjectController::startCutoutPick()
+{
+    const Clip *c = edit::clipById(m_project, primaryClipId());
+    const MediaAsset *a = c && c->hasMedia() ? m_project.asset(c->assetId) : nullptr;
+    if (!a || a->kind != MediaKind::Video || !engine::objectCutoutModelsInstalled())
+        return;
+    pause();
+    if (m_trackingPick)
+        cancelTrackingPick();
+    m_cutoutPick = true;
+    emit cutoutChanged();
+    setStatus(tr("Click the object to cut out · Alt+click or right-click marks what is not part of it"));
+}
+
+void ProjectController::cancelCutoutPick()
+{
+    if (!m_cutoutPick)
+        return;
+    m_cutoutPick = false;
+    emit cutoutChanged();
+}
+
+void ProjectController::addCutoutPoint(double x, double y, bool positive)
+{
+    const QString id = primaryClipId();
+    const Clip *c = edit::clipById(m_project, id);
+    if (!c || !c->hasMedia())
+        return;
+    const Micros rel = m_playhead - c->start;
+    if (rel < 0 || rel >= c->duration) {
+        setStatus(tr("Move the playhead over the clip"));
+        return;
+    }
+    double u = 0, v = 0;
+    if (!canvasToClipImage(m_project, *c, rel, {x * m_project.width, y * m_project.height}, u, v) || u < 0 || u > 1 || v < 0
+        || v > 1) {
+        setStatus(tr("Click on the video"));
+        return;
+    }
+    const Micros src = sourceTimeAt(m_project, *c, rel);
+    const MediaAsset *a = m_project.asset(c->assetId);
+    const Micros halfFrame = static_cast<Micros>(kSecond / (2 * (a && a->fps > 1 ? a->fps : 30.0)));
+    edit(tr("Select object"), [&](Project &p) {
+        Clip *clip = edit::clipById(p, id);
+        if (!clip)
+            return false;
+        ObjectCutout &cut = clip->cutout;
+        // Cliques valem para um quadro: num quadro novo, a seleção recomeça.
+        if (!cut.hasPoints() || std::abs(cut.time - src) > halfFrame) {
+            cut.points.clear();
+            cut.time = src;
+        }
+        cut.points.push_back({u, v, positive});
+        cut.object = true;
+        cut.tracked = false;
+        clip->removeBackground = true;
+        return true;
+    });
+}
+
+void ProjectController::undoCutoutPoint()
+{
+    const QString id = primaryClipId();
+    const Clip *c = edit::clipById(m_project, id);
+    if (!c || c->cutout.points.empty())
+        return;
+    edit(tr("Select object"), [&](Project &p) {
+        Clip *clip = edit::clipById(p, id);
+        if (!clip)
+            return false;
+        clip->cutout.points.pop_back();
+        clip->cutout.tracked = false;
+        if (clip->cutout.points.empty())
+            clip->cutout.time = -1;
+        return true;
+    });
+}
+
+void ProjectController::clearCutout()
+{
+    const QString id = primaryClipId();
+    const Clip *c = edit::clipById(m_project, id);
+    if (!c || !c->cutout.hasPoints())
+        return;
+    edit(tr("Clear object selection"), [&](Project &p) {
+        Clip *clip = edit::clipById(p, id);
+        if (!clip)
+            return false;
+        clip->cutout.points.clear();
+        clip->cutout.time = -1;
+        clip->cutout.tracked = false;
+        return true;
+    });
+}
+
+void ProjectController::applyCutout()
+{
+    const QString id = primaryClipId();
+    const Clip *c = edit::clipById(m_project, id);
+    if (!c || !c->cutout.hasPoints() || c->cutout.tracked)
+        return;
+    cancelCutoutPick();
+    edit(tr("Cut out object"), [&](Project &p) {
+        Clip *clip = edit::clipById(p, id);
+        if (!clip)
+            return false;
+        clip->cutout.tracked = true;
+        clip->cutout.object = true;
+        clip->removeBackground = true;
+        return true;
+    });
+}
+
+void ProjectController::seekToCutoutFrame()
+{
+    const Clip *c = edit::clipById(m_project, primaryClipId());
+    if (!c || !c->cutout.hasPoints())
+        return;
+    // O instante do clipe cujo quadro de origem é o clicado (vale também com curvas de velocidade).
+    Micros best = 0, bestDiff = std::numeric_limits<Micros>::max();
+    const Micros step = std::max<Micros>(1000, c->duration / 2000);
+    for (Micros rel = 0; rel < c->duration; rel += step) {
+        const Micros d = std::abs(sourceTimeAt(m_project, *c, rel) - c->cutout.time);
+        if (d < bestDiff) {
+            bestDiff = d;
+            best = rel;
+        }
+    }
+    seek(static_cast<double>(c->start + best));
+}
+
+QVariantList ProjectController::cutoutMarkers() const
+{
+    QVariantList list;
+    const Clip *c = edit::clipById(m_project, primaryClipId());
+    if (!c || !c->cutout.object || !c->cutout.hasPoints())
+        return list;
+    const Micros rel = m_playhead - c->start;
+    if (rel < 0 || rel >= c->duration)
+        return list;
+    const MediaAsset *a = m_project.asset(c->assetId);
+    const Micros halfFrame = static_cast<Micros>(kSecond / (2 * (a && a->fps > 1 ? a->fps : 30.0)));
+    if (std::abs(sourceTimeAt(m_project, *c, rel) - c->cutout.time) > halfFrame)
+        return list;
+    for (const CutoutPoint &pt : c->cutout.points) {
+        const QPointF q = clipImageToCanvas(m_project, *c, rel, pt.u, pt.v);
+        list << QVariantMap{{"x", q.x() / m_project.width}, {"y", q.y() / m_project.height}, {"positive", pt.positive}};
+    }
+    return list;
+}
+
+QString ProjectController::cutoutPreview() const
+{
+    const Clip *c = edit::clipById(m_project, primaryClipId());
+    if (!c || !c->cutout.object || !c->cutout.hasPoints() || m_cutoutPreviewKey != c->id + engine::cutoutKey(c->cutout))
+        return {};
+    return QStringLiteral("image://cutout/%1").arg(m_cutoutPreviewCounter);
+}
+
+QImage ProjectController::cutoutPreviewImage() const
+{
+    std::lock_guard lock(m_cutoutPreviewMutex);
+    return m_cutoutPreviewImage;
+}
+
+void ProjectController::updateCutoutPreview()
+{
+    const Clip *c = edit::clipById(m_project, primaryClipId());
+    const MediaAsset *a = c && c->hasMedia() ? m_project.asset(c->assetId) : nullptr;
+    if (!a || a->kind != MediaKind::Video || !c->cutout.object || !c->cutout.hasPoints()
+        || !engine::objectCutoutModelsInstalled()) {
+        emit cutoutChanged();
+        return;
+    }
+    const QString key = c->id + engine::cutoutKey(c->cutout);
+    if (key == m_cutoutPreviewKey || key == m_cutoutPreviewWanted) {
+        emit cutoutChanged();
+        return;
+    }
+    m_cutoutPreviewWanted = key;
+    m_cutoutPreviewBusy = true;
+    emit cutoutChanged();
+    if (!m_previewSegmenter)
+        m_previewSegmenter = std::make_shared<engine::ObjectSegmenter>();
+    const int generation = ++*m_previewGeneration;
+    auto segmenter = m_previewSegmenter;
+    auto segMutex = m_previewSegmenterMutex;
+    auto current = m_previewGeneration;
+    const QString path = a->path;
+    const ObjectCutout cut = c->cutout;
+    QPointer<ProjectController> self(this);
+    std::thread([self, segmenter, segMutex, current, generation, path, cut, key] {
+        std::lock_guard lock(*segMutex);
+        if (*current != generation)
+            return; // já há cliques mais novos
+        QString err;
+        const QImage mask = segmenter->segmentFrame(path, cut.time, cut.points, &err);
+        // O quadro escurecido fora do objeto, com o objeto em destaque.
+        QImage view;
+        if (!mask.isNull()) {
+            media::VideoDecoder dec;
+            if (dec.open(path, mask.size()))
+                view = dec.frameAt(cut.time).convertToFormat(QImage::Format_RGBA8888);
+            if (view.size() != mask.size())
+                view = view.isNull() ? QImage(mask.size(), QImage::Format_RGBA8888)
+                                     : view.scaled(mask.size(), Qt::IgnoreAspectRatio, Qt::SmoothTransformation);
+            for (int y = 0; y < view.height(); ++y) {
+                uchar *p = view.scanLine(y);
+                const uchar *m = mask.constScanLine(y);
+                for (int x = 0; x < view.width(); ++x) {
+                    const float k = m[x] / 255.f;
+                    // Fora: 35% do brilho; dentro: tom laranja leve.
+                    p[x * 4 + 0] = static_cast<uchar>(p[x * 4 + 0] * (0.35f + 0.65f * k) * (1 - 0.15f * k) + 255 * 0.15f * k);
+                    p[x * 4 + 1] = static_cast<uchar>(p[x * 4 + 1] * (0.35f + 0.65f * k) * (1 - 0.15f * k) + 140 * 0.15f * k);
+                    p[x * 4 + 2] = static_cast<uchar>(p[x * 4 + 2] * (0.35f + 0.65f * k) * (1 - 0.15f * k));
+                    p[x * 4 + 3] = 255;
+                }
+            }
+        }
+        QMetaObject::invokeMethod(self, [self, view, key, err, generation, current] {
+            if (!self || *current != generation)
+                return;
+            self->m_cutoutPreviewBusy = false;
+            self->m_cutoutPreviewWanted.clear();
+            if (view.isNull()) {
+                emit self->errorOccurred(tr("Object cutout failed: %1").arg(err));
+            } else {
+                {
+                    std::lock_guard l(self->m_cutoutPreviewMutex);
+                    self->m_cutoutPreviewImage = view;
+                }
+                self->m_cutoutPreviewKey = key;
+                ++self->m_cutoutPreviewCounter;
+            }
+            emit self->cutoutChanged();
         }, Qt::QueuedConnection);
     }).detach();
 }

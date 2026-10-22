@@ -369,6 +369,13 @@ QJsonObject clipToJson(const Clip &c)
         o.insert("removeBackground", true);
     if (c.smoothSlowMotion)
         o.insert("smoothSlowMotion", true);
+    if (c.cutout.object || c.cutout.hasPoints()) {
+        QJsonArray pts;
+        for (const CutoutPoint &pt : c.cutout.points)
+            pts.append(QJsonArray{pt.u, pt.v, pt.positive ? 1 : 0});
+        o.insert("cutout", QJsonObject{{"object", c.cutout.object}, {"time", us(c.cutout.time)}, {"points", pts},
+                                       {"tracked", c.cutout.tracked}});
+    }
     if (!c.keepPitch)
         o.insert("keepPitch", false);
     if (c.voiceIsolation > 0)
@@ -474,6 +481,18 @@ Clip clipFromJson(const QJsonObject &o)
     c.stabilize = std::clamp(o.value("stabilize").toDouble(), 0.0, 1.0);
     c.removeBackground = o.value("removeBackground").toBool();
     c.smoothSlowMotion = o.value("smoothSlowMotion").toBool();
+    if (o.contains("cutout")) {
+        const QJsonObject co = o.value("cutout").toObject();
+        c.cutout.object = co.value("object").toBool();
+        c.cutout.time = static_cast<Micros>(co.value("time").toDouble(-1));
+        c.cutout.tracked = co.value("tracked").toBool();
+        for (const QJsonValue &v : co.value("points").toArray()) {
+            const QJsonArray a = v.toArray();
+            if (a.size() >= 3)
+                c.cutout.points.push_back({std::clamp(a[0].toDouble(), 0.0, 1.0), std::clamp(a[1].toDouble(), 0.0, 1.0),
+                                           a[2].toInt() != 0});
+        }
+    }
     c.keepPitch = o.value("keepPitch").toBool(true);
     c.voiceIsolation = std::clamp(o.value("voiceIsolation").toDouble(), 0.0, 1.0);
     c.ducking = std::clamp(o.value("ducking").toDouble(), 0.0, 1.0);

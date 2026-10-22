@@ -4,6 +4,8 @@
 #include "core/Serialize.h"
 #include "Scopes.h"
 #include "engine/AudioMixer.h"
+#include "engine/ObjectCutout.h"
+#include "engine/DecoderFrameSource.h"
 #include "engine/FrameInterpolation.h"
 #include "engine/AiModels.h"
 #include "media/Loudness.h"
@@ -866,6 +868,66 @@ private slots:
         m_ctrl->undo(); // câmera lenta fluida
         QCOMPARE(m_ctrl->selectedClip().value("smoothSlowMotion").toBool(), false);
         QCOMPARE(m_ctrl->selectedClip().value("smoothState").toString(), QStringLiteral("off"));
+    }
+
+    void objectCutout()
+    {
+        // Bola vermelha (raio 38) sobre fundo detalhado, centro em (100 + 400t, 180 + 60·sen 4t).
+        const QString video = m_dir.filePath(QStringLiteral("bola.mp4"));
+        QProcess p;
+        p.start(QStringLiteral("ffmpeg"),
+                {"-hide_banner", "-loglevel", "error", "-y", "-f", "lavfi", "-i", "mandelbrot=size=640x360:rate=30", "-f",
+                 "lavfi", "-i", "color=c=red:size=80x80:rate=30", "-filter_complex",
+                 "[1]format=rgba,geq=r=255:g=40:b=40:a='if(lt(hypot(X-40,Y-40),38),255,0)'[b];"
+                 "[0][b]overlay=x='60+t*400':y='140+60*sin(t*4)'",
+                 "-t", "0.3", "-c:v", "libx264", "-preset", "ultrafast", "-crf", "12", "-pix_fmt", "yuv420p", video});
+        QVERIFY(p.waitForFinished(60000) && p.exitCode() == 0);
+        m_ctrl->newProject(640, 360, 30);
+        m_ctrl->importMedia({QUrl::fromLocalFile(video)});
+        m_ctrl->addAssetToTimeline(m_ctrl->assets().first().toMap().value("id").toString());
+        const QString clip = clipsOf(0).first().toMap().value("id").toString();
+        m_ctrl->select(clip);
+        m_ctrl->setClipProperties(clip, {{QStringLiteral("removeBackground"), true}, {QStringLiteral("cutoutObject"), true}});
+        QVERIFY(m_ctrl->selectedClip().value("cutoutObject").toBool());
+        if (!clv::engine::objectCutoutModelsInstalled()) {
+            QCOMPARE(m_ctrl->selectedClip().value("cutoutState").toString(), QStringLiteral("needsModel"));
+            QSKIP("modelo SAM 2 não instalado");
+        }
+        QCOMPARE(m_ctrl->selectedClip().value("cutoutState").toString(), QStringLiteral("noPoints"));
+
+        // Clique no centro da bola no quadro 4.
+        m_ctrl->seek(4 * 1'000'000.0 / 30 + 1000);
+        const double t = 4.0 / 30;
+        const double cx = 100 + 400 * t, cy = 180 + 60 * std::sin(4 * t);
+        m_ctrl->startCutoutPick();
+        QVERIFY(m_ctrl->cutoutPick());
+        m_ctrl->addCutoutPoint(cx / 640, cy / 360, true);
+        QCOMPARE(m_ctrl->selectedClip().value("cutoutPoints").toInt(), 1);
+        QCOMPARE(m_ctrl->selectedClip().value("cutoutState").toString(), QStringLiteral("picked"));
+        const QVariantList markers = m_ctrl->cutoutMarkers();
+        QCOMPARE(markers.size(), 1);
+        QVERIFY(std::abs(markers.first().toMap().value("x").toDouble() - cx / 640) < 0.002);
+        QTRY_VERIFY_WITH_TIMEOUT(!m_ctrl->cutoutPreview().isEmpty(), 60000);
+        QVERIFY(!m_ctrl->cutoutPreviewImage().isNull());
+        // Longe do quadro clicado, os marcadores somem.
+        m_ctrl->seek(0);
+        QVERIFY(m_ctrl->cutoutMarkers().isEmpty());
+
+        m_ctrl->applyCutout();
+        QVERIFY(!m_ctrl->cutoutPick());
+        QTRY_COMPARE_WITH_TIMEOUT(m_ctrl->selectedClip().value("cutoutState").toString(), QStringLiteral("ready"), 240000);
+        // O alfa do quadro: a bola opaca, o fundo transparente.
+        const auto snap = m_ctrl->snapshot();
+        clv::engine::DecoderFrameSource frames(QSize(640, 360), false);
+        const auto layer = clv::evaluate(*snap, 4 * 1'000'000 / 30 + 1000).layers.front();
+        const QImage img = frames.frameFor(layer).toImage();
+        QVERIFY(qAlpha(img.pixel(static_cast<int>(cx), static_cast<int>(cy))) > 200);
+        QVERIFY(qAlpha(img.pixel(600, 30)) < 30);
+
+        m_ctrl->undo(); // aplicar
+        QCOMPARE(m_ctrl->selectedClip().value("cutoutState").toString(), QStringLiteral("picked"));
+        m_ctrl->undoCutoutPoint();
+        QCOMPARE(m_ctrl->selectedClip().value("cutoutState").toString(), QStringLiteral("noPoints"));
     }
 
     void separateMusic()

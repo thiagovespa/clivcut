@@ -203,6 +203,24 @@ struct TextStyle {
 /// Compound: clipe composto, um trecho de outra timeline (Project::compounds) tratado como um clipe só.
 enum class ClipType { Media, Text, Adjust, Compound };
 
+/// Clique sobre o objeto a recortar (SAM 2): posição normalizada (0..1) na imagem da mídia.
+struct CutoutPoint {
+    double u = 0, v = 0;
+    bool positive = true; ///< false = "isto não faz parte do objeto"
+    bool operator==(const CutoutPoint &) const = default;
+};
+
+/// Recorte de um objeto escolhido com cliques num quadro e acompanhado pelo resto do clipe.
+struct ObjectCutout {
+    bool object = false; ///< modo "objeto" na remoção de fundo (senão, pessoas automaticamente)
+    Micros time = -1;    ///< tempo da mídia do quadro clicado (-1 = nenhum)
+    std::vector<CutoutPoint> points;
+    bool tracked = false; ///< "Aplicar ao clipe": o objeto é acompanhado e vira o alfa do clipe
+    bool hasPoints() const { return time >= 0 && !points.empty(); }
+    bool active() const { return object && tracked && hasPoints(); }
+    bool operator==(const ObjectCutout &) const = default;
+};
+
 struct Clip {
     QString id;
     QString groupId; ///< clipes com o mesmo id de grupo são selecionados/movidos juntos
@@ -235,6 +253,7 @@ struct Clip {
     double voiceIsolation = 0; ///< isolamento de voz por IA 0..1 (0 = desligado)
     bool keepPitch = true;   ///< mudança de velocidade preserva o tom (WSOLA)
     bool removeBackground = false; ///< alfa vindo do matte gerado por IA (engine/Matting.h)
+    ObjectCutout cutout;           ///< remoção de fundo de um objeto escolhido (engine/ObjectCutout.h)
     bool smoothSlowMotion = false; ///< câmera lenta com quadros intermediários gerados por IA (engine/FrameInterpolation.h)
     bool audioOnly = false;  ///< usa só o áudio da mídia (clipe de áudio separado de um vídeo)
     Micros fadeIn = 0;

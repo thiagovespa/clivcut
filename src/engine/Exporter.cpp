@@ -5,6 +5,7 @@
 #include "AiModels.h"
 #include "DecoderFrameSource.h"
 #include "FrameInterpolation.h"
+#include "ObjectCutout.h"
 #include "Matting.h"
 #include "Stabilization.h"
 #include "core/Evaluate.h"
@@ -32,8 +33,20 @@ bool Exporter::run(const Project &p, ExportOptions opts, const Progress &progres
     // app (linha de comando) também as usa.
     p.forEachClip([&](const Clip &c) {
         const MediaAsset *a = c.hasMedia() ? p.asset(c.assetId) : nullptr;
-        if (a && c.removeBackground)
+        if (a && c.removeBackground && !c.cutout.object)
             discoverMatte(a->path);
+        // Objeto escolhido com cliques e ainda não acompanhado: acompanha agora (precisa do modelo).
+        if (a && c.removeBackground && c.cutout.active() && a->kind == MediaKind::Video) {
+            discoverObjectMattes(a->path);
+            if (findObjectMatte(a->path, c.cutout, c.sourceIn, c.sourceOut()).isEmpty() && objectCutoutModelsInstalled()) {
+                ObjectSegmenter segmenter;
+                Micros fileStart = 0;
+                double fileFps = 30;
+                const QString out = objectMattePathFor(a->path, c.cutout, c.sourceIn, c.sourceOut());
+                if (segmenter.track(a->path, c.cutout, c.sourceIn, c.sourceOut(), out, &fileStart, &fileFps, {}, nullptr))
+                    registerObjectMatte(a->path, c.cutout, c.sourceIn, c.sourceOut(), fileStart, fileFps, out);
+            }
+        }
         // Sem análise ainda (ex.: linha de comando): analisa agora, para o vídeo sair estabilizado.
         if (a && c.stabilize > 0 && a->kind == MediaKind::Video && !discoverMotion(a->path))
             analyzeMotion(a->path, motionPathFor(a->path), {}, nullptr);

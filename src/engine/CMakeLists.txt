@@ -20,6 +20,7 @@ add_library(clivcut_engine STATIC
     AudioCleanup.h AudioCleanup.cpp
     Matting.h Matting.cpp
     FrameInterpolation.h FrameInterpolation.cpp
+    ObjectCutout.h ObjectCutout.cpp
 )
 target_include_directories(clivcut_engine PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/..)
 target_link_libraries(clivcut_engine PUBLIC clivcut_core clivcut_media clivcut_render)

@@ -34,6 +34,13 @@ public:
     QImage requestImage(const QString &id, QSize *size, const QSize &requestedSize) override;
 };
 
+/** image://cutout/<n> → prévia do recorte de objeto (quadro clicado com a máscara), trocada pelo controller. */
+class CutoutPreviewProvider : public QQuickImageProvider {
+public:
+    CutoutPreviewProvider() : QQuickImageProvider(QQuickImageProvider::Image) {}
+    QImage requestImage(const QString &id, QSize *size, const QSize &requestedSize) override;
+};
+
 class WaveformProvider : public QQuickAsyncImageProvider {
 public:
     QQuickImageResponse *requestImageResponse(const QString &id, const QSize &requestedSize) override;
