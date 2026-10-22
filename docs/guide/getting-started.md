@@ -5,6 +5,7 @@
 Download the latest package from the [releases page](https://github.com/thiagovespa/clivcut/releases):
 
 - **Linux:** the `.AppImage` (make it executable and run it) or the `.flatpak` (`flatpak install --user clivcut-<version>-x86_64.flatpak`).
+  Debian/Ubuntu: `sudo apt install ./clivcut_<version>-1_amd64.deb`. Fedora/openSUSE: `sudo dnf install ./clivcut-<version>-1.x86_64.rpm` (or `zypper install`). Any distro: extract the `.tar.gz` and run `bin/clivcut`.
 - **Windows:** the `.exe` installer, or the portable `.zip`.
 - **macOS:** the `.dmg` for your Mac (`arm64` for Apple Silicon, `x86_64` for Intel). The app is not notarized: open it the first time with right-click → Open.
 

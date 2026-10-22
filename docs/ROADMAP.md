@@ -56,9 +56,9 @@
 | 17 | Packaging: AppImage | ✅ | tested |
 | 18 | Packaging: Flatpak | 🟡 | builds in CI on every push (KDE 6.11, FFmpeg 8.0.3 with x264/VA-API/NVENC, whisper.cpp, ONNX Runtime) and uploads a .flatpak bundle; publishing on Flathub missing |
 | 19 | Packaging: Windows (MSVC/vcpkg/NSIS) and macOS (Homebrew/DMG) | 🟡 | built and tested in CI on every push and attached to releases (installer, zip, Intel and Apple Silicon DMGs); not yet run on real Windows/Mac machines |
-| 20 | Packaging: .deb (Debian/Ubuntu) | ⬜ | built in CI and attached to releases; published to an apt repository (e.g. a PPA) |
-| 21 | Packaging: .rpm (Fedora/openSUSE) | ⬜ | built in CI and attached to releases; published to a dnf/zypper repository (e.g. COPR or OBS) |
-| 22 | Packaging: .tar.gz | ⬜ | relocatable binary tarball for other distributions, attached to releases |
+| 20 | Packaging: .deb (Debian/Ubuntu) | 🟡 | built in CI (`packaging/linux/build-packages.sh`, Qt bundled under `/opt/clivcut`) and attached to releases; publishing to an apt repository (e.g. a PPA) is pending |
+| 21 | Packaging: .rpm (Fedora/openSUSE) | 🟡 | built in CI (same tree as the .deb, soname dependencies so one package fits both) and attached to releases; publishing to a dnf/zypper repository (e.g. COPR or OBS) is pending |
+| 22 | Packaging: .tar.gz | ✅ | relocatable binary tarball for other distributions, attached to releases |
 | 23 | Packaging: Gentoo ebuild | ⬜ | `media-video/clivcut` in the `vespa` overlay, bumped on every release |
 
 ## Phase 3

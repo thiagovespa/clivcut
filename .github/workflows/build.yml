@@ -49,6 +49,17 @@ jobs:
           name: clivcut-linux-appimage
           path: dist/*.AppImage
 
+      - name: .tar.gz, .deb e .rpm
+        run: packaging/linux/build-packages.sh
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: clivcut-linux-packages
+          path: |
+            dist/*.tar.gz
+            dist/*.deb
+            dist/*.rpm
+
   windows:
     name: Windows (MSVC)
     runs-on: windows-2022

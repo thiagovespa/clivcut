@@ -134,6 +134,12 @@ packaging/appimage/build-appimage.sh      # produces dist/clivcut-<version>-x86_
 chmod +x dist/clivcut-*.AppImage && dist/clivcut-*.AppImage
 ```
 
+**.tar.gz, .deb and .rpm**, made from the AppImage tree (run the AppImage script first). Qt and the other libraries are bundled; the `.deb` and `.rpm` install under `/opt/clivcut` with `clivcut` and `clivcut-render` in `/usr/bin`:
+
+```sh
+packaging/linux/build-packages.sh         # dist/clivcut-<version>-linux-x86_64.tar.gz, .deb and .rpm
+```
+
 **Flatpak** (manifest in `packaging/flatpak/`; builds FFmpeg with x264, VA-API and whisper.cpp inside the sandbox):
 
 ```sh
@@ -174,7 +180,7 @@ cmake --build build
 
 On Intel, ONNX Runtime is pinned to 1.23.2, the last official `osx-x86_64` build (set `CLIVCUT_ONNXRUNTIME_ROOT` to use another one, or `-DCLIVCUT_WITH_ONNX=OFF` to build without local AI). Homebrew no longer ships bottles for Intel Macs, so there `brew install qt` compiles Qt from source; prefer `make dmg`.
 
-On Windows the GPU path uses Direct3D 11 and on macOS Metal, with the same shaders. CI (`.github/workflows/build.yml`) builds the AppImage, the Windows installer and the macOS DMGs (Intel and Apple Silicon) on every push.
+On Windows the GPU path uses Direct3D 11 and on macOS Metal, with the same shaders. CI (`.github/workflows/build.yml`) builds the AppImage, the Linux `.tar.gz`/`.deb`/`.rpm`, the Windows installer and the macOS DMGs (Intel and Apple Silicon) on every push.
 
 ## Usage
 
