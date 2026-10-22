@@ -29,6 +29,7 @@ Popup {
     // (rail, media, preview, inspector, timeline, search, export) e painel a abrir (opcional).
     readonly property var releases: [
         { version: "0.4.0", items: [
+            { title: qsTr("Templates"), text: qsTr("Start a video from a ready-made template and fill its slots with your media, save your own projects as templates, and add text templates (lower third, subscribe, quote and more) from the Text panel."), show: { area: "rail", panel: 1 } },
             { title: qsTr("AI voice narration"), text: qsTr("Turn texts and captions into natural speech, generated on your computer, in Portuguese, Spanish, English and more: select a text and use “Read aloud” on the Text tab, or “Read all captions” in the Captions panel."), show: { area: "rail", panel: 2 } }
         ] },
         { version: "0.3.0", items: [

@@ -11,6 +11,8 @@ Rectangle {
     signal openRequested()
     signal draftRequested()
     signal dismissed()
+    /// Um template virou o projeto: falta escolher as mídias para os espaços.
+    signal templateOpened()
 
     readonly property var formats: [
         { name: qsTr("Landscape"), sub: "16:9 · 1920×1080", w: 1920, h: 1080, rw: 64, rh: 36 },
@@ -93,6 +95,89 @@ Rectangle {
                             onTapped: {
                                 Project.newProject(card.modelData.w, card.modelData.h, 30);
                                 root.dismissed();
+                            }
+                        }
+                    }
+                }
+            }
+
+            Text {
+                Layout.topMargin: 8
+                text: qsTr("Or start from a template")
+                color: Theme.textDim
+                font.pixelSize: Theme.fontLarge
+                font.bold: true
+            }
+            Flow {
+                Layout.fillWidth: true
+                spacing: 12
+                Repeater {
+                    model: Project.templates
+                    Rectangle {
+                        id: tpl
+                        required property var modelData
+                        width: 214
+                        height: 150
+                        radius: 12
+                        color: tplHover.hovered ? Theme.surfaceHi : Theme.panel
+                        border.color: tplHover.hovered ? Theme.accent : Theme.border
+                        readonly property real ratio: modelData.width / modelData.height
+                        ColumnLayout {
+                            anchors.fill: parent
+                            anchors.margins: 12
+                            spacing: 4
+                            RowLayout {
+                                spacing: 8
+                                // Formato do template em miniatura.
+                                Rectangle {
+                                    implicitWidth: tpl.ratio >= 1 ? 40 : 40 * tpl.ratio
+                                    implicitHeight: tpl.ratio >= 1 ? 40 / tpl.ratio : 40
+                                    radius: 3
+                                    color: "transparent"
+                                    border.color: tplHover.hovered ? Theme.accent : Theme.textDim
+                                    border.width: 2
+                                }
+                                Text {
+                                    Layout.fillWidth: true
+                                    text: qsTr("%n slot(s)", "", tpl.modelData.slots) + " · " + Project.formatTime(tpl.modelData.duration).substring(0, 5)
+                                    color: Theme.textFaint
+                                    font.pixelSize: Theme.fontSmall
+                                }
+                                IconButton {
+                                    visible: !tpl.modelData.builtin
+                                    implicitWidth: 22; implicitHeight: 22
+                                    iconName: "x"
+                                    iconSize: 12
+                                    tip: qsTr("Delete template")
+                                    onClicked: Project.deleteTemplate(tpl.modelData.id)
+                                }
+                            }
+                            Text {
+                                Layout.fillWidth: true
+                                text: tpl.modelData.name
+                                color: Theme.text
+                                font.pixelSize: Theme.fontNormal
+                                font.bold: true
+                                elide: Text.ElideRight
+                            }
+                            Text {
+                                Layout.fillWidth: true
+                                Layout.fillHeight: true
+                                text: tpl.modelData.description
+                                color: Theme.textDim
+                                font.pixelSize: Theme.fontSmall
+                                wrapMode: Text.Wrap
+                                elide: Text.ElideRight
+                                maximumLineCount: 3
+                            }
+                        }
+                        HoverHandler { id: tplHover; cursorShape: Qt.PointingHandCursor }
+                        TapHandler {
+                            onTapped: {
+                                if (Project.newFromTemplate(tpl.modelData.id)) {
+                                    root.dismissed();
+                                    root.templateOpened();
+                                }
                             }
                         }
                     }

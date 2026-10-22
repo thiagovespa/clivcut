@@ -88,6 +88,7 @@ ApplicationWindow {
         onHomeRequested: window.showWelcome = true
         onTourRequested: window.startTour()
         onWhatsNewRequested: window.openWhatsNew("")
+        onSaveTemplateRequested: saveTemplateDialog.open()
     }
 
     // Tela inicial enquanto o projeto está vazio (some ao importar/abrir).
@@ -183,6 +184,7 @@ ApplicationWindow {
         onOpenRequested: openDialog.open()
         onDraftRequested: draftDialog.open()
         onDismissed: window.showWelcome = false
+        onTemplateOpened: if (Project.emptySlotCount > 0) fillDialog.open()
     }
 
     SplitView {
@@ -389,6 +391,42 @@ ApplicationWindow {
         onAccepted: {
             settings.lastFolder = currentFolder;
             Project.importMedia(selectedFiles);
+        }
+    }
+    // Template recém-aberto: escolher as mídias de uma vez preenche os espaços em ordem.
+    FileDialog {
+        id: fillDialog
+        title: qsTr("Choose your media for the template (in order)")
+        fileMode: FileDialog.OpenFiles
+        currentFolder: settings.lastFolder
+        nameFilters: mediaDialog.nameFilters
+        onAccepted: {
+            settings.lastFolder = currentFolder;
+            Project.fillSlots(selectedFiles);
+        }
+    }
+    Dialog {
+        id: saveTemplateDialog
+        parent: Overlay.overlay
+        anchors.centerIn: parent
+        modal: true
+        title: qsTr("Save as template")
+        standardButtons: Dialog.Save | Dialog.Cancel
+        onOpened: {
+            templateName.text = Project.projectName;
+            templateName.selectAll();
+            templateName.forceActiveFocus();
+        }
+        onAccepted: Project.saveAsTemplate(templateName.text)
+        ColumnLayout {
+            spacing: 8
+            Text {
+                Layout.preferredWidth: 360
+                wrapMode: Text.Wrap
+                color: Theme.textDim
+                text: qsTr("The media become empty slots; texts, effects, transitions and timing stay. The template shows up on the start screen.")
+            }
+            TextField { id: templateName; Layout.fillWidth: true; onAccepted: saveTemplateDialog.accept() }
         }
     }
     FileDialog {

@@ -641,6 +641,13 @@
         <source>areas without clips stay transparent</source>
         <translation>las áreas sin clips quedan transparentes</translation>
     </message>
+    <message numerus="yes">
+        <source>%n template slot(s) still empty: they will show as placeholders in the video.</source>
+        <translation>
+            <numerusform>%n hueco de la plantilla todavía vacío: aparecerá como marcador en el vídeo.</numerusform>
+            <numerusform>%n huecos de la plantilla todavía vacíos: aparecerán como marcadores en el vídeo.</numerusform>
+        </translation>
+    </message>
     <message>
         <source>Cancel export</source>
         <translation>Cancelar exportación</translation>
@@ -1066,6 +1073,18 @@ Atajos: Espacio reproduce · Ctrl+B divide · Q/W eliminan a la izquierda/derech
         <translation>Leer este texto</translation>
     </message>
     <message>
+        <source>Template slot: %1</source>
+        <translation>Hueco de la plantilla: %1</translation>
+    </message>
+    <message>
+        <source>Drag a media file from the Media panel onto it, double-click a media file, or choose a file. Its position, look and timing stay.</source>
+        <translation>Arrastra un medio del panel Medios sobre él, haz doble clic en un medio o elige un archivo. Se mantienen la posición, el aspecto y el tiempo.</translation>
+    </message>
+    <message>
+        <source>Choose file…</source>
+        <translation>Elegir archivo…</translation>
+    </message>
+    <message>
         <source>Transform</source>
         <translation>Transformación</translation>
     </message>
@@ -1176,6 +1195,18 @@ Atajos: Espacio reproduce · Ctrl+B divide · Q/W eliminan a la izquierda/derech
     <message>
         <source>Filter</source>
         <translation>Filtro</translation>
+    </message>
+    <message>
+        <source>Choose a file for the slot</source>
+        <translation>Elige un archivo para el hueco</translation>
+    </message>
+    <message>
+        <source>Media (*.mp4 *.mov *.mkv *.webm *.avi *.m4v *.mts *.mp3 *.wav *.m4a *.aac *.flac *.ogg *.opus *.png *.jpg *.jpeg *.webp *.gif *.bmp *.tif *.tiff *.heic)</source>
+        <translation>Medios (*.mp4 *.mov *.mkv *.webm *.avi *.m4v *.mts *.mp3 *.wav *.m4a *.aac *.flac *.ogg *.opus *.png *.jpg *.jpeg *.webp *.gif *.bmp *.tif *.tiff *.heic)</translation>
+    </message>
+    <message>
+        <source>All files (*)</source>
+        <translation>Todos los archivos (*)</translation>
     </message>
     <message>
         <source>Remove</source>
@@ -2068,6 +2099,18 @@ Atajos: Espacio reproduce · Ctrl+B divide · Q/W eliminan a la izquierda/derech
         <translation>Todos los archivos (*)</translation>
     </message>
     <message>
+        <source>Choose your media for the template (in order)</source>
+        <translation>Elige los medios para la plantilla (en orden)</translation>
+    </message>
+    <message>
+        <source>Save as template</source>
+        <translation>Guardar como plantilla</translation>
+    </message>
+    <message>
+        <source>The media become empty slots; texts, effects, transitions and timing stay. The template shows up on the start screen.</source>
+        <translation>Los medios se convierten en huecos vacíos; textos, efectos, transiciones y tiempos se mantienen. La plantilla aparece en la pantalla de inicio.</translation>
+    </message>
+    <message>
         <source>Open project</source>
         <translation>Abrir proyecto</translation>
     </message>
@@ -2292,6 +2335,10 @@ Atajos: Espacio reproduce · Ctrl+B divide · Q/W eliminan a la izquierda/derech
     <message>
         <source>Highlight</source>
         <translation>Destacado</translation>
+    </message>
+    <message>
+        <source>Text templates</source>
+        <translation>Plantillas de texto</translation>
     </message>
     <message>
         <source>Shapes</source>
@@ -2697,6 +2744,79 @@ Atajos: Espacio reproduce · Ctrl+B divide · Q/W eliminan a la izquierda/derech
     <message>
         <source>Compound clip</source>
         <translation>Clip compuesto</translation>
+    </message>
+    <message>
+        <source>Your template</source>
+        <translation>Tu plantilla</translation>
+    </message>
+    <message>
+        <source>Could not open the template: %1</source>
+        <translation>No se pudo abrir la plantilla: %1</translation>
+    </message>
+    <message numerus="yes">
+        <source>Template ready: fill its %n slot(s) with your media</source>
+        <translation>
+            <numerusform>Plantilla lista: rellena su hueco con tu contenido</numerusform>
+            <numerusform>Plantilla lista: rellena sus %n huecos con tu contenido</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Template ready</source>
+        <translation>Plantilla lista</translation>
+    </message>
+    <message>
+        <source>Photo %1</source>
+        <translation>Foto %1</translation>
+    </message>
+    <message>
+        <source>Audio %1</source>
+        <translation>Audio %1</translation>
+    </message>
+    <message>
+        <source>Video %1</source>
+        <translation>Vídeo %1</translation>
+    </message>
+    <message>
+        <source>Could not save the template: %1</source>
+        <translation>No se pudo guardar la plantilla: %1</translation>
+    </message>
+    <message>
+        <source>Template saved: %1</source>
+        <translation>Plantilla guardada: %1</translation>
+    </message>
+    <message>
+        <source>Fill template slot</source>
+        <translation>Rellenar hueco de la plantilla</translation>
+    </message>
+    <message>
+        <source>Replace media</source>
+        <translation>Reemplazar medio</translation>
+    </message>
+    <message>
+        <source>This media does not fit this clip</source>
+        <translation>Este medio no sirve para este clip</translation>
+    </message>
+    <message>
+        <source>Fill template slots</source>
+        <translation>Rellenar huecos de la plantilla</translation>
+    </message>
+    <message numerus="yes">
+        <source>%n slot(s) filled, %1 still empty</source>
+        <translation>
+            <numerusform>%n hueco rellenado, %1 todavía vacío(s)</numerusform>
+            <numerusform>%n huecos rellenados, %1 todavía vacío(s)</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>%n slot(s) filled</source>
+        <translation>
+            <numerusform>%n hueco rellenado</numerusform>
+            <numerusform>%n huecos rellenados</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Add text template</source>
+        <translation>Añadir plantilla de texto</translation>
     </message>
     <message>
         <source>Project created (%1×%2, %3 fps)</source>
@@ -3626,6 +3746,213 @@ Atajos: Espacio reproduce · Ctrl+B divide · Q/W eliminan a la izquierda/derech
     </message>
 </context>
 <context>
+    <name>Templates</name>
+    <message>
+        <source>Vertical intro</source>
+        <translation>Intro vertical</translation>
+    </message>
+    <message>
+        <source>Three quick shots, a title and music, for stories and shorts</source>
+        <translation>Tres tomas rápidas, un título y música, para historias y shorts</translation>
+    </message>
+    <message>
+        <source>Photo slideshow</source>
+        <translation>Presentación de fotos</translation>
+    </message>
+    <message>
+        <source>Six photos with a slow zoom, crossfades and music</source>
+        <translation>Seis fotos con zoom lento, fundidos y música</translation>
+    </message>
+    <message>
+        <source>Podcast clip</source>
+        <translation>Clip de pódcast</translation>
+    </message>
+    <message>
+        <source>A vertical cut of an episode with its title and the guest&apos;s name</source>
+        <translation>Un corte vertical de un episodio con su título y el nombre del invitado</translation>
+    </message>
+    <message>
+        <source>Before / after</source>
+        <translation>Antes y después</translation>
+    </message>
+    <message>
+        <source>Two videos side by side, labeled</source>
+        <translation>Dos vídeos lado a lado, con etiquetas</translation>
+    </message>
+    <message>
+        <source>Product showcase</source>
+        <translation>Escaparate de producto</translation>
+    </message>
+    <message>
+        <source>Square, punchy cuts with a call to action</source>
+        <translation>Formato cuadrado, cortes rápidos y una llamada a la acción</translation>
+    </message>
+    <message>
+        <source>Channel intro</source>
+        <translation>Intro de canal</translation>
+    </message>
+    <message>
+        <source>A glitchy opening with your channel name and a subscribe bubble</source>
+        <translation>Una apertura con efecto glitch, el nombre de tu canal y un globo para suscribirse</translation>
+    </message>
+    <message>
+        <source>Video 1</source>
+        <translation>Vídeo 1</translation>
+    </message>
+    <message>
+        <source>Video 2</source>
+        <translation>Vídeo 2</translation>
+    </message>
+    <message>
+        <source>Video 3</source>
+        <translation>Vídeo 3</translation>
+    </message>
+    <message>
+        <source>Photo 1</source>
+        <translation>Foto 1</translation>
+    </message>
+    <message>
+        <source>Photo 2</source>
+        <translation>Foto 2</translation>
+    </message>
+    <message>
+        <source>Photo 3</source>
+        <translation>Foto 3</translation>
+    </message>
+    <message>
+        <source>Photo 4</source>
+        <translation>Foto 4</translation>
+    </message>
+    <message>
+        <source>Photo 5</source>
+        <translation>Foto 5</translation>
+    </message>
+    <message>
+        <source>Photo 6</source>
+        <translation>Foto 6</translation>
+    </message>
+    <message>
+        <source>Music</source>
+        <translation>Música</translation>
+    </message>
+    <message>
+        <source>Before</source>
+        <translation>Antes</translation>
+    </message>
+    <message>
+        <source>After</source>
+        <translation>Después</translation>
+    </message>
+    <message>
+        <source>Your title</source>
+        <translation>Tu título</translation>
+    </message>
+    <message>
+        <source>@yourname</source>
+        <translation>@tunombre</translation>
+    </message>
+    <message>
+        <source>Follow for more</source>
+        <translation>Sígueme para más</translation>
+    </message>
+    <message>
+        <source>Our trip</source>
+        <translation>Nuestro viaje</translation>
+    </message>
+    <message>
+        <source>Thanks for watching</source>
+        <translation>Gracias por ver</translation>
+    </message>
+    <message>
+        <source>Episode title goes here</source>
+        <translation>Título del episodio aquí</translation>
+    </message>
+    <message>
+        <source>Guest Name</source>
+        <translation>Nombre del invitado</translation>
+    </message>
+    <message>
+        <source>Role or company</source>
+        <translation>Cargo o empresa</translation>
+    </message>
+    <message>
+        <source>BEFORE</source>
+        <translation>ANTES</translation>
+    </message>
+    <message>
+        <source>AFTER</source>
+        <translation>DESPUÉS</translation>
+    </message>
+    <message>
+        <source>New *arrival*</source>
+        <translation>*Novedad* en la tienda</translation>
+    </message>
+    <message>
+        <source>Shop now</source>
+        <translation>Compra ahora</translation>
+    </message>
+    <message>
+        <source>CHANNEL NAME</source>
+        <translation>NOMBRE DEL CANAL</translation>
+    </message>
+    <message>
+        <source>Subscribe!</source>
+        <translation>¡Suscríbete!</translation>
+    </message>
+    <message>
+        <source>Name Surname</source>
+        <translation>Nombre Apellido</translation>
+    </message>
+    <message>
+        <source>Subscribe</source>
+        <translation>Suscríbete</translation>
+    </message>
+    <message>
+        <source>“Your quote goes here.”</source>
+        <translation>“Tu cita aquí.”</translation>
+    </message>
+    <message>
+        <source>— Author</source>
+        <translation>— Autor</translation>
+    </message>
+    <message>
+        <source>CHAPTER 1</source>
+        <translation>CAPÍTULO 1</translation>
+    </message>
+    <message>
+        <source>Chapter *title*</source>
+        <translation>Título del *capítulo*</translation>
+    </message>
+    <message>
+        <source>BREAKING NEWS · Headline goes here</source>
+        <translation>ÚLTIMA HORA · Titular aquí</translation>
+    </message>
+    <message>
+        <source>Link in bio ↓</source>
+        <translation>Enlace en la bio ↓</translation>
+    </message>
+    <message>
+        <source>Lower third</source>
+        <translation>Rótulo inferior</translation>
+    </message>
+    <message>
+        <source>Quote</source>
+        <translation>Cita</translation>
+    </message>
+    <message>
+        <source>Chapter title</source>
+        <translation>Título de capítulo</translation>
+    </message>
+    <message>
+        <source>News banner</source>
+        <translation>Faja de noticia</translation>
+    </message>
+    <message>
+        <source>Link in bio</source>
+        <translation>Enlace en la bio</translation>
+    </message>
+</context>
+<context>
     <name>Timeline</name>
     <message>
         <source>Split at playhead</source>
@@ -3820,6 +4147,14 @@ Atajos: Espacio reproduce · Ctrl+B divide · Q/W eliminan a la izquierda/derech
     <message>
         <source>Export…</source>
         <translation>Exportar…</translation>
+    </message>
+    <message>
+        <source>New from template…</source>
+        <translation>Nuevo desde plantilla…</translation>
+    </message>
+    <message>
+        <source>Save as template…</source>
+        <translation>Guardar como plantilla…</translation>
     </message>
     <message>
         <source>Help</source>
@@ -4091,6 +4426,21 @@ Atajos: Espacio reproduce · Ctrl+B divide · Q/W eliminan a la izquierda/derech
         <translation>Empieza por el formato del vídeo</translation>
     </message>
     <message>
+        <source>Or start from a template</source>
+        <translation>O empieza con una plantilla</translation>
+    </message>
+    <message numerus="yes">
+        <source>%n slot(s)</source>
+        <translation>
+            <numerusform>%n hueco</numerusform>
+            <numerusform>%n huecos</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Delete template</source>
+        <translation>Eliminar plantilla</translation>
+    </message>
+    <message>
         <source>Import media</source>
         <translation>Importar medios</translation>
     </message>
@@ -4125,6 +4475,14 @@ Atajos: Espacio reproduce · Ctrl+B divide · Q/W eliminan a la izquierda/derech
 </context>
 <context>
     <name>WhatsNewDialog</name>
+    <message>
+        <source>Templates</source>
+        <translation>Plantillas</translation>
+    </message>
+    <message>
+        <source>Start a video from a ready-made template and fill its slots with your media, save your own projects as templates, and add text templates (lower third, subscribe, quote and more) from the Text panel.</source>
+        <translation>Empieza un vídeo con una plantilla lista y rellena sus huecos con tu contenido, guarda tus proyectos como plantillas y añade plantillas de texto (rótulo inferior, suscríbete, cita y más) desde el panel Texto.</translation>
+    </message>
     <message>
         <source>AI voice narration</source>
         <translation>Narración con voz de IA</translation>

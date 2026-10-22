@@ -52,7 +52,7 @@
 | 13 | Shader-based video effects (glitch, shake, blur, VHS, glow, particles) and more transitions | ✅ | 12 effects in the layer shader (per clip or as an effect layer) and 17 transitions; effect keyframes and multiple effects per clip missing |
 | 14 | Audio: music ducking under voice, voice effects (echo, reverb, voice changer), voiceover recording | ✅ | ducking in real time in the mixer, voice effects as cached FFmpeg filter chains, voiceover recorded with SDL capture |
 | 15 | Music beat detection with automatic markers | ✅ | spectral-flux onsets, autocorrelation tempo and dynamic-programming beat tracking; every beat, 2 beats or bar |
-| 16 | Project templates with media slots and ready-made text templates | ⬜ | |
+| 16 | Project templates with media slots and ready-made text templates | ✅ | 6 built-in project templates, user templates (save as template), slot filling in order or by drag and drop, media replacement, 6 text templates |
 | 17 | Packaging: AppImage | ✅ | tested |
 | 18 | Packaging: Flatpak | 🟡 | builds in CI on every push (KDE 6.11, FFmpeg 8.0.3 with x264/VA-API/NVENC, whisper.cpp, ONNX Runtime) and uploads a .flatpak bundle; publishing on Flathub missing |
 | 19 | Packaging: Windows (MSVC/vcpkg/NSIS) and macOS (Homebrew/DMG) | 🟡 | built and tested in CI on every push and attached to releases (installer, zip, Intel and Apple Silicon DMGs); not yet run on real Windows/Mac machines |

@@ -263,6 +263,8 @@ public:
     Q_INVOKABLE void fillSlots(const QList<QUrl> &urls);
     /// Troca a mídia de um clipe (ou preenche um espaço) mantendo lugar e aparência.
     Q_INVOKABLE bool replaceClipMedia(const QString &clipId, const QString &assetId);
+    /// Importa um arquivo e o põe no clipe (espaço de template ou troca de mídia).
+    Q_INVOKABLE bool replaceClipMediaFromFile(const QString &clipId, const QUrl &url);
     int emptySlotCount() const;
     /// Modelos de texto prontos: [{id, name}]; inseridos no cursor.
     QVariantList textTemplates() const;

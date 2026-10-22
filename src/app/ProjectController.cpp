@@ -865,6 +865,16 @@ bool ProjectController::replaceClipMedia(const QString &clipId, const QString &a
     return ok;
 }
 
+bool ProjectController::replaceClipMediaFromFile(const QString &clipId, const QUrl &url)
+{
+    importMedia({url});
+    const QString path = localPath(url);
+    for (const auto &[id, a] : m_project.assets)
+        if (a.path == path)
+            return replaceClipMedia(clipId, id);
+    return false;
+}
+
 void ProjectController::fillSlots(const QList<QUrl> &urls)
 {
     // Importa (as que já estão no projeto são reaproveitadas) e preenche na ordem dos espaços.

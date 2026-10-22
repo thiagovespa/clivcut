@@ -2,7 +2,38 @@
 <!DOCTYPE TS>
 <TS version="2.1" language="en" sourcelanguage="en">
 <context>
+    <name>ExportDialog</name>
+    <message numerus="yes">
+        <source>%n template slot(s) still empty: they will show as placeholders in the video.</source>
+        <translation>
+            <numerusform>%n template slot still empty: they will show as placeholders in the video.</numerusform>
+            <numerusform>%n template slots still empty: they will show as placeholders in the video.</numerusform>
+        </translation>
+    </message>
+</context>
+<context>
     <name>ProjectController</name>
+    <message numerus="yes">
+        <source>Template ready: fill its %n slot(s) with your media</source>
+        <translation>
+            <numerusform>Template ready: fill its %n slot with your media</numerusform>
+            <numerusform>Template ready: fill its %n slots with your media</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>%n slot(s) filled, %1 still empty</source>
+        <translation>
+            <numerusform>%n slot filled, %1 still empty</numerusform>
+            <numerusform>%n slots filled, %1 still empty</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>%n slot(s) filled</source>
+        <translation>
+            <numerusform>%n slot filled</numerusform>
+            <numerusform>%n slots filled</numerusform>
+        </translation>
+    </message>
     <message numerus="yes">
         <source>%n file(s) imported</source>
         <translation>
@@ -119,6 +150,16 @@
         <translation>
             <numerusform>Remove %n word</numerusform>
             <numerusform>Remove %n words</numerusform>
+        </translation>
+    </message>
+</context>
+<context>
+    <name>WelcomeScreen</name>
+    <message numerus="yes">
+        <source>%n slot(s)</source>
+        <translation>
+            <numerusform>%n slot</numerusform>
+            <numerusform>%n slots</numerusform>
         </translation>
     </message>
 </context>

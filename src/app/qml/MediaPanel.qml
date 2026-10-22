@@ -316,6 +316,23 @@ Rectangle {
                         TileButton { glyph: "▭"; caption: qsTr("Subtitle"); tint: "#202024"; onClicked: Project.addText("", "subtitle") }
                         TileButton { glyph: "★"; caption: qsTr("Highlight"); tint: "#4d4310"; onClicked: Project.addText("", "highlight") }
                     }
+                    SectionLabel { text: qsTr("Text templates") }
+                    Flow {
+                        Layout.fillWidth: true
+                        spacing: 8
+                        Repeater {
+                            model: Project.textTemplates
+                            TileButton {
+                                required property var modelData
+                                readonly property var glyphs: ({ "lower-third": "▁▂", "subscribe": "♥", "quote": "❝", "chapter": "§",
+                                                                "breaking-news": "▬", "link-in-bio": "↓" })
+                                glyph: glyphs[modelData.id] || "T"
+                                caption: modelData.name
+                                tint: "#2a3550"
+                                onClicked: Project.insertTextTemplate(modelData.id)
+                            }
+                        }
+                    }
                     SectionLabel { text: qsTr("Shapes") }
                     Flow {
                         Layout.fillWidth: true

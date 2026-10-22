@@ -16,6 +16,7 @@ Item {
     readonly property bool isAudio: clipData.mediaKind === "audio" || clipData.audioOnly
     readonly property bool isImage: clipData.mediaKind === "image"
     readonly property bool isCompound: clipData.mediaKind === "compound"
+    readonly property bool isSlot: clipData.mediaKind === "slot"
 
     // Estado de interação (pré-visualização local até soltar).
     property real dragDx: 0
@@ -31,6 +32,7 @@ Item {
     z: body.drag.active || dragDx !== 0 || dragDy !== 0 ? 50 : (selected ? 2 : 1)
 
     readonly property color baseColor: isText ? Theme.clipText : isAdjust ? Theme.clipAdjust : isCompound ? Theme.clipCompound
+                                       : isSlot ? Theme.surfaceHi
                                        : isAudio ? Theme.clipAudio : isImage ? Theme.clipImage : Theme.clipVideo
 
     Rectangle {
@@ -44,7 +46,7 @@ Item {
 
         // Tira de miniaturas (vídeo/imagem)
         Row {
-            visible: !root.isText && !root.isAdjust && !root.isAudio && !root.isCompound && !clipData.missing
+            visible: !root.isText && !root.isAdjust && !root.isAudio && !root.isCompound && !root.isSlot && !clipData.missing
             anchors.fill: parent
             anchors.margins: 1
             readonly property real tileW: Math.max(24, height * 16 / 9)
@@ -97,6 +99,27 @@ Item {
             }
         }
 
+        // Soltar uma mídia da biblioteca em cima do clipe troca a mídia (ou preenche o espaço).
+        DropArea {
+            id: mediaDrop
+            anchors.fill: parent
+            enabled: !root.isText && !root.isAdjust && !root.isCompound
+            keys: ["clivcut/asset"]
+            onDropped: (d) => {
+                Project.replaceClipMedia(root.clipData.id, d.getDataAsString("clivcut/asset"));
+                d.accept(Qt.CopyAction);
+            }
+        }
+        Rectangle {
+            anchors.fill: parent
+            visible: mediaDrop.containsDrag || root.isSlot
+            color: mediaDrop.containsDrag ? Theme.accentSoft : "transparent"
+            border.color: Theme.accent
+            border.width: mediaDrop.containsDrag ? 2 : 1
+            opacity: mediaDrop.containsDrag ? 1 : 0.6
+            radius: 5
+        }
+
         // Rótulo
         Rectangle {
             x: 4
@@ -111,7 +134,7 @@ Item {
                 anchors.verticalCenter: parent.verticalCenter
                 x: 5
                 width: parent.width - 8
-                text: (root.clipData.audioMuted ? "🔇 " : "") + (root.clipData.groupId !== "" ? "⛓ " : "") + (root.isText ? "T  " : root.isAdjust ? "◐  " : root.isCompound ? "▣  " : "") + root.clipData.label + "  " + Project.formatTime(root.clipData.duration).substring(0, 5)
+                text: (root.clipData.audioMuted ? "🔇 " : "") + (root.clipData.groupId !== "" ? "⛓ " : "") + (root.isText ? "T  " : root.isAdjust ? "◐  " : root.isCompound ? "▣  " : root.isSlot ? "+  " : "") + root.clipData.label + "  " + Project.formatTime(root.clipData.duration).substring(0, 5)
                 color: "white"
                 font.pixelSize: 10
                 elide: Text.ElideRight

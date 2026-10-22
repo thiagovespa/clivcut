@@ -10,6 +10,10 @@ In the **Text** panel (Alt+2), pick a preset (default, title, subtitle, highligh
 - **Curved text:** the *Curve* slider bends the text into an arc, up or down.
 - **Shapes:** rectangle, rounded, circle, triangle, star, arrow, heart and speech bubble, alone or behind the text, with their own color and size.
 
+## Text templates
+
+Under **Text templates** in the Text panel: lower third (name and role), subscribe, quote, chapter title, news banner and link in bio. They are added at the playhead as ordinary text clips, ready to edit.
+
 ## Stickers
 
 The bottom of the Text panel has a sticker library. Click one to drop it at the playhead, above the video; move and resize it like any clip. To make a sticker or text follow something that moves, see [motion tracking](color-and-effects.md#motion-tracking).

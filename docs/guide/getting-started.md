@@ -14,6 +14,12 @@ The welcome screen offers canvas formats (landscape 16:9, vertical 9:16, square,
 
 ![Welcome screen](../screenshots/welcome.png)
 
+## Start from a template
+
+Below the formats, **Or start from a template** lists ready-made projects. Pick one and choose your media files: they fill the template's slots in order (photos and videos into image slots, music into the music slot). Slots still empty show as striped cards with a **+**; drag a media file from the Media panel onto one, double-click a media file while a slot is selected, or use **Choose file…** in the inspector. The export dialog warns while slots are empty.
+
+Your own projects can become templates too: logo menu → **Save as template…** turns the media into empty slots and keeps texts, effects, transitions and timing.
+
 ## The window
 
 ![Editor](../screenshots/editor.png)

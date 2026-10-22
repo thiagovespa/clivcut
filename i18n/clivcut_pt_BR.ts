@@ -641,6 +641,13 @@
         <source>areas without clips stay transparent</source>
         <translation>áreas sem clipes ficam transparentes</translation>
     </message>
+    <message numerus="yes">
+        <source>%n template slot(s) still empty: they will show as placeholders in the video.</source>
+        <translation>
+            <numerusform>%n espaço do template ainda vazio: ele vai aparecer como marcador no vídeo.</numerusform>
+            <numerusform>%n espaços do template ainda vazios: eles vão aparecer como marcadores no vídeo.</numerusform>
+        </translation>
+    </message>
     <message>
         <source>Cancel export</source>
         <translation>Cancelar exportação</translation>
@@ -1066,6 +1073,18 @@ Atalhos: Espaço reproduz · Ctrl+B divide · Q/W exclui à esquerda/direita · 
         <translation>Ler este texto</translation>
     </message>
     <message>
+        <source>Template slot: %1</source>
+        <translation>Espaço do template: %1</translation>
+    </message>
+    <message>
+        <source>Drag a media file from the Media panel onto it, double-click a media file, or choose a file. Its position, look and timing stay.</source>
+        <translation>Arraste uma mídia do painel Mídia para cima dele, dê um clique duplo numa mídia ou escolha um arquivo. A posição, a aparência e o tempo continuam.</translation>
+    </message>
+    <message>
+        <source>Choose file…</source>
+        <translation>Escolher arquivo…</translation>
+    </message>
+    <message>
         <source>Transform</source>
         <translation>Transformação</translation>
     </message>
@@ -1176,6 +1195,18 @@ Atalhos: Espaço reproduz · Ctrl+B divide · Q/W exclui à esquerda/direita · 
     <message>
         <source>Filter</source>
         <translation>Filtro</translation>
+    </message>
+    <message>
+        <source>Choose a file for the slot</source>
+        <translation>Escolha um arquivo para o espaço</translation>
+    </message>
+    <message>
+        <source>Media (*.mp4 *.mov *.mkv *.webm *.avi *.m4v *.mts *.mp3 *.wav *.m4a *.aac *.flac *.ogg *.opus *.png *.jpg *.jpeg *.webp *.gif *.bmp *.tif *.tiff *.heic)</source>
+        <translation>Mídia (*.mp4 *.mov *.mkv *.webm *.avi *.m4v *.mts *.mp3 *.wav *.m4a *.aac *.flac *.ogg *.opus *.png *.jpg *.jpeg *.webp *.gif *.bmp *.tif *.tiff *.heic)</translation>
+    </message>
+    <message>
+        <source>All files (*)</source>
+        <translation>Todos os arquivos (*)</translation>
     </message>
     <message>
         <source>Remove</source>
@@ -2068,6 +2099,18 @@ Atalhos: Espaço reproduz · Ctrl+B divide · Q/W exclui à esquerda/direita · 
         <translation>Todos os arquivos (*)</translation>
     </message>
     <message>
+        <source>Choose your media for the template (in order)</source>
+        <translation>Escolha as mídias para o template (em ordem)</translation>
+    </message>
+    <message>
+        <source>Save as template</source>
+        <translation>Salvar como template</translation>
+    </message>
+    <message>
+        <source>The media become empty slots; texts, effects, transitions and timing stay. The template shows up on the start screen.</source>
+        <translation>As mídias viram espaços vazios; textos, efeitos, transições e tempos continuam. O template aparece na tela inicial.</translation>
+    </message>
+    <message>
         <source>Open project</source>
         <translation>Abrir projeto</translation>
     </message>
@@ -2292,6 +2335,10 @@ Atalhos: Espaço reproduz · Ctrl+B divide · Q/W exclui à esquerda/direita · 
     <message>
         <source>Highlight</source>
         <translation>Destaque</translation>
+    </message>
+    <message>
+        <source>Text templates</source>
+        <translation>Modelos de texto</translation>
     </message>
     <message>
         <source>Shapes</source>
@@ -2697,6 +2744,79 @@ Atalhos: Espaço reproduz · Ctrl+B divide · Q/W exclui à esquerda/direita · 
     <message>
         <source>Compound clip</source>
         <translation>Clipe composto</translation>
+    </message>
+    <message>
+        <source>Your template</source>
+        <translation>Seu template</translation>
+    </message>
+    <message>
+        <source>Could not open the template: %1</source>
+        <translation>Não foi possível abrir o template: %1</translation>
+    </message>
+    <message numerus="yes">
+        <source>Template ready: fill its %n slot(s) with your media</source>
+        <translation>
+            <numerusform>Template pronto: preencha o espaço com a sua mídia</numerusform>
+            <numerusform>Template pronto: preencha os %n espaços com as suas mídias</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Template ready</source>
+        <translation>Template pronto</translation>
+    </message>
+    <message>
+        <source>Photo %1</source>
+        <translation>Foto %1</translation>
+    </message>
+    <message>
+        <source>Audio %1</source>
+        <translation>Áudio %1</translation>
+    </message>
+    <message>
+        <source>Video %1</source>
+        <translation>Vídeo %1</translation>
+    </message>
+    <message>
+        <source>Could not save the template: %1</source>
+        <translation>Não foi possível salvar o template: %1</translation>
+    </message>
+    <message>
+        <source>Template saved: %1</source>
+        <translation>Template salvo: %1</translation>
+    </message>
+    <message>
+        <source>Fill template slot</source>
+        <translation>Preencher espaço do template</translation>
+    </message>
+    <message>
+        <source>Replace media</source>
+        <translation>Trocar mídia</translation>
+    </message>
+    <message>
+        <source>This media does not fit this clip</source>
+        <translation>Esta mídia não serve para este clipe</translation>
+    </message>
+    <message>
+        <source>Fill template slots</source>
+        <translation>Preencher espaços do template</translation>
+    </message>
+    <message numerus="yes">
+        <source>%n slot(s) filled, %1 still empty</source>
+        <translation>
+            <numerusform>%n espaço preenchido, %1 ainda vazio(s)</numerusform>
+            <numerusform>%n espaços preenchidos, %1 ainda vazio(s)</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>%n slot(s) filled</source>
+        <translation>
+            <numerusform>%n espaço preenchido</numerusform>
+            <numerusform>%n espaços preenchidos</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Add text template</source>
+        <translation>Adicionar modelo de texto</translation>
     </message>
     <message>
         <source>Project created (%1×%2, %3 fps)</source>
@@ -3626,6 +3746,213 @@ Atalhos: Espaço reproduz · Ctrl+B divide · Q/W exclui à esquerda/direita · 
     </message>
 </context>
 <context>
+    <name>Templates</name>
+    <message>
+        <source>Vertical intro</source>
+        <translation>Abertura vertical</translation>
+    </message>
+    <message>
+        <source>Three quick shots, a title and music, for stories and shorts</source>
+        <translation>Três cenas rápidas, um título e música, para stories e shorts</translation>
+    </message>
+    <message>
+        <source>Photo slideshow</source>
+        <translation>Apresentação de fotos</translation>
+    </message>
+    <message>
+        <source>Six photos with a slow zoom, crossfades and music</source>
+        <translation>Seis fotos com zoom lento, transições suaves e música</translation>
+    </message>
+    <message>
+        <source>Podcast clip</source>
+        <translation>Corte de podcast</translation>
+    </message>
+    <message>
+        <source>A vertical cut of an episode with its title and the guest&apos;s name</source>
+        <translation>Um corte vertical de um episódio com o título e o nome do convidado</translation>
+    </message>
+    <message>
+        <source>Before / after</source>
+        <translation>Antes e depois</translation>
+    </message>
+    <message>
+        <source>Two videos side by side, labeled</source>
+        <translation>Dois vídeos lado a lado, com rótulos</translation>
+    </message>
+    <message>
+        <source>Product showcase</source>
+        <translation>Vitrine de produto</translation>
+    </message>
+    <message>
+        <source>Square, punchy cuts with a call to action</source>
+        <translation>Formato quadrado, cortes rápidos e uma chamada para ação</translation>
+    </message>
+    <message>
+        <source>Channel intro</source>
+        <translation>Abertura de canal</translation>
+    </message>
+    <message>
+        <source>A glitchy opening with your channel name and a subscribe bubble</source>
+        <translation>Uma abertura com efeito glitch, o nome do canal e um balão para se inscrever</translation>
+    </message>
+    <message>
+        <source>Video 1</source>
+        <translation>Vídeo 1</translation>
+    </message>
+    <message>
+        <source>Video 2</source>
+        <translation>Vídeo 2</translation>
+    </message>
+    <message>
+        <source>Video 3</source>
+        <translation>Vídeo 3</translation>
+    </message>
+    <message>
+        <source>Photo 1</source>
+        <translation>Foto 1</translation>
+    </message>
+    <message>
+        <source>Photo 2</source>
+        <translation>Foto 2</translation>
+    </message>
+    <message>
+        <source>Photo 3</source>
+        <translation>Foto 3</translation>
+    </message>
+    <message>
+        <source>Photo 4</source>
+        <translation>Foto 4</translation>
+    </message>
+    <message>
+        <source>Photo 5</source>
+        <translation>Foto 5</translation>
+    </message>
+    <message>
+        <source>Photo 6</source>
+        <translation>Foto 6</translation>
+    </message>
+    <message>
+        <source>Music</source>
+        <translation>Música</translation>
+    </message>
+    <message>
+        <source>Before</source>
+        <translation>Antes</translation>
+    </message>
+    <message>
+        <source>After</source>
+        <translation>Depois</translation>
+    </message>
+    <message>
+        <source>Your title</source>
+        <translation>Seu título</translation>
+    </message>
+    <message>
+        <source>@yourname</source>
+        <translation>@seunome</translation>
+    </message>
+    <message>
+        <source>Follow for more</source>
+        <translation>Siga para mais</translation>
+    </message>
+    <message>
+        <source>Our trip</source>
+        <translation>Nossa viagem</translation>
+    </message>
+    <message>
+        <source>Thanks for watching</source>
+        <translation>Obrigado por assistir</translation>
+    </message>
+    <message>
+        <source>Episode title goes here</source>
+        <translation>Título do episódio aqui</translation>
+    </message>
+    <message>
+        <source>Guest Name</source>
+        <translation>Nome do convidado</translation>
+    </message>
+    <message>
+        <source>Role or company</source>
+        <translation>Cargo ou empresa</translation>
+    </message>
+    <message>
+        <source>BEFORE</source>
+        <translation>ANTES</translation>
+    </message>
+    <message>
+        <source>AFTER</source>
+        <translation>DEPOIS</translation>
+    </message>
+    <message>
+        <source>New *arrival*</source>
+        <translation>*Novidade* na loja</translation>
+    </message>
+    <message>
+        <source>Shop now</source>
+        <translation>Compre agora</translation>
+    </message>
+    <message>
+        <source>CHANNEL NAME</source>
+        <translation>NOME DO CANAL</translation>
+    </message>
+    <message>
+        <source>Subscribe!</source>
+        <translation>Inscreva-se!</translation>
+    </message>
+    <message>
+        <source>Name Surname</source>
+        <translation>Nome Sobrenome</translation>
+    </message>
+    <message>
+        <source>Subscribe</source>
+        <translation>Inscreva-se</translation>
+    </message>
+    <message>
+        <source>“Your quote goes here.”</source>
+        <translation>“Sua citação aqui.”</translation>
+    </message>
+    <message>
+        <source>— Author</source>
+        <translation>— Autor</translation>
+    </message>
+    <message>
+        <source>CHAPTER 1</source>
+        <translation>CAPÍTULO 1</translation>
+    </message>
+    <message>
+        <source>Chapter *title*</source>
+        <translation>Título do *capítulo*</translation>
+    </message>
+    <message>
+        <source>BREAKING NEWS · Headline goes here</source>
+        <translation>URGENTE · Manchete aqui</translation>
+    </message>
+    <message>
+        <source>Link in bio ↓</source>
+        <translation>Link na bio ↓</translation>
+    </message>
+    <message>
+        <source>Lower third</source>
+        <translation>Nome e cargo</translation>
+    </message>
+    <message>
+        <source>Quote</source>
+        <translation>Citação</translation>
+    </message>
+    <message>
+        <source>Chapter title</source>
+        <translation>Título de capítulo</translation>
+    </message>
+    <message>
+        <source>News banner</source>
+        <translation>Faixa de notícia</translation>
+    </message>
+    <message>
+        <source>Link in bio</source>
+        <translation>Link na bio</translation>
+    </message>
+</context>
+<context>
     <name>Timeline</name>
     <message>
         <source>Split at playhead</source>
@@ -3820,6 +4147,14 @@ Atalhos: Espaço reproduz · Ctrl+B divide · Q/W exclui à esquerda/direita · 
     <message>
         <source>Export…</source>
         <translation>Exportar…</translation>
+    </message>
+    <message>
+        <source>New from template…</source>
+        <translation>Novo a partir de template…</translation>
+    </message>
+    <message>
+        <source>Save as template…</source>
+        <translation>Salvar como template…</translation>
     </message>
     <message>
         <source>Help</source>
@@ -4091,6 +4426,21 @@ Atalhos: Espaço reproduz · Ctrl+B divide · Q/W exclui à esquerda/direita · 
         <translation>Comece pelo formato do vídeo</translation>
     </message>
     <message>
+        <source>Or start from a template</source>
+        <translation>Ou comece por um template</translation>
+    </message>
+    <message numerus="yes">
+        <source>%n slot(s)</source>
+        <translation>
+            <numerusform>%n espaço</numerusform>
+            <numerusform>%n espaços</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Delete template</source>
+        <translation>Apagar template</translation>
+    </message>
+    <message>
         <source>Import media</source>
         <translation>Importar mídia</translation>
     </message>
@@ -4125,6 +4475,14 @@ Atalhos: Espaço reproduz · Ctrl+B divide · Q/W exclui à esquerda/direita · 
 </context>
 <context>
     <name>WhatsNewDialog</name>
+    <message>
+        <source>Templates</source>
+        <translation>Templates</translation>
+    </message>
+    <message>
+        <source>Start a video from a ready-made template and fill its slots with your media, save your own projects as templates, and add text templates (lower third, subscribe, quote and more) from the Text panel.</source>
+        <translation>Comece um vídeo por um template pronto e preencha os espaços com as suas mídias, salve seus projetos como templates e adicione modelos de texto (nome e cargo, inscreva-se, citação e outros) pelo painel Texto.</translation>
+    </message>
     <message>
         <source>AI voice narration</source>
         <translation>Narração com voz de IA</translation>

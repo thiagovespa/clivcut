@@ -205,6 +205,15 @@ Dialog {
                     + (root.mode === 0 && root.alphaCodec ? " · " + qsTr("areas without clips stay transparent") : "")
         }
 
+        Text {
+            visible: Project.emptySlotCount > 0 && root.mode !== 1
+            Layout.fillWidth: true
+            wrapMode: Text.Wrap
+            color: Theme.warning
+            font.pixelSize: Theme.fontSmall
+            text: qsTr("%n template slot(s) still empty: they will show as placeholders in the video.", "", Project.emptySlotCount)
+        }
+
         ProgressBar {
             Layout.fillWidth: true
             visible: Project.exporting

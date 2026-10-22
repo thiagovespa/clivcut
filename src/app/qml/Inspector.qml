@@ -278,6 +278,40 @@ Rectangle {
                 // ---------------- Transformação ----------------
                 ColumnLayout {
                     visible: root.page === "transform" && root.hasVisual
+                    // Espaço de template vazio: como preenchê-lo.
+                    Rectangle {
+                        visible: root.isMedia && root.sel.mediaKind === "slot"
+                        Layout.fillWidth: true
+                        implicitHeight: slotCol.implicitHeight + 20
+                        radius: 8
+                        color: Theme.accentSoft
+                        border.color: Theme.accent
+                        ColumnLayout {
+                            id: slotCol
+                            anchors.fill: parent
+                            anchors.margins: 10
+                            spacing: 6
+                            Text {
+                                Layout.fillWidth: true
+                                text: qsTr("Template slot: %1").arg(root.isMedia ? root.sel.slot : "")
+                                color: Theme.text
+                                font.bold: true
+                                wrapMode: Text.Wrap
+                            }
+                            Text {
+                                Layout.fillWidth: true
+                                text: qsTr("Drag a media file from the Media panel onto it, double-click a media file, or choose a file. Its position, look and timing stay.")
+                                color: Theme.textDim
+                                font.pixelSize: Theme.fontSmall
+                                wrapMode: Text.Wrap
+                            }
+                            Button {
+                                text: qsTr("Choose file…")
+                                focusPolicy: Qt.NoFocus
+                                onClicked: slotFileDialog.open()
+                            }
+                        }
+                    }
                     Layout.fillWidth: true
                     SectionLabel {
                         text: qsTr("Transform")
@@ -1286,4 +1320,12 @@ Rectangle {
         nameFilters: [qsTr("3D LUT (*.cube)")]
         onAccepted: Project.loadLut(root.sel.id, selectedFile)
     }
+
+    FileDialog {
+        id: slotFileDialog
+        title: qsTr("Choose a file for the slot")
+        nameFilters: [qsTr("Media (*.mp4 *.mov *.mkv *.webm *.avi *.m4v *.mts *.mp3 *.wav *.m4a *.aac *.flac *.ogg *.opus *.png *.jpg *.jpeg *.webp *.gif *.bmp *.tif *.tiff *.heic)"), qsTr("All files (*)")]
+        onAccepted: Project.replaceClipMediaFromFile(root.sel.id, selectedFile)
+    }
+
 }

@@ -36,6 +36,7 @@ Written in **C++20 + Qt 6 (Qt Quick / RHI) + FFmpeg**. Video compositing runs on
 - **Keyframes:**
   - On position, scale, rotation, opacity, volume, brightness, contrast and saturation, via the ◆ button next to each property.
   - **Graph editor** in the Keyframes tab: drag time and value and pick the curve for each segment (linear, ease in, ease out, smooth, hold or **custom Bézier** with handles).
+- **Templates:** six ready-made projects (vertical intro, photo slideshow, podcast clip, before/after, product showcase, channel intro) on the start screen, with slots you fill with your media — pick several files at once to fill them in order, or drag a media file onto a slot. Any project can be saved as your own template, and any clip's media can be replaced by dropping another file on it. Six text templates (lower third, subscribe, quote, chapter title, news banner, link in bio) go in from the Text panel.
 - **Text:** font, size, color, outline, shadow, background box and alignment, curved text, and words between *asterisks* in a highlight color. Title, subtitle and highlight presets.
 - **Shapes:** rectangle, rounded, circle, triangle, star, arrow, heart and speech bubble, with fill color and size, alone or behind text.
 - **Stickers:** a built-in library of 47 emoji stickers ([Fluent Emoji](https://github.com/microsoft/fluentui-emoji), MIT license), added as transparent images above the main track.

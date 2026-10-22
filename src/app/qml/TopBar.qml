@@ -14,6 +14,7 @@ ToolBar {
     signal commandsRequested()
     signal homeRequested()
     signal tourRequested()
+    signal saveTemplateRequested()
     signal whatsNewRequested()
     readonly property Item searchItem: search
     readonly property Item exportItem: exportButton
@@ -67,6 +68,9 @@ ToolBar {
                 MenuSeparator {}
                 MenuItem { text: qsTr("Import draft JSON…"); onTriggered: root.importDraftRequested() }
                 MenuItem { text: qsTr("Export…") + "\t" + Keymap.label("export"); onTriggered: root.exportRequested() }
+                MenuSeparator {}
+                MenuItem { text: qsTr("New from template…"); onTriggered: root.homeRequested() }
+                MenuItem { text: qsTr("Save as template…"); onTriggered: root.saveTemplateRequested() }
                 MenuSeparator {}
                 Menu {
                     title: qsTr("Help")
