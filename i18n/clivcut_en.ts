@@ -94,6 +94,13 @@
             <numerusform>Music separated into %n tracks</numerusform>
         </translation>
     </message>
+    <message numerus="yes">
+        <source>AI voice added: %n clip(s)</source>
+        <translation>
+            <numerusform>AI voice added: %n clip</numerusform>
+            <numerusform>AI voice added: %n clips</numerusform>
+        </translation>
+    </message>
 </context>
 <context>
     <name>SilenceDialog</name>

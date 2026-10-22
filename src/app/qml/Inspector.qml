@@ -267,6 +267,12 @@ Rectangle {
                         ToolTip.visible: hovered
                         ToolTip.text: qsTr("Copies this text's style, position and animations to the whole track")
                     }
+                    SectionLabel { text: qsTr("Read aloud (AI voice)") }
+                    AiVoiceControls {
+                        Layout.fillWidth: true
+                        actionText: Project.selection.length > 1 ? qsTr("Read the selected texts") : qsTr("Read this text")
+                        onGenerateRequested: Project.speakSelection()
+                    }
                 }
 
                 // ---------------- Transformação ----------------

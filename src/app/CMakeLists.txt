@@ -61,6 +61,7 @@ qt_add_qml_module(clivcut
         qml/components/Icon.qml
         qml/components/PillButton.qml
         qml/components/Spotlight.qml
+        qml/components/AiVoiceControls.qml
         qml/components/PropSlider.qml
         qml/components/SectionLabel.qml
         qml/components/ColorField.qml

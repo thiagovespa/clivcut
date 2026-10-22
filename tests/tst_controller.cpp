@@ -10,6 +10,7 @@
 #include "media/MediaProbe.h"
 
 #include <QDir>
+#include <QElapsedTimer>
 #include <QFile>
 #include <QProcess>
 #include <QSignalSpy>
@@ -908,6 +909,44 @@ private slots:
         // O vídeo da faixa principal não tem o que seguir por baixo.
         m_ctrl->select(clipsOf(0).first().toMap().value("id").toString());
         QVERIFY(!m_ctrl->selectedClip().value("canTrack").toBool());
+    }
+
+    void readTextAloud()
+    {
+        if (m_ctrl->ttsState() == QLatin1String("unavailable") || m_ctrl->ttsState() == QLatin1String("needsModel"))
+            QSKIP("voz neural não instalada");
+        m_ctrl->newProject(640, 360, 30);
+        m_ctrl->seek(1'000'000);
+        m_ctrl->addText(QStringLiteral("Olá! Isto é um *teste* de narração."));
+        const double textStart = m_ctrl->selectedClip().value("start").toDouble();
+        m_ctrl->setTtsVoice(QStringLiteral("pm_alex"));
+        QCOMPARE(m_ctrl->ttsVoice(), QStringLiteral("pm_alex"));
+        auto narration = [this]() -> QVariantMap {
+            for (const auto &t : m_ctrl->tracks())
+                if (t.toMap().value("kind").toString() == QLatin1String("audio") && !t.toMap().value("clips").toList().isEmpty())
+                    return t.toMap();
+            return {};
+        };
+        m_ctrl->speakSelection();
+        QCOMPARE(m_ctrl->ttsState(), QStringLiteral("processing"));
+        QTRY_VERIFY_WITH_TIMEOUT(m_ctrl->ttsProgress() < 0, 60000);
+        QVariantMap track = narration();
+        QVERIFY(!track.isEmpty());
+        QCOMPARE(track.value("name").toString(), QStringLiteral("Narration"));
+        const QVariantMap clip = track.value("clips").toList().first().toMap();
+        QCOMPARE(clip.value("start").toDouble(), textStart); // no tempo do texto
+        QVERIFY(clip.value("duration").toDouble() > 1.5e6);
+        m_ctrl->undo();
+        QVERIFY(narration().isEmpty());
+        // Mesmo texto, voz e velocidade: vem do cache.
+        QElapsedTimer t;
+        t.start();
+        m_ctrl->speakSelection();
+        QTRY_VERIFY_WITH_TIMEOUT(m_ctrl->ttsProgress() < 0, 60000);
+        QVERIFY(t.elapsed() < 2000);
+        QVERIFY(!narration().isEmpty());
+        m_ctrl->speakCaptions(); // não há legendas: só avisa
+        QVERIFY(m_ctrl->ttsProgress() < 0);
     }
 
     void beatMarkers()

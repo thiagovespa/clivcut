@@ -66,6 +66,7 @@ Written in **C++20 + Qt 6 (Qt Quick / RHI) + FFmpeg**. Video compositing runs on
   - **Ducking:** background music gets quieter automatically while there is speech on the other clips.
   - **Beat detection:** finds the tempo of a music clip and adds beat markers (every beat, every 2 beats or every bar); clips snap to them, so cuts land on the beat.
   - **AI voice isolation** (DeepFilterNet3, local): keeps only the speech, removing music, noise and room sound. The model (16 MB) is downloaded once.
+  - **AI voice narration** (Kokoro v1.0, local): reads a text, the selected texts or all captions aloud with natural voices in Portuguese (Brazil), Spanish, English, French, Italian and Hindi, with adjustable speed; the audio lands on a Narration track at the time of each text. The model (205 MB, Apache-2.0) is downloaded once; `clivcut-render --speak` does the same from the command line.
   - **AI music separation** (HT-Demucs v4, local): splits a song into vocals, drums, bass and other instruments, or just the vocals or the instrumental, as new audio tracks with the same timing; the original clip is muted. The model (166 MB, MIT) is downloaded once and checked by SHA-256.
   - **Detach audio from video** (Ctrl+Shift+D) and mute clip.
 - **Motion tracking:** make a text, sticker or image follow something that moves in the video below it: draw a box around it on the player and the clip gets position keyframes from the playhead in both directions (editable afterwards).

@@ -34,6 +34,10 @@ The **Transcript** panel (Alt+7) transcribes the timeline word by word. Click a 
 
 On a music clip, the **Beats** section finds the tempo and adds markers on every beat, every 2 beats or every bar (the strongest beat). They show as small dots on the ruler and clips snap to them, so your cuts land on the beat. **Clear** removes them (your own markers stay).
 
+## AI voice (text to speech)
+
+Select a text clip (or several) and, on the inspector's **Text** tab, open **Read aloud (AI voice)**: pick a voice and a speed and press **Read this text**. To narrate a whole video from its captions, use **Read all captions** in the Captions panel. The voices (Kokoro, generated on your computer) cover Brazilian Portuguese, Spanish, English, French, Italian and Hindi; the first time, the app downloads the voice model (205 MB). Each narration lands on a *Narration* audio track at the time of its text; the same text with the same voice is reused instead of being generated again.
+
 ## Music separation
 
 The **Separate music (AI)** section splits a song into **vocals, drums, bass and other instruments**, or gives you just the **vocals** or just the **instrumental**. The first time it offers to download the model (166 MB). Separation runs in the background — it takes a while, about twice the length of the song on a typical CPU — and the parts arrive as new audio tracks with the same timing; the original clip is muted, not deleted, so you can compare or go back. Separating the same song again is instant.

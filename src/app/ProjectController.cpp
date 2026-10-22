@@ -25,6 +25,7 @@
 #include "engine/Stabilization.h"
 #include "engine/StemSeparation.h"
 #include "engine/MotionTracking.h"
+#include "engine/TextToSpeech.h"
 #include "core/Tracking.h"
 #include "engine/Exporter.h"
 #include "engine/Proxy.h"
@@ -150,6 +151,7 @@ ProjectController::~ProjectController()
     *m_stabCancel = true;
     *m_stemsCancel = true;
     *m_trackCancel = true;
+    *m_ttsCancel = true;
     *m_voiceCancel = true;
     *m_effectCancel = true;
     *m_renderCancel = true;
@@ -1819,6 +1821,11 @@ void ProjectController::downloadModel(const QString &id)
                 refreshMattes();
             if (id == engine::kVoiceModel)
                 refreshVoice();
+            if (id == engine::kTtsModel || id == engine::kTtsVoices) {
+                emit ttsChanged();
+                // A voz precisa dos dois arquivos: baixa o outro em seguida.
+                QMetaObject::invokeMethod(this, [this] { downloadTtsModels(); }, Qt::QueuedConnection);
+            }
             emit selectedClipChanged();
         }
         else if (!cancelled)
@@ -3735,6 +3742,213 @@ void ProjectController::placeStems(const QString &clipId, int mode)
     emit selectionChanged();
     emit selectedClipChanged();
     setStatus(tr("Music separated into %n track(s)", nullptr, static_cast<int>(created.size())));
+}
+
+// ---------------------------------------------------------------------------
+// Voz neural (narração por texto)
+
+QVariantList ProjectController::ttsVoices() const
+{
+    static const std::map<QString, const char *> languages{
+        {QStringLiteral("pt-br"), QT_TRANSLATE_NOOP("ProjectController", "Portuguese (Brazil)")},
+        {QStringLiteral("es"), QT_TRANSLATE_NOOP("ProjectController", "Spanish")},
+        {QStringLiteral("en-us"), QT_TRANSLATE_NOOP("ProjectController", "English (US)")},
+        {QStringLiteral("en-gb"), QT_TRANSLATE_NOOP("ProjectController", "English (UK)")},
+        {QStringLiteral("fr-fr"), QT_TRANSLATE_NOOP("ProjectController", "French")},
+        {QStringLiteral("it"), QT_TRANSLATE_NOOP("ProjectController", "Italian")},
+        {QStringLiteral("hi"), QT_TRANSLATE_NOOP("ProjectController", "Hindi")}};
+    QVariantList out;
+    for (const auto &v : engine::ttsVoices()) {
+        const auto it = languages.find(v.language);
+        const QString lang = it != languages.end() ? tr(it->second) : v.language;
+        out << QVariantMap{{"id", v.id}, {"name", v.name}, {"language", lang}, {"female", v.female},
+                           {"label", QStringLiteral("%1 · %2").arg(v.name, lang)}};
+    }
+    return out;
+}
+
+QString ProjectController::ttsVoice() const
+{
+    const QString saved = QSettings().value(QStringLiteral("tts/voice")).toString();
+    return engine::findTtsVoice(saved) ? saved : engine::defaultTtsVoice(app::activeLanguage());
+}
+
+void ProjectController::setTtsVoice(const QString &id)
+{
+    if (!engine::findTtsVoice(id) || id == ttsVoice())
+        return;
+    QSettings().setValue(QStringLiteral("tts/voice"), id);
+    emit ttsChanged();
+}
+
+double ProjectController::ttsSpeed() const
+{
+    return std::clamp(QSettings().value(QStringLiteral("tts/speed"), 1.0).toDouble(), 0.5, 2.0);
+}
+
+void ProjectController::setTtsSpeed(double speed)
+{
+    speed = std::clamp(std::round(speed * 20) / 20, 0.5, 2.0);
+    if (speed == ttsSpeed())
+        return;
+    QSettings().setValue(QStringLiteral("tts/speed"), speed);
+    emit ttsChanged();
+}
+
+QString ProjectController::ttsState() const
+{
+    if (!engine::ttsAvailable())
+        return QStringLiteral("unavailable");
+    if (m_ttsProgress >= 0)
+        return QStringLiteral("processing");
+    if (!engine::aiModelInstalled(engine::kTtsModel) || !engine::aiModelInstalled(engine::kTtsVoices))
+        return QStringLiteral("needsModel");
+    return QStringLiteral("ready");
+}
+
+void ProjectController::downloadTtsModels()
+{
+    for (const QString &id : {engine::kTtsModel, engine::kTtsVoices})
+        if (!engine::aiModelInstalled(id)) {
+            downloadModel(id);
+            return;
+        }
+}
+
+void ProjectController::speakSelection()
+{
+    QStringList ids;
+    for (const QString &id : m_selection)
+        if (const Clip *c = edit::clipById(m_project, id); c && c->isText() && !c->text.trimmed().isEmpty())
+            ids << id;
+    speakClips(ids);
+}
+
+void ProjectController::speakCaptions()
+{
+    QStringList ids;
+    for (const Track &t : m_project.tracks)
+        if (t.captions)
+            for (const Clip &c : t.clips)
+                if (c.isText() && !c.text.trimmed().isEmpty())
+                    ids << c.id;
+    if (ids.isEmpty()) {
+        setStatus(tr("There are no captions to read"));
+        return;
+    }
+    speakClips(ids);
+}
+
+void ProjectController::cancelSpeech()
+{
+    *m_ttsCancel = true;
+}
+
+void ProjectController::speakClips(const QStringList &clipIds)
+{
+    if (clipIds.isEmpty() || ttsState() != QLatin1String("ready"))
+        return;
+    struct Job {
+        QString clipId;
+        QString text;
+        Micros start;
+        QString path;
+    };
+    const QString voice = ttsVoice();
+    const double speed = ttsSpeed();
+    const QString dir = QDir(QStandardPaths::writableLocation(QStandardPaths::AppDataLocation)).filePath(QStringLiteral("speech"));
+    std::vector<Job> jobs;
+    for (const QString &id : clipIds) {
+        const Clip *c = edit::clipById(m_project, id);
+        if (!c)
+            continue;
+        // Texto falado: sem as marcas de destaque e numa linha só.
+        QString text = c->text;
+        text.replace(QStringLiteral("\\*"), QStringLiteral("\x01")).remove(QLatin1Char('*')).replace(QLatin1Char('\x01'), QLatin1Char('*'));
+        text = text.simplified();
+        const QByteArray key = (voice + QLatin1Char('|') + QString::number(speed) + QLatin1Char('|') + text).toUtf8();
+        const QString hash = QString::fromLatin1(QCryptographicHash::hash(key, QCryptographicHash::Sha1).toHex().left(20));
+        jobs.push_back({id, text, c->start, QDir(dir).filePath(QStringLiteral("%1_%2.wav").arg(voice, hash))});
+    }
+    m_ttsCancel = std::make_shared<std::atomic<bool>>(false);
+    auto cancel = m_ttsCancel;
+    m_ttsProgress = 0;
+    emit ttsChanged();
+    emit selectedClipChanged();
+    setStatus(tr("Generating the AI voice…"));
+    const QString model = engine::aiModelPath(engine::kTtsModel), voices = engine::aiModelPath(engine::kTtsVoices);
+    std::thread([this, jobs, voice, speed, model, voices, cancel] {
+        QString err;
+        bool ok = true;
+        const double n = static_cast<double>(jobs.size());
+        for (size_t i = 0; i < jobs.size() && ok && !*cancel; ++i) {
+            if (QFileInfo::exists(jobs[i].path))
+                continue; // mesmo texto, voz e velocidade: reaproveita
+            ok = engine::synthesizeSpeech(jobs[i].text, voice, speed, model, voices, jobs[i].path,
+                                          [&](double f) {
+                                              const double total = (i + f) / n;
+                                              QMetaObject::invokeMethod(this, [this, total] {
+                                                  m_ttsProgress = total;
+                                                  emit ttsChanged();
+                                              }, Qt::QueuedConnection);
+                                              return !*cancel;
+                                          },
+                                          &err);
+        }
+        QMetaObject::invokeMethod(this, [this, jobs, ok, err, cancel] {
+            m_ttsProgress = -1;
+            emit ttsChanged();
+            emit selectedClipChanged();
+            if (*cancel) {
+                setStatus(tr("AI voice canceled"));
+                return;
+            }
+            if (!ok) {
+                emit errorOccurred(tr("AI voice failed: %1").arg(err));
+                return;
+            }
+            QStringList created;
+            edit(tr("Read aloud"), [&](Project &p) {
+                int preferred = -1;
+                for (const Job &j : jobs) {
+                    QString assetId;
+                    for (const auto &[id, a] : p.assets)
+                        if (a.path == j.path)
+                            assetId = id;
+                    if (assetId.isEmpty()) {
+                        MediaAsset a;
+                        if (!media::probe(j.path, a))
+                            continue;
+                        a.id = newId("ast");
+                        a.name = tr("Voice · %1").arg(j.text.left(32));
+                        assetId = a.id;
+                        p.assets.emplace(a.id, a);
+                    }
+                    Clip c = createMediaClip(p.assets.at(assetId), j.start);
+                    // Mesma faixa de narração enquanto couber; se uma fala invadir a próxima, outra faixa.
+                    int ti;
+                    if (preferred < 0) {
+                        p.tracks.push_back(createTrack(TrackKind::Audio, tr("Narration")));
+                        ti = preferred = static_cast<int>(p.tracks.size()) - 1;
+                    } else if (edit::fitsInTrack(p.tracks[preferred], c.start, c.duration)) {
+                        ti = preferred;
+                    } else {
+                        ti = edit::ensureTrackFor(p, TrackKind::Audio, c.start, c.duration, preferred + 1);
+                    }
+                    c.id = newId("clp");
+                    created << c.id;
+                    p.tracks[ti].clips.push_back(c);
+                    edit::sortTrack(p.tracks[ti]);
+                }
+                return !created.isEmpty();
+            });
+            if (created.isEmpty())
+                return;
+            refreshProxies();
+            emit assetsChanged();
+            setStatus(tr("AI voice added: %n clip(s)", nullptr, static_cast<int>(created.size())));
+        }, Qt::QueuedConnection);
+    }).detach();
 }
 
 QString ProjectController::trackingSourceFor(const QString &clipId) const

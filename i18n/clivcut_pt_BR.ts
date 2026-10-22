@@ -49,6 +49,49 @@
     </message>
 </context>
 <context>
+    <name>AiVoiceControls</name>
+    <message>
+        <source>Generate voice</source>
+        <translation>Gerar voz</translation>
+    </message>
+    <message>
+        <source>Voice</source>
+        <translation>Voz</translation>
+    </message>
+    <message>
+        <source>Speed</source>
+        <translation>Velocidade</translation>
+    </message>
+    <message>
+        <source>Cancel</source>
+        <translation>Cancelar</translation>
+    </message>
+    <message>
+        <source>Download AI voice (205 MB)</source>
+        <translation>Baixar voz de IA (205 MB)</translation>
+    </message>
+    <message>
+        <source>Not available in this build (compiled without the AI voice).</source>
+        <translation>Indisponível nesta versão (compilada sem a voz de IA).</translation>
+    </message>
+    <message>
+        <source>Downloading the AI voice…</source>
+        <translation>Baixando a voz de IA…</translation>
+    </message>
+    <message>
+        <source>Requires the AI voice (Kokoro, Apache-2.0), downloaded only once.</source>
+        <translation>Requer a voz de IA (Kokoro, Apache-2.0), baixada uma única vez.</translation>
+    </message>
+    <message>
+        <source>Generating the voice… %1%</source>
+        <translation>Gerando a voz… %1%</translation>
+    </message>
+    <message>
+        <source>Natural narration generated on your computer. The audio lands on a Narration track, at the time of each text.</source>
+        <translation>Narração natural gerada no seu computador. O áudio entra numa faixa Narração, no tempo de cada texto.</translation>
+    </message>
+</context>
+<context>
     <name>AudioRecorder</name>
     <message>
         <source>Could not open the microphone: %1</source>
@@ -120,6 +163,14 @@
     <message>
         <source>Cancel</source>
         <translation>Cancelar</translation>
+    </message>
+    <message>
+        <source>Read captions aloud (AI voice)</source>
+        <translation>Ler as legendas em voz alta (IA)</translation>
+    </message>
+    <message>
+        <source>Read all captions</source>
+        <translation>Ler todas as legendas</translation>
     </message>
     <message>
         <source>Caption files</source>
@@ -1001,6 +1052,18 @@ Atalhos: Espaço reproduz · Ctrl+B divide · Q/W exclui à esquerda/direita · 
     <message>
         <source>Copies this text&apos;s style, position and animations to the whole track</source>
         <translation>Copia estilo, posição e animações deste texto para toda a faixa</translation>
+    </message>
+    <message>
+        <source>Read aloud (AI voice)</source>
+        <translation>Ler em voz alta (IA)</translation>
+    </message>
+    <message>
+        <source>Read the selected texts</source>
+        <translation>Ler os textos selecionados</translation>
+    </message>
+    <message>
+        <source>Read this text</source>
+        <translation>Ler este texto</translation>
     </message>
     <message>
         <source>Transform</source>
@@ -2438,6 +2501,22 @@ Atalhos: Espaço reproduz · Ctrl+B divide · Q/W exclui à esquerda/direita · 
         <source>Splits music into vocals, drums, bass and other instruments</source>
         <translation>Divide a música em voz, bateria, baixo e outros instrumentos</translation>
     </message>
+    <message>
+        <source>AI voice (Kokoro)</source>
+        <translation>Voz de IA (Kokoro)</translation>
+    </message>
+    <message>
+        <source>Natural-sounding narration from text, generated on your computer</source>
+        <translation>Narração natural a partir de texto, gerada no seu computador</translation>
+    </message>
+    <message>
+        <source>AI voices (Kokoro)</source>
+        <translation>Vozes de IA (Kokoro)</translation>
+    </message>
+    <message>
+        <source>The voices for the AI narration</source>
+        <translation>As vozes da narração com IA</translation>
+    </message>
 </context>
 <context>
     <name>NewProjectDialog</name>
@@ -3231,6 +3310,69 @@ Atalhos: Espaço reproduz · Ctrl+B divide · Q/W exclui à esquerda/direita · 
         </translation>
     </message>
     <message>
+        <source>Portuguese (Brazil)</source>
+        <translation>Português (Brasil)</translation>
+    </message>
+    <message>
+        <source>Spanish</source>
+        <translation>Espanhol</translation>
+    </message>
+    <message>
+        <source>English (US)</source>
+        <translation>Inglês (EUA)</translation>
+    </message>
+    <message>
+        <source>English (UK)</source>
+        <translation>Inglês (Reino Unido)</translation>
+    </message>
+    <message>
+        <source>French</source>
+        <translation>Francês</translation>
+    </message>
+    <message>
+        <source>Italian</source>
+        <translation>Italiano</translation>
+    </message>
+    <message>
+        <source>Hindi</source>
+        <translation>Hindi</translation>
+    </message>
+    <message>
+        <source>There are no captions to read</source>
+        <translation>Não há legendas para ler</translation>
+    </message>
+    <message>
+        <source>Generating the AI voice…</source>
+        <translation>Gerando a voz de IA…</translation>
+    </message>
+    <message>
+        <source>AI voice canceled</source>
+        <translation>Voz de IA cancelada</translation>
+    </message>
+    <message>
+        <source>AI voice failed: %1</source>
+        <translation>Falha na voz de IA: %1</translation>
+    </message>
+    <message>
+        <source>Read aloud</source>
+        <translation>Ler em voz alta</translation>
+    </message>
+    <message>
+        <source>Voice · %1</source>
+        <translation>Voz · %1</translation>
+    </message>
+    <message>
+        <source>Narration</source>
+        <translation>Narração</translation>
+    </message>
+    <message numerus="yes">
+        <source>AI voice added: %n clip(s)</source>
+        <translation>
+            <numerusform>Voz de IA adicionada: %n clipe</numerusform>
+            <numerusform>Voz de IA adicionada: %n clipes</numerusform>
+        </translation>
+    </message>
+    <message>
         <source>Draw a box around what the clip should follow</source>
         <translation>Desenhe uma caixa em volta do que o clipe deve seguir</translation>
     </message>
@@ -3984,6 +4126,14 @@ Atalhos: Espaço reproduz · Ctrl+B divide · Q/W exclui à esquerda/direita · 
 <context>
     <name>WhatsNewDialog</name>
     <message>
+        <source>AI voice narration</source>
+        <translation>Narração com voz de IA</translation>
+    </message>
+    <message>
+        <source>Turn texts and captions into natural speech, generated on your computer, in Portuguese, Spanish, English and more: select a text and use “Read aloud” on the Text tab, or “Read all captions” in the Captions panel.</source>
+        <translation>Transforme textos e legendas em fala natural, gerada no seu computador, em português, espanhol, inglês e outras línguas: selecione um texto e use “Ler em voz alta” na aba Texto, ou “Ler todas as legendas” no painel Legendas.</translation>
+    </message>
+    <message>
         <source>Guided tour and this window</source>
         <translation>Tour guiado e esta janela</translation>
     </message>
@@ -4106,6 +4256,57 @@ Atalhos: Espaço reproduz · Ctrl+B divide · Q/W exclui à esquerda/direita · 
     <message>
         <source>Take the tour</source>
         <translation>Fazer o tour</translation>
+    </message>
+</context>
+<context>
+    <name>clv::engine</name>
+    <message>
+        <source>Phoneme data (espeak-ng-data) not found</source>
+        <translation>Dados de fonemas (espeak-ng-data) não encontrados</translation>
+    </message>
+    <message>
+        <source>Could not start espeak-ng</source>
+        <translation>Não foi possível iniciar o espeak-ng</translation>
+    </message>
+    <message>
+        <source>Voice file not found: %1</source>
+        <translation>Arquivo de vozes não encontrado: %1</translation>
+    </message>
+    <message>
+        <source>Voice %1 not found in %2</source>
+        <translation>Voz %1 não encontrada em %2</translation>
+    </message>
+    <message>
+        <source>This build was compiled without text-to-speech</source>
+        <translation>Esta versão foi compilada sem narração por texto</translation>
+    </message>
+    <message>
+        <source>Language not available for speech: %1</source>
+        <translation>Língua indisponível para fala: %1</translation>
+    </message>
+    <message>
+        <source>Unknown voice: %1</source>
+        <translation>Voz desconhecida: %1</translation>
+    </message>
+    <message>
+        <source>Speech model not found: %1</source>
+        <translation>Modelo de voz não encontrado: %1</translation>
+    </message>
+    <message>
+        <source>Nothing to read</source>
+        <translation>Nada para ler</translation>
+    </message>
+    <message>
+        <source>Canceled</source>
+        <translation>Cancelado</translation>
+    </message>
+    <message>
+        <source>AI model error: %1</source>
+        <translation>Erro no modelo de IA: %1</translation>
+    </message>
+    <message>
+        <source>Could not write %1</source>
+        <translation>Não foi possível gravar %1</translation>
     </message>
 </context>
 </TS>

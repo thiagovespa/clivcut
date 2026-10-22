@@ -28,6 +28,9 @@ Popup {
     // Destaques por versão, da mais nova para a mais antiga. "show": área a destacar
     // (rail, media, preview, inspector, timeline, search, export) e painel a abrir (opcional).
     readonly property var releases: [
+        { version: "0.4.0", items: [
+            { title: qsTr("AI voice narration"), text: qsTr("Turn texts and captions into natural speech, generated on your computer, in Portuguese, Spanish, English and more: select a text and use “Read aloud” on the Text tab, or “Read all captions” in the Captions panel."), show: { area: "rail", panel: 2 } }
+        ] },
         { version: "0.3.0", items: [
             { title: qsTr("Guided tour and this window"), text: qsTr("A short tour of the editor for first-time users, and this summary after each update. Both live in the menu, under Help."), show: { area: "search" } },
             { title: qsTr("Compound clips"), text: qsTr("Alt+G combines clips from several tracks into one clip that you can move, cut and style as a whole; double-click it to edit what is inside."), show: { area: "timeline" } },

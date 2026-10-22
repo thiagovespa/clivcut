@@ -90,6 +90,13 @@ class ProjectController : public QObject {
     Q_PROPERTY(bool detectingBeats READ detectingBeats NOTIFY beatsChanged)
     /// Escolhendo a região a rastrear no player; progresso do rastreamento (-1 = parado).
     Q_PROPERTY(bool trackingPick READ trackingPick NOTIFY trackingChanged)
+    /// Voz neural: vozes [{id, name, language, female}], a escolhida, a velocidade e o estado
+    /// ("unavailable", "needsModel", "ready", "processing"); progresso -1 = parado.
+    Q_PROPERTY(QVariantList ttsVoices READ ttsVoices NOTIFY languageChanged)
+    Q_PROPERTY(QString ttsVoice READ ttsVoice WRITE setTtsVoice NOTIFY ttsChanged)
+    Q_PROPERTY(double ttsSpeed READ ttsSpeed WRITE setTtsSpeed NOTIFY ttsChanged)
+    Q_PROPERTY(QString ttsState READ ttsState NOTIFY ttsChanged)
+    Q_PROPERTY(double ttsProgress READ ttsProgress NOTIFY ttsChanged)
     Q_PROPERTY(double trackingProgress READ trackingProgress NOTIFY trackingChanged)
     Q_PROPERTY(bool hasBeatMarkers READ hasBeatMarkers NOTIFY projectChanged)
     /// Transcrição palavra a palavra da timeline: [{start, end, text}] em µs.
@@ -307,6 +314,19 @@ public:
     Q_INVOKABLE void cancelTracking();
     Q_INVOKABLE void clearTracking();
     bool trackingPick() const { return m_trackingPick; }
+    QVariantList ttsVoices() const;
+    QString ttsVoice() const;
+    void setTtsVoice(const QString &id);
+    double ttsSpeed() const;
+    void setTtsSpeed(double speed);
+    QString ttsState() const;
+    double ttsProgress() const { return m_ttsProgress; }
+    /// Lê em voz alta os textos selecionados / todas as legendas, com a voz escolhida.
+    Q_INVOKABLE void speakSelection();
+    Q_INVOKABLE void speakCaptions();
+    Q_INVOKABLE void cancelSpeech();
+    /// Baixa o que falta da voz neural (modelo e vozes).
+    Q_INVOKABLE void downloadTtsModels();
     static bool onboardingSuppressed()
     {
         return (qEnvironmentVariableIsSet("CLIVCUT_SCREENSHOT") && !qEnvironmentVariableIsSet("CLIVCUT_SCREENSHOT_ONBOARDING"))
@@ -454,6 +474,7 @@ signals:
     void silencesChanged();
     void beatsChanged();
     void trackingChanged();
+    void ttsChanged();
     void transcriptChanged();
     void scopesChanged();
     void recordingChanged();
@@ -577,6 +598,9 @@ private:
     QString m_voiceBuilding;
     double m_voiceProgress = 0;
     std::shared_ptr<std::atomic<bool>> m_voiceCancel = std::make_shared<std::atomic<bool>>(false);
+    double m_ttsProgress = -1;
+    std::shared_ptr<std::atomic<bool>> m_ttsCancel = std::make_shared<std::atomic<bool>>(false);
+    void speakClips(const QStringList &clipIds);
     bool m_trackingPick = false;
     double m_trackingProgress = -1;
     std::shared_ptr<std::atomic<bool>> m_trackCancel = std::make_shared<std::atomic<bool>>(false);

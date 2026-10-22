@@ -196,6 +196,13 @@ Flickable {
             }
         }
 
+        SectionLabel { text: qsTr("Read captions aloud (AI voice)") }
+        AiVoiceControls {
+            Layout.fillWidth: true
+            actionText: qsTr("Read all captions")
+            onGenerateRequested: Project.speakCaptions()
+        }
+
         SectionLabel { text: qsTr("Caption files") }
         RowLayout {
             Layout.fillWidth: true
