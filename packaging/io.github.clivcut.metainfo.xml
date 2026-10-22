@@ -36,6 +36,13 @@
     <category>AudioVideoEditing</category>
   </categories>
   <releases>
+    <release version="0.3.0" date="2026-10-21">
+      <description>
+        <p>Compound clips that can be edited in place, video stabilization, motion tracking, AI music
+          separation into vocals, drums, bass and other instruments, beat markers, a guided tour, a
+          "what's new" window after updates and a user guide.</p>
+      </description>
+    </release>
     <release version="0.2.0" date="2026-10-16">
       <description>
         <p>GPU and transparent video export, a render cache, customizable shortcuts, AI voice isolation,
