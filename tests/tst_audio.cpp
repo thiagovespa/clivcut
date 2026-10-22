@@ -9,6 +9,7 @@
 #include "engine/VoiceIsolation.h"
 #include "engine/Silence.h"
 #include "engine/StemSeparation.h"
+#include "engine/TextToSpeech.h"
 #include "engine/AiModels.h"
 #include "engine/WhisperModels.h"
 #include "media/AudioDecoder.h"
@@ -444,6 +445,67 @@ private slots:
         const auto none = engine::detectBeatsPcm16k(std::vector<float>(16000 * 5, 0.f), 0);
         QVERIFY(none.beats.empty());
         QCOMPARE(none.bpm, 0.0);
+    }
+
+    void textToSpeechPhonemes()
+    {
+        if (!engine::ttsAvailable())
+            QSKIP("compilado sem voz neural");
+        // Referência: a implementação oficial em Python (kokoro-onnx + phonemizer + espeak-ng 1.52).
+        struct Case {
+            QString lang, text, phonemes;
+        };
+        const Case cases[] = {
+            {QStringLiteral("pt-br"), QStringLiteral("Olá! Este é um teste de narração gerada no seu computador. Hoje vamos aprender a editar vídeos de um jeito simples e rápido, com cortes, legendas e música de fundo."),
+             QStringLiteral("olˈa! ˌestʃy ɛ ũŋ tˈɛstʃy dʒy nˌaxasˈɐ̃ʊ̃ ʒˌeɾˈadæ nʊ seʊ kˌomputadˈor. ˈoʒy vˌɐ̃mʊz ˌapreɪŋdˈeɾ a ˌedʒitˈar vˈidʒjʊz dʒj ũŋ ʒˈeɪtʊ sˈimplyz i xˈapidʊ, koŋ kˈɔɾətʃys, lˌeʒˈeɪŋdæz i mˈuzikæ dʒy fˈũŋdʊ.")},
+            {QStringLiteral("pt-br"), QStringLiteral("Olá, mundo! Tudo bem? Sim: vamos lá… Tenho 25 anos (quase)."),
+             QStringLiteral("olˈa, mˈũŋdʊ! tˈudʊ bˈeɪŋ? sˈiŋ: vˌɐ̃mʊz lˈa… tˌeɲʊ vˈiŋtʃyisˈiŋkw ˈɐ̃nʊs (kwˈazy).")},
+            {QStringLiteral("es"), QStringLiteral("¡Hola! ¿Cómo estás? Esta es una prueba de narración, con cortes y música."),
+             QStringLiteral("ˈola! kˈomo estˈas? ˈesta ˈes ˈuna pɾuˈeβa ðe nˌaraθjˈon, kon kˈoɾtes i mˈusika.")},
+            {QStringLiteral("en-us"), QStringLiteral("Hi! This is a narration test generated right on your computer. Today we'll learn how to edit videos quickly, with cuts, captions and background music."),
+             QStringLiteral("hˈaɪ! ðɪs ɪz ɐ nɚɹˈeɪʃən tˈɛst dʒˈɛnɚɹˌeɪɾᵻd ɹˈaɪt ˌɔn jʊɹ kəmpjˈuːɾɚ. tədˈeɪ wiːl lˈɜːn hˌaʊ tʊ ˈɛdɪt vˈɪdɪoʊz kwˈɪkli, wɪð kˈʌts, kˈæpʃənz ænd bˈækɡɹaʊnd mjˈuːzɪk.")},
+            {QStringLiteral("en-us"), QStringLiteral("Wait... what? It's 3:45 pm; \"quoted\" text — and more."),
+             QStringLiteral("wˈeɪt... wˌʌt? ɪts θɹˈiː:fˈɔːɹɾi fˈaɪv pˌiːˈɛm; \"kwˈoʊɾᵻd\" tˈɛkst — ænd mˈɔːɹ.")},
+        };
+        for (const Case &c : cases) {
+            QString err;
+            const QString ph = engine::ttsPhonemize(c.text, c.lang, &err);
+            QVERIFY2(err.isEmpty(), qPrintable(err));
+            QCOMPARE(ph, c.phonemes);
+        }
+        const std::vector<std::int64_t> head{57, 54, 156, 43, 5, 16, 157, 47, 61, 62, 131, 67, 16, 86, 16, 63, 17, 112, 16, 62};
+        const auto tokens = engine::ttsTokenize(cases[0].phonemes);
+        QVERIFY(tokens.size() > head.size());
+        QVERIFY(std::equal(head.begin(), head.end(), tokens.begin()));
+    }
+
+    void textToSpeechSynthesis()
+    {
+        if (!engine::ttsAvailable() || !engine::aiModelInstalled(engine::kTtsModel) || !engine::aiModelInstalled(engine::kTtsVoices))
+            QSKIP("modelo Kokoro não instalado");
+        const QString out = m_dir.filePath(QStringLiteral("fala.wav"));
+        QString err;
+        double last = 0;
+        const QString text = QStringLiteral("Olá! Este é um teste de narração gerada no seu computador. "
+                                            "Hoje vamos aprender a editar vídeos de um jeito simples e rápido, "
+                                            "com cortes, legendas e música de fundo.");
+        QVERIFY2(engine::synthesizeSpeech(text, QStringLiteral("pf_dora"), 1.0, engine::aiModelPath(engine::kTtsModel),
+                                          engine::aiModelPath(engine::kTtsVoices), out, [&](double f) { last = f; return true; }, &err),
+                 qPrintable(err));
+        QCOMPARE(last, 1.0);
+        MediaAsset a;
+        QVERIFY(media::probe(out, a));
+        // A referência em Python dá ~9,7 s para este texto.
+        QVERIFY2(a.duration > 8 * kSecond && a.duration < 12 * kSecond, qPrintable(QString::number(a.duration)));
+        // Mais devagar fica mais longo.
+        const QString slow = m_dir.filePath(QStringLiteral("devagar.wav"));
+        QVERIFY(engine::synthesizeSpeech(text, QStringLiteral("pf_dora"), 0.7, engine::aiModelPath(engine::kTtsModel),
+                                         engine::aiModelPath(engine::kTtsVoices), slow, {}, &err));
+        MediaAsset b;
+        QVERIFY(media::probe(slow, b));
+        QVERIFY(b.duration > a.duration * 1.2);
+        QVERIFY(!engine::synthesizeSpeech(text, QStringLiteral("xx_none"), 1.0, engine::aiModelPath(engine::kTtsModel),
+                                          engine::aiModelPath(engine::kTtsVoices), slow, {}, &err));
     }
 
     void stemSeparation()

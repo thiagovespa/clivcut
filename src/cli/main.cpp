@@ -8,6 +8,7 @@
 #include "engine/AiModels.h"
 #include "engine/Exporter.h"
 #include "engine/Matting.h"
+#include "engine/TextToSpeech.h"
 #include "engine/Transcriber.h"
 #include "engine/WhisperModels.h"
 #include "media/FFmpegUtil.h"
@@ -120,7 +121,14 @@ int main(int argc, char **argv)
     QCommandLineOption gpuEncode(QStringLiteral("gpu"), QStringLiteral("Encode on the GPU when available (VA-API, NVENC, QSV...)"));
     QCommandLineOption removeBg(QStringLiteral("remove-bg"),
                                 QStringLiteral("Generate the matte (alpha) video of a video/image with AI (rvm model)"));
-    cli.addOptions({codec, crf, height, fps, convert, probe, transcribe, model, language, maxChars, bench, noHw, gpuEncode, removeBg});
+    QCommandLineOption speak(QStringLiteral("speak"),
+                             QStringLiteral("Read a text (or a .txt file) aloud with the AI voice and save a WAV"));
+    QCommandLineOption voice(QStringLiteral("voice"), QStringLiteral("AI voice (e.g. pf_dora, ef_dora, af_heart)"),
+                             QStringLiteral("voice"), QStringLiteral("af_heart"));
+    QCommandLineOption speed(QStringLiteral("speed"), QStringLiteral("Speech speed (0.5 to 2)"), QStringLiteral("x"),
+                             QStringLiteral("1"));
+    cli.addOptions({codec, crf, height, fps, convert, probe, transcribe, model, language, maxChars, bench, noHw, gpuEncode, removeBg,
+                    speak, voice, speed});
     cli.process(app);
 
     const QStringList args = cli.positionalArguments();
@@ -136,6 +144,39 @@ int main(int argc, char **argv)
         const char *kinds[] = {"video", "audio", "image"};
         std::printf("type: %s\nduration: %.3f s\nsize: %dx%d\nfps: %.3f\naudio: %s\n", kinds[static_cast<int>(a.kind)],
                     a.duration / 1e6, a.width, a.height, a.fps, a.hasAudio ? "yes" : "no");
+        return 0;
+    }
+    if (cli.isSet(speak)) {
+        if (args.size() != 2)
+            cli.showHelp(1);
+        QString text = args[0];
+        if (QFileInfo(text).isFile()) {
+            QFile f(text);
+            f.open(QIODevice::ReadOnly);
+            text = QString::fromUtf8(f.readAll());
+        }
+        for (const QString &id : {engine::kTtsModel, engine::kTtsVoices})
+            if (!engine::aiModelInstalled(id)) {
+                const QString path = engine::aiModelPath(id);
+                std::fprintf(stderr, "error: model missing at %s\nDownload it with: curl -L -o %s %s\n", qPrintable(path),
+                             qPrintable(path), qPrintable(engine::findAiModel(id)->url.toString()));
+                return 1;
+            }
+        QElapsedTimer timer;
+        timer.start();
+        QString err;
+        const bool ok = engine::synthesizeSpeech(text, cli.value(voice), cli.value(speed).toDouble(),
+                                                 engine::aiModelPath(engine::kTtsModel), engine::aiModelPath(engine::kTtsVoices),
+                                                 args[1], [](double f) {
+                                                     std::fprintf(stderr, "\rSpeaking... %3d%%", static_cast<int>(f * 100));
+                                                     return true;
+                                                 }, &err);
+        std::fprintf(stderr, "\n");
+        if (!ok) {
+            std::fprintf(stderr, "error: %s\n", qPrintable(err));
+            return 1;
+        }
+        std::printf("Speech saved to %s (%.1f s)\n", qPrintable(args[1]), timer.elapsed() / 1000.0);
         return 0;
     }
     if (cli.isSet(removeBg)) {

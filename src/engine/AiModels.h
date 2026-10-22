@@ -32,5 +32,8 @@ inline const QString kMattingModel = QStringLiteral("rvm");
 inline const QString kVoiceModel = QStringLiteral("dfn3");
 /// Separação de música em faixas (HT-Demucs v4, MIT).
 inline const QString kStemsModel = QStringLiteral("htdemucs");
+/// Voz neural (Kokoro v1.0, Apache-2.0): o modelo e o arquivo com as vozes.
+inline const QString kTtsModel = QStringLiteral("kokoro");
+inline const QString kTtsVoices = QStringLiteral("kokoro-voices");
 
 } // namespace clv::engine

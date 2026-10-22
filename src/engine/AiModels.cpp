@@ -36,6 +36,23 @@ const std::vector<AiModel> &aiModels()
                                             "d54ed9eb60e258ea82131c6ee14578628816456a/htdemucs_fp16weights.onnx")),
                         QStringLiteral("MIT"),
                         QStringLiteral("d05c269d0178d2a72ad484b10b11dd370193fc923201c3b27a99f848745db70a")});
+        // Kokoro v1.0 (pesos Apache-2.0) exportado em ONNX pelo projeto kokoro-onnx (MIT). A versão fp16
+        // soa como a original e é rápida em todas as versões do ONNX Runtime usadas (a int8 fica
+        // ~4x mais lenta antes da 1.31).
+        list.push_back({kTtsModel, QString::fromUtf8(QT_TRANSLATE_NOOP("Models", "AI voice (Kokoro)")), 177'464'787,
+                        QString::fromUtf8(QT_TRANSLATE_NOOP("Models", "Natural-sounding narration from text, generated on your computer")),
+                        QStringLiteral("tts"), QStringLiteral("kokoro-v1.0.fp16.onnx"),
+                        QUrl(QStringLiteral("https://github.com/thewh1teagle/kokoro-onnx/releases/download/model-files-v1.0/"
+                                            "kokoro-v1.0.fp16.onnx")),
+                        QStringLiteral("Apache-2.0"),
+                        QStringLiteral("c1610a859f3bdea01107e73e50100685af38fff88f5cd8e5c56df109ec880204")});
+        list.push_back({kTtsVoices, QString::fromUtf8(QT_TRANSLATE_NOOP("Models", "AI voices (Kokoro)")), 28'214'398,
+                        QString::fromUtf8(QT_TRANSLATE_NOOP("Models", "The voices for the AI narration")),
+                        QStringLiteral("tts"), QStringLiteral("voices-v1.0.bin"),
+                        QUrl(QStringLiteral("https://github.com/thewh1teagle/kokoro-onnx/releases/download/model-files-v1.0/"
+                                            "voices-v1.0.bin")),
+                        QStringLiteral("Apache-2.0"),
+                        QStringLiteral("bca610b8308e8d99f32e6fe4197e7ec01679264efed0cac9140fe9c29f1fbf7d")});
         return list;
     }();
     return models;
